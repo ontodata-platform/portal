@@ -10,6 +10,7 @@ import type {
   Notice,
   OperationsStatistics,
   PageResponse,
+  PersonalTodo,
   PortalResult,
   PortalTask,
   RequirementRequest,
@@ -95,4 +96,18 @@ export const workbenchApi = {
     client.get<UpstreamAggregation>('/workbench/capabilities', { params }).then((r) => r.data),
   workflowTemplates: (params: ListParams) =>
     client.get<UpstreamAggregation>('/workbench/workflow-templates', { params }).then((r) => r.data),
+}
+
+/** 个人中心：我的需求/我的申请/待办统计（M5 接 IAM 后 requester 改认证上下文）。 */
+export const personalApi = {
+  requirements: (requester: string, params: ListParams) =>
+    client
+      .get<PageResponse<RequirementRequest>>('/personal/requirements', { params: { ...params, requester } })
+      .then((r) => r.data),
+  approvals: (requester: string, params: ListParams) =>
+    client
+      .get<PageResponse<ApprovalRequest>>('/personal/approvals', { params: { ...params, requester } })
+      .then((r) => r.data),
+  todos: (requester: string) =>
+    client.get<PersonalTodo>('/personal/todos', { params: { requester } }).then((r) => r.data),
 }

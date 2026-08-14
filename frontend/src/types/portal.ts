@@ -128,3 +128,11 @@ export interface UpstreamAggregation {
   message?: string
   body?: { total: number; items: CatalogEntry[] }
 }
+
+/** 个人中心待办统计（personal-center，M5 接 IAM 后随认证上下文）。 */
+export interface PersonalTodo {
+  pendingApprovalCount: number
+  myOpenRequirementCount: number
+  myRequirementCount: number
+  myApprovalCount: number
+}

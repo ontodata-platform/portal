@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -43,6 +44,18 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiErrorResponse> handleConstraintViolation(
       ConstraintViolationException exception, HttpServletRequest request) {
     return response(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "请求参数校验失败", request, null);
+  }
+
+  /** 必填请求参数缺失：与校验失败同为 400 VALIDATION_FAILED（否则落入兜底 500）。 */
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public ResponseEntity<ApiErrorResponse> handleMissingParameter(
+      MissingServletRequestParameterException exception, HttpServletRequest request) {
+    return response(
+        HttpStatus.BAD_REQUEST,
+        "VALIDATION_FAILED",
+        "缺少必填请求参数：" + exception.getParameterName(),
+        request,
+        null);
   }
 
   @ExceptionHandler(BindException.class)

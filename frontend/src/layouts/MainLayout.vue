@@ -7,6 +7,7 @@ import {
   HomeOutlined,
   ShopOutlined,
   SolutionOutlined,
+  UserOutlined,
 } from '@ant-design/icons-vue'
 import type { MenuProps } from 'ant-design-vue'
 import { computed } from 'vue'
@@ -26,6 +27,7 @@ const menus = [
   { key: '/approvals', label: '审批中心', icon: AuditOutlined },
   { key: '/results', label: '结果中心', icon: FileDoneOutlined },
   { key: '/requirements', label: '需求管理', icon: SolutionOutlined },
+  { key: '/personal', label: '个人中心', icon: UserOutlined },
 ]
 
 const selectedKey = computed(() => route.path)

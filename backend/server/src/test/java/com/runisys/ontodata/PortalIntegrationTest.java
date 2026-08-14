@@ -134,6 +134,17 @@ class PortalIntegrationTest {
 
   @Test
   void approvalCenterTerminalStateProtection() throws Exception {
+    // 基线（跨测试共享内存库：个人中心测试也产生审批单，计数必须相对断言）
+    long approvalBaseline = approvalRepository.count();
+    String pendingBaselineJson =
+        mockMvc
+            .perform(get("/api/v1/approvals").param("status", "PENDING"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    long pendingBaseline = objectMapper.readTree(pendingBaselineJson).path("total").asLong();
+
     String approvalJson =
         """
         {
@@ -159,7 +170,7 @@ class PortalIntegrationTest {
             .getResponse()
             .getContentAsString();
     String code = objectMapper.readTree(created).path("code").asText();
-    Assertions.assertEquals(1, approvalRepository.count());
+    Assertions.assertEquals(approvalBaseline + 1, approvalRepository.count());
 
     // 审批通过
     mockMvc
@@ -209,11 +220,11 @@ class PortalIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("REJECTED"));
 
-    // 按状态过滤 PENDING 为空（两张都终态了）
+    // 按状态过滤 PENDING 回到基线（本测试两张都终态了；其他测试的 PENDING 单不受影响）
     mockMvc
         .perform(get("/api/v1/approvals").param("status", "PENDING"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.total").value(0));
+        .andExpect(jsonPath("$.total").value(pendingBaseline));
 
     // 详情与不存在
     mockMvc
@@ -605,5 +616,101 @@ class PortalIntegrationTest {
     mockMvc
         .perform(get("/api/v1/operations/feedbacks/fb-deadbeef"))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void personalCenterAggregatesMyItemsAndTodos() throws Exception {
+    // 基线（跨测试共享内存库，其他测试也产生 alice 的需求/审批）
+    String baselineJson =
+        mockMvc
+            .perform(get("/api/v1/personal/todos").param("requester", "carol"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    com.fasterxml.jackson.databind.JsonNode baseline = objectMapper.readTree(baselineJson);
+
+    // carol 提一条需求、一条审批申请
+    mockMvc
+        .perform(
+            post("/api/v1/requirements")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "requirementType": "DATA",
+                      "title": "carol 的数据补全需求",
+                      "requester": "carol"
+                    }
+                    """))
+        .andExpect(status().isCreated());
+    mockMvc
+        .perform(
+            post("/api/v1/approvals")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "approvalType": "DATA_GRANT",
+                      "sourceSystem": "data-platform",
+                      "title": "carol 的数据授权申请",
+                      "requester": "carol"
+                    }
+                    """))
+        .andExpect(status().isCreated());
+
+    // 待办统计：carol 新增 1 条 PENDING 审批、1 条 OPEN 需求、需求/申请总数各 +1
+    mockMvc
+        .perform(get("/api/v1/personal/todos").param("requester", "carol"))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath("$.pendingApprovalCount")
+                .value(baseline.path("pendingApprovalCount").asLong() + 1))
+        .andExpect(
+            jsonPath("$.myOpenRequirementCount")
+                .value(baseline.path("myOpenRequirementCount").asLong() + 1))
+        .andExpect(
+            jsonPath("$.myRequirementCount")
+                .value(baseline.path("myRequirementCount").asLong() + 1))
+        .andExpect(
+            jsonPath("$.myApprovalCount").value(baseline.path("myApprovalCount").asLong() + 1));
+
+    // 我的需求：按提出人过滤，carol 恰好 +1（标题包含 carol 标记，防同标题去重误伤）
+    String myRequirementsJson =
+        mockMvc
+            .perform(get("/api/v1/personal/requirements").param("requester", "carol"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    Assertions.assertEquals(
+        baseline.path("myRequirementCount").asLong() + 1,
+        objectMapper.readTree(myRequirementsJson).path("total").asLong(),
+        "我的需求只统计 carol 提出的需求");
+
+    // 我的申请：按申请人过滤
+    String myApprovalsJson =
+        mockMvc
+            .perform(get("/api/v1/personal/approvals").param("requester", "carol"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    Assertions.assertEquals(
+        baseline.path("myApprovalCount").asLong() + 1,
+        objectMapper.readTree(myApprovalsJson).path("total").asLong(),
+        "我的申请只统计 carol 提交的审批单");
+
+    // 状态过滤：carol 的 PENDING 需求 1 条（新增的那条）
+    mockMvc
+        .perform(
+            get("/api/v1/personal/requirements")
+                .param("requester", "carol")
+                .param("status", "OPEN"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(baseline.path("myOpenRequirementCount").asLong() + 1));
+
+    // 用户缺失 → 400
+    mockMvc.perform(get("/api/v1/personal/todos")).andExpect(status().isBadRequest());
   }
 }
