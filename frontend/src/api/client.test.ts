@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { AxiosHeaders, type InternalAxiosRequestConfig } from 'axios'
+import { afterEach, describe, expect, it } from 'vitest'
 
-import { ApiError, parseJsonOrThrow } from './client'
+import { DEFAULT_TENANT, setTenant } from '@/tenant'
+import { ApiError, client, parseJsonOrThrow } from './client'
 
 describe('ApiError', () => {
   it('解析后端错误体（含 traceId 与字段错误）', () => {
@@ -58,5 +60,30 @@ describe('parseJsonOrThrow', () => {
 
   it('非法 JSON 抛中文 ApiError', () => {
     expect(() => parseJsonOrThrow('{bad', '字段白名单')).toThrowError('字段白名单不是合法的 JSON')
+  })
+})
+
+describe('X-Tenant-Id 请求拦截器', () => {
+  afterEach(() => {
+    setTenant(DEFAULT_TENANT)
+  })
+
+  it('每个请求按当前租户注入 X-Tenant-Id 请求头', () => {
+    setTenant('tenant-a')
+    const config = { headers: new AxiosHeaders() } as unknown as InternalAxiosRequestConfig
+    const handler = client.interceptors.request.handlers?.[0]
+
+    handler?.fulfilled?.(config)
+
+    expect(config.headers.get('X-Tenant-Id')).toBe('tenant-a')
+  })
+
+  it('缺省租户 default 同样注入请求头', () => {
+    const config = { headers: new AxiosHeaders() } as unknown as InternalAxiosRequestConfig
+    const handler = client.interceptors.request.handlers?.[0]
+
+    handler?.fulfilled?.(config)
+
+    expect(config.headers.get('X-Tenant-Id')).toBe(DEFAULT_TENANT)
   })
 })

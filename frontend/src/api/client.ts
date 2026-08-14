@@ -7,6 +7,7 @@
 import axios, { type AxiosError } from 'axios'
 
 import type { ApiErrorBody } from '@/types/portal'
+import { tenantState } from '@/tenant'
 
 export class ApiError extends Error {
   readonly status: number
@@ -60,6 +61,12 @@ export class ApiError extends Error {
 export const client = axios.create({
   baseURL: '/api/v1',
   timeout: 15000,
+})
+
+// M5 多租户：每个请求携带 X-Tenant-Id（后端 TenantContextFilter 装载租户上下文）
+client.interceptors.request.use((config) => {
+  config.headers.set('X-Tenant-Id', tenantState.tenantId)
+  return config
 })
 
 client.interceptors.response.use(

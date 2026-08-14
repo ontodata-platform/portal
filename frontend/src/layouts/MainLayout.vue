@@ -13,11 +13,35 @@ import type { MenuProps } from 'ant-design-vue'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import { ApiError } from '@/api/client'
 import { useMessageStore } from '@/stores/message'
+import { useTenantStore } from '@/stores/tenant'
 
 const route = useRoute()
 const router = useRouter()
 const messageStore = useMessageStore()
+const tenantStore = useTenantStore()
+
+/** M5 多租户验收租户清单；combobox 允许输入自定义租户标识（非法时退回 default）。 */
+const tenantOptions = [
+  { value: 'default', label: 'default（缺省租户）' },
+  { value: 'tenant-a', label: 'tenant-a（验收租户 A）' },
+  { value: 'tenant-b', label: 'tenant-b（验收租户 B）' },
+]
+
+const handleTenantChange = (value: unknown) => {
+  const typed = String(value ?? '')
+  const effective = tenantStore.switchTenant(typed)
+  if (typed.trim() !== effective) {
+    messageStore.reportError(
+      new ApiError(
+        400,
+        'INVALID_TENANT',
+        '租户标识只能包含小写字母、数字与连字符（1-64 位），已恢复为缺省租户',
+      ),
+    )
+  }
+}
 
 const menus = [
   { key: '/operations', label: '门户运营', icon: HomeOutlined },
@@ -57,6 +81,15 @@ const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     <a-layout>
       <a-layout-header class="header">
         <span class="title">{{ pageTitle }}</span>
+        <div class="header-spacer"></div>
+        <span class="tenant-label">租户</span>
+        <a-select
+          :value="tenantStore.tenantId"
+          mode="combobox"
+          :options="tenantOptions"
+          class="tenant-select"
+          @change="handleTenantChange"
+        />
       </a-layout-header>
       <a-layout-content class="content">
         <a-alert
@@ -92,6 +125,19 @@ const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
   border-bottom: 1px solid #f0f0f0;
   display: flex;
   align-items: center;
+}
+
+.header-spacer {
+  flex: 1;
+}
+
+.tenant-label {
+  color: rgba(0, 0, 0, 0.45);
+  margin-right: 8px;
+}
+
+.tenant-select {
+  width: 240px;
 }
 
 .title {
