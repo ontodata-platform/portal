@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { taskApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { PortalTask } from '@/types/portal'
 
+const { t, locale } = useI18n()
 const messageStore = useMessageStore()
 
 const loading = ref(false)
@@ -15,15 +17,15 @@ const query = reactive({ page: 1, size: 20, status: '', domain: '', type: '' })
 const detailOpen = ref(false)
 const detail = ref<PortalTask | null>(null)
 
-const columns = [
-  { title: '任务标识', dataIndex: 'taskId', key: 'taskId' },
-  { title: '类型', dataIndex: 'taskType', key: 'taskType' },
-  { title: '来源系统', dataIndex: 'ownerSystem', key: 'ownerSystem' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-  { title: '进度', dataIndex: 'progress', key: 'progress' },
-  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
-  { title: '操作', dataIndex: 'action', key: 'action' },
-]
+const columns = computed(() => [
+  { title: t('tasks.taskId'), dataIndex: 'taskId', key: 'taskId' },
+  { title: t('common.type'), dataIndex: 'taskType', key: 'taskType' },
+  { title: t('common.sourceSystem'), dataIndex: 'ownerSystem', key: 'ownerSystem' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status' },
+  { title: t('common.progress'), dataIndex: 'progress', key: 'progress' },
+  { title: t('common.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: t('common.action'), dataIndex: 'action', key: 'action' },
+])
 
 const statusColor = computed(
   () =>
@@ -35,6 +37,11 @@ const statusColor = computed(
       CANCELED: 'default',
     }) as Record<string, string>,
 )
+
+/** 日期时间按当前界面语言格式化（M5 国际化）。 */
+function formatTime(value: string): string {
+  return new Date(value).toLocaleString(locale.value)
+}
 
 async function load() {
   loading.value = true
@@ -70,14 +77,14 @@ onMounted(load)
 <template>
   <a-card>
     <a-space style="margin-bottom: 12px" wrap>
-      <a-select v-model:value="query.status" placeholder="状态" allow-clear style="width: 140px">
+      <a-select v-model:value="query.status" :placeholder="t('tasks.statusPlaceholder')" allow-clear style="width: 140px">
         <a-select-option value="PENDING">PENDING</a-select-option>
         <a-select-option value="RUNNING">RUNNING</a-select-option>
         <a-select-option value="SUCCESS">SUCCESS</a-select-option>
         <a-select-option value="FAILED">FAILED</a-select-option>
       </a-select>
-      <a-input v-model:value="query.domain" placeholder="来源系统（如 recombine）" style="width: 200px" />
-      <a-input v-model:value="query.type" placeholder="任务类型（大写，如 DATA_INGEST）" style="width: 220px" />
+      <a-input v-model:value="query.domain" :placeholder="t('tasks.domainPlaceholder')" style="width: 200px" />
+      <a-input v-model:value="query.type" :placeholder="t('tasks.typePlaceholder')" style="width: 220px" />
       <a-button
         type="primary"
         @click="
@@ -85,7 +92,7 @@ onMounted(load)
           load()
         "
       >
-        查询
+        {{ t('common.query') }}
       </a-button>
     </a-space>
 
@@ -110,26 +117,26 @@ onMounted(load)
           <a-progress :percent="record.progress" size="small" />
         </template>
         <template v-else-if="column.key === 'updatedAt'">
-          {{ new Date(record.updatedAt).toLocaleString('zh-CN') }}
+          {{ formatTime(record.updatedAt) }}
         </template>
         <template v-else-if="column.key === 'action'">
-          <a-button size="small" @click="openDetail(record)">详情</a-button>
+          <a-button size="small" @click="openDetail(record)">{{ t('common.detail') }}</a-button>
         </template>
       </template>
     </a-table>
 
-    <a-modal v-model:open="detailOpen" title="任务详情" :footer="null" width="640px">
+    <a-modal v-model:open="detailOpen" :title="t('tasks.detailModal')" :footer="null" width="640px">
       <a-descriptions v-if="detail" :column="1" bordered size="small">
-        <a-descriptions-item label="任务标识">{{ detail.taskId }}</a-descriptions-item>
-        <a-descriptions-item label="类型">{{ detail.taskType }}</a-descriptions-item>
-        <a-descriptions-item label="来源系统">{{ detail.ownerSystem }}</a-descriptions-item>
-        <a-descriptions-item label="状态">{{ detail.status }}</a-descriptions-item>
-        <a-descriptions-item label="阶段">{{ detail.stage ?? '-' }}</a-descriptions-item>
-        <a-descriptions-item label="进度">{{ detail.progress }}%</a-descriptions-item>
-        <a-descriptions-item label="资源引用">{{ detail.resourceRefs.join('、') || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="结果引用">{{ detail.resultRefs.join('、') || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="链路标识">{{ detail.traceId ?? '-' }}</a-descriptions-item>
-        <a-descriptions-item label="更新时间">{{ new Date(detail.updatedAt).toLocaleString('zh-CN') }}</a-descriptions-item>
+        <a-descriptions-item :label="t('tasks.taskId')">{{ detail.taskId }}</a-descriptions-item>
+        <a-descriptions-item :label="t('common.type')">{{ detail.taskType }}</a-descriptions-item>
+        <a-descriptions-item :label="t('common.sourceSystem')">{{ detail.ownerSystem }}</a-descriptions-item>
+        <a-descriptions-item :label="t('common.status')">{{ detail.status }}</a-descriptions-item>
+        <a-descriptions-item :label="t('tasks.stage')">{{ detail.stage ?? '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('common.progress')">{{ detail.progress }}%</a-descriptions-item>
+        <a-descriptions-item :label="t('tasks.resourceRefs')">{{ detail.resourceRefs.join('、') || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('tasks.resultRefs')">{{ detail.resultRefs.join('、') || '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('tasks.traceId')">{{ detail.traceId ?? '-' }}</a-descriptions-item>
+        <a-descriptions-item :label="t('common.updatedAt')">{{ formatTime(detail.updatedAt) }}</a-descriptions-item>
       </a-descriptions>
     </a-modal>
   </a-card>

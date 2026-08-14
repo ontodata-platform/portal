@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 
+import { i18n } from '@/i18n'
 import PersonalCenterView from './PersonalCenterView.vue'
 
 const requirementsMock = vi.fn()
@@ -39,7 +40,7 @@ function mountView() {
       components: { PersonalCenterView },
       template: '<PersonalCenterView />',
     }),
-    { global: { plugins: [createPinia()], stubs } },
+    { global: { plugins: [createPinia(), i18n], stubs } },
   )
 }
 

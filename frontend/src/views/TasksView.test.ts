@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 
+import { i18n } from '@/i18n'
 import { useMessageStore } from '@/stores/message'
 import TasksView from './TasksView.vue'
 
@@ -39,7 +40,7 @@ function mountView() {
       components: { TasksView },
       template: '<TasksView />',
     }),
-    { global: { plugins: [createPinia()], stubs } },
+    { global: { plugins: [createPinia(), i18n], stubs } },
   )
 }
 
@@ -109,7 +110,7 @@ describe('TasksView', () => {
         components: { TasksView },
         template: '<TasksView />',
       }),
-      { global: { plugins: [pinia], stubs } },
+      { global: { plugins: [pinia, i18n], stubs } },
     )
     await flushPromises()
 

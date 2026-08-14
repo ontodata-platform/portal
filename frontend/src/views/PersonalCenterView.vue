@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { approvalApi, personalApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { ApprovalRequest, PersonalTodo, RequirementRequest } from '@/types/portal'
 
+const { t } = useI18n()
 const messageStore = useMessageStore()
 
 const requester = ref('alice')
@@ -26,17 +28,17 @@ const approvalTotal = ref(0)
 const pendingLoading = ref(false)
 const pendingApprovals = ref<ApprovalRequest[]>([])
 
-const requirementColumns = [
-  { title: '编码', dataIndex: 'code', key: 'code' },
-  { title: '标题', dataIndex: 'title', key: 'title' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-]
+const requirementColumns = computed(() => [
+  { title: t('common.code'), dataIndex: 'code', key: 'code' },
+  { title: t('common.title'), dataIndex: 'title', key: 'title' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status' },
+])
 
-const approvalColumns = [
-  { title: '编码', dataIndex: 'code', key: 'code' },
-  { title: '标题', dataIndex: 'title', key: 'title' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-]
+const approvalColumns = computed(() => [
+  { title: t('common.code'), dataIndex: 'code', key: 'code' },
+  { title: t('common.title'), dataIndex: 'title', key: 'title' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status' },
+])
 
 const statusColor: Record<string, string> = {
   OPEN: 'default',
@@ -106,27 +108,27 @@ onMounted(loadAll)
 <template>
   <a-card>
     <a-space style="margin-bottom: 16px">
-      <span>当前用户（M5 接入统一身份后自动识别）：</span>
+      <span>{{ t('personal.currentUser') }}</span>
       <a-input v-model:value="requester" style="width: 200px" />
-      <a-button type="primary" @click="loadAll">刷新</a-button>
+      <a-button type="primary" @click="loadAll">{{ t('personal.refresh') }}</a-button>
     </a-space>
 
     <a-row :gutter="16" style="margin-bottom: 16px">
       <a-col :span="6">
-        <a-statistic title="待我审批" :value="todos.pendingApprovalCount" :value-style="{ color: todos.pendingApprovalCount > 0 ? '#cf1322' : undefined }" />
+        <a-statistic :title="t('personal.pendingForMe')" :value="todos.pendingApprovalCount" :value-style="{ color: todos.pendingApprovalCount > 0 ? '#cf1322' : undefined }" />
       </a-col>
       <a-col :span="6">
-        <a-statistic title="我的进行中需求" :value="todos.myOpenRequirementCount" />
+        <a-statistic :title="t('personal.myOpenRequirements')" :value="todos.myOpenRequirementCount" />
       </a-col>
       <a-col :span="6">
-        <a-statistic title="我的需求总数" :value="todos.myRequirementCount" />
+        <a-statistic :title="t('personal.myRequirementTotal')" :value="todos.myRequirementCount" />
       </a-col>
       <a-col :span="6">
-        <a-statistic title="我的申请总数" :value="todos.myApprovalCount" />
+        <a-statistic :title="t('personal.myApprovalTotal')" :value="todos.myApprovalCount" />
       </a-col>
     </a-row>
 
-    <a-card title="待我审批（全体 PENDING 审批单）" size="small" :bordered="false" style="margin-bottom: 16px">
+    <a-card :title="t('personal.pendingCard')" size="small" :bordered="false" style="margin-bottom: 16px">
       <a-table
         :columns="approvalColumns"
         :data-source="pendingApprovals"
@@ -142,7 +144,7 @@ onMounted(loadAll)
       </a-table>
     </a-card>
 
-    <a-card title="我的需求" size="small" :bordered="false" style="margin-bottom: 16px">
+    <a-card :title="t('personal.myRequirements')" size="small" :bordered="false" style="margin-bottom: 16px">
       <a-table
         :columns="requirementColumns"
         :data-source="requirements"
@@ -158,7 +160,7 @@ onMounted(loadAll)
       </a-table>
     </a-card>
 
-    <a-card title="我的申请" size="small" :bordered="false">
+    <a-card :title="t('personal.myApprovals')" size="small" :bordered="false">
       <a-table
         :columns="approvalColumns"
         :data-source="approvals"

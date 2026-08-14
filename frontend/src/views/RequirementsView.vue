@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { requirementApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { RequirementRequest } from '@/types/portal'
 
+const { t } = useI18n()
 const messageStore = useMessageStore()
 
 const loading = ref(false)
@@ -31,15 +33,15 @@ const closing = ref(false)
 const closeTarget = ref<RequirementRequest | null>(null)
 const closeForm = reactive({ closedNote: '' })
 
-const columns = [
-  { title: '编码', dataIndex: 'code', key: 'code' },
-  { title: '类型', dataIndex: 'requirementType', key: 'requirementType' },
-  { title: '标题', dataIndex: 'title', key: 'title' },
-  { title: '提出人', dataIndex: 'requester', key: 'requester' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-  { title: '分派目标', dataIndex: 'assigneeSystem', key: 'assigneeSystem' },
-  { title: '操作', dataIndex: 'action', key: 'action' },
-]
+const columns = computed(() => [
+  { title: t('common.code'), dataIndex: 'code', key: 'code' },
+  { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType' },
+  { title: t('common.title'), dataIndex: 'title', key: 'title' },
+  { title: t('common.requester'), dataIndex: 'requester', key: 'requester' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status' },
+  { title: t('requirements.assigneeTarget'), dataIndex: 'assigneeSystem', key: 'assigneeSystem' },
+  { title: t('common.action'), dataIndex: 'action', key: 'action' },
+])
 
 const statusColor: Record<string, string> = {
   OPEN: 'default',
@@ -50,11 +52,28 @@ const statusColor: Record<string, string> = {
   CANCELED: 'default',
 }
 
-const typeLabel: Record<string, string> = {
-  DATA: '数据需求',
-  ALGORITHM: '算法需求',
-  COMPREHENSIVE: '综合需求',
-}
+/** 需求类型展示文案（协议编码不变，界面按语言翻译）。 */
+const typeLabel = computed(
+  () =>
+    ({
+      DATA: t('requirements.dataRequirement'),
+      ALGORITHM: t('requirements.algorithmRequirement'),
+      COMPREHENSIVE: t('requirements.comprehensiveRequirement'),
+    }) as Record<string, string>,
+)
+
+/** 需求状态展示文案（协议编码不变，界面按语言翻译）。 */
+const statusText = computed(
+  () =>
+    ({
+      OPEN: t('requirements.open'),
+      ANALYZING: t('requirements.analyzing'),
+      ASSIGNED: t('requirements.assigned'),
+      IN_PROGRESS: t('requirements.inProgress'),
+      COMPLETED: t('requirements.completed'),
+      CANCELED: t('requirements.canceled'),
+    }) as Record<string, string>,
+)
 
 async function load() {
   loading.value = true
@@ -84,7 +103,7 @@ async function create() {
       description: createForm.description || undefined,
       requester: createForm.requester,
     })
-    messageStore.success('需求已登记（同类型同标题的非终态需求会被去重拦截）')
+    messageStore.success(t('requirements.created'))
     createOpen.value = false
     createForm.title = ''
     await load()
@@ -108,7 +127,10 @@ async function transition(action: () => Promise<unknown>, successText: string) {
 }
 
 async function analyze(record: RequirementRequest) {
-  await transition(() => requirementApi.analyze(record.code), `需求 ${record.code} 已进入分析`)
+  await transition(
+    () => requirementApi.analyze(record.code),
+    t('requirements.analyzed', { code: record.code }),
+  )
 }
 
 async function assign() {
@@ -121,7 +143,12 @@ async function assign() {
       assigneeSystem: assignForm.assigneeSystem,
       assigneeRef: assignForm.assigneeRef || undefined,
     })
-    messageStore.success(`需求 ${assignTarget.value.code} 已分派到 ${assignForm.assigneeSystem}`)
+    messageStore.success(
+      t('requirements.assignedTo', {
+        code: assignTarget.value.code,
+        system: assignForm.assigneeSystem,
+      }),
+    )
     assignOpen.value = false
     await load()
   } catch (error) {
@@ -151,7 +178,7 @@ async function complete() {
   closing.value = true
   try {
     await requirementApi.complete(closeTarget.value.code, { closedNote: closeForm.closedNote })
-    messageStore.success(`需求 ${closeTarget.value.code} 已完成`)
+    messageStore.success(t('requirements.completedMessage', { code: closeTarget.value.code }))
     closeOpen.value = false
     await load()
   } catch (error) {
@@ -162,7 +189,10 @@ async function complete() {
 }
 
 async function cancel(record: RequirementRequest) {
-  await transition(() => requirementApi.cancel(record.code, {}), `需求 ${record.code} 已取消`)
+  await transition(
+    () => requirementApi.cancel(record.code, {}),
+    t('requirements.canceledMessage', { code: record.code }),
+  )
 }
 
 onMounted(load)
@@ -171,20 +201,20 @@ onMounted(load)
 <template>
   <a-card>
     <a-space style="margin-bottom: 12px" wrap>
-      <a-select v-model:value="query.status" placeholder="状态" allow-clear style="width: 150px">
-        <a-select-option value="OPEN">待分析</a-select-option>
-        <a-select-option value="ANALYZING">分析中</a-select-option>
-        <a-select-option value="ASSIGNED">已分派</a-select-option>
-        <a-select-option value="IN_PROGRESS">进行中</a-select-option>
-        <a-select-option value="COMPLETED">已完成</a-select-option>
-        <a-select-option value="CANCELED">已取消</a-select-option>
+      <a-select v-model:value="query.status" :placeholder="t('requirements.statusPlaceholder')" allow-clear style="width: 150px">
+        <a-select-option value="OPEN">{{ t('requirements.open') }}</a-select-option>
+        <a-select-option value="ANALYZING">{{ t('requirements.analyzing') }}</a-select-option>
+        <a-select-option value="ASSIGNED">{{ t('requirements.assigned') }}</a-select-option>
+        <a-select-option value="IN_PROGRESS">{{ t('requirements.inProgress') }}</a-select-option>
+        <a-select-option value="COMPLETED">{{ t('requirements.completed') }}</a-select-option>
+        <a-select-option value="CANCELED">{{ t('requirements.canceled') }}</a-select-option>
       </a-select>
-      <a-select v-model:value="query.type" placeholder="类型" allow-clear style="width: 150px">
-        <a-select-option value="DATA">数据需求</a-select-option>
-        <a-select-option value="ALGORITHM">算法需求</a-select-option>
-        <a-select-option value="COMPREHENSIVE">综合需求</a-select-option>
+      <a-select v-model:value="query.type" :placeholder="t('requirements.typePlaceholder')" allow-clear style="width: 150px">
+        <a-select-option value="DATA">{{ t('requirements.dataRequirement') }}</a-select-option>
+        <a-select-option value="ALGORITHM">{{ t('requirements.algorithmRequirement') }}</a-select-option>
+        <a-select-option value="COMPREHENSIVE">{{ t('requirements.comprehensiveRequirement') }}</a-select-option>
       </a-select>
-      <a-input v-model:value="query.keyword" placeholder="按标题搜索" style="width: 180px" />
+      <a-input v-model:value="query.keyword" :placeholder="t('requirements.keywordPlaceholder')" style="width: 180px" />
       <a-button
         type="primary"
         @click="
@@ -192,9 +222,9 @@ onMounted(load)
           load()
         "
       >
-        查询
+        {{ t('common.query') }}
       </a-button>
-      <a-button @click="createOpen = true">登记需求</a-button>
+      <a-button @click="createOpen = true">{{ t('requirements.createButton') }}</a-button>
     </a-space>
 
     <a-table
@@ -215,7 +245,7 @@ onMounted(load)
           {{ typeLabel[record.requirementType] ?? record.requirementType }}
         </template>
         <template v-else-if="column.key === 'status'">
-          <a-tag :color="statusColor[record.status]">{{ record.status }}</a-tag>
+          <a-tag :color="statusColor[record.status]">{{ statusText[record.status] ?? record.status }}</a-tag>
         </template>
         <template v-else-if="column.key === 'action'">
           <a-space>
@@ -225,7 +255,7 @@ onMounted(load)
               type="primary"
               @click="analyze(record)"
             >
-              分析
+              {{ t('requirements.analyze') }}
             </a-button>
             <a-button
               v-if="record.status === 'ANALYZING'"
@@ -233,15 +263,15 @@ onMounted(load)
               type="primary"
               @click="openAssign(record)"
             >
-              分派
+              {{ t('requirements.assign') }}
             </a-button>
             <a-button
               v-if="record.status === 'ASSIGNED'"
               size="small"
               type="primary"
-              @click="transition(() => requirementApi.progress(record.code), `需求 ${record.code} 已进入进行中`)"
+              @click="transition(() => requirementApi.progress(record.code), t('requirements.progressed', { code: record.code }))"
             >
-              启动
+              {{ t('requirements.start') }}
             </a-button>
             <a-button
               v-if="record.status === 'IN_PROGRESS'"
@@ -249,7 +279,7 @@ onMounted(load)
               type="primary"
               @click="openComplete(record)"
             >
-              完成
+              {{ t('requirements.complete') }}
             </a-button>
             <a-button
               v-if="record.status === 'OPEN' || record.status === 'ANALYZING'"
@@ -257,37 +287,37 @@ onMounted(load)
               danger
               @click="cancel(record)"
             >
-              取消
+              {{ t('requirements.cancel') }}
             </a-button>
           </a-space>
         </template>
       </template>
     </a-table>
 
-    <a-modal v-model:open="createOpen" title="登记需求" :confirm-loading="creating" @ok="create">
+    <a-modal v-model:open="createOpen" :title="t('requirements.createModal')" :confirm-loading="creating" @ok="create">
       <a-form layout="vertical">
-        <a-form-item label="需求类型" required>
+        <a-form-item :label="t('requirements.requirementType')" required>
           <a-radio-group v-model:value="createForm.requirementType">
-            <a-radio value="DATA">数据需求</a-radio>
-            <a-radio value="ALGORITHM">算法需求</a-radio>
-            <a-radio value="COMPREHENSIVE">综合需求</a-radio>
+            <a-radio value="DATA">{{ t('requirements.dataRequirement') }}</a-radio>
+            <a-radio value="ALGORITHM">{{ t('requirements.algorithmRequirement') }}</a-radio>
+            <a-radio value="COMPREHENSIVE">{{ t('requirements.comprehensiveRequirement') }}</a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item label="标题" required>
-          <a-input v-model:value="createForm.title" placeholder="需求标题（同类型同标题去重）" />
+        <a-form-item :label="t('common.title')" required>
+          <a-input v-model:value="createForm.title" :placeholder="t('requirements.titlePlaceholder')" />
         </a-form-item>
-        <a-form-item label="描述">
-          <a-textarea v-model:value="createForm.description" placeholder="需求描述（可空）" :rows="3" />
+        <a-form-item :label="t('requirements.description')">
+          <a-textarea v-model:value="createForm.description" :placeholder="t('requirements.descriptionPlaceholder')" :rows="3" />
         </a-form-item>
-        <a-form-item label="提出人" required>
-          <a-input v-model:value="createForm.requester" placeholder="提出人" />
+        <a-form-item :label="t('common.requester')" required>
+          <a-input v-model:value="createForm.requester" :placeholder="t('requirements.requesterPlaceholder')" />
         </a-form-item>
       </a-form>
     </a-modal>
 
-    <a-modal v-model:open="assignOpen" title="分派需求" :confirm-loading="assigning" @ok="assign">
+    <a-modal v-model:open="assignOpen" :title="t('requirements.assignModal')" :confirm-loading="assigning" @ok="assign">
       <a-form layout="vertical">
-        <a-form-item label="分派目标（平台内业务软件）" required>
+        <a-form-item :label="t('requirements.assignTargetLabel')" required>
           <a-select v-model:value="assignForm.assigneeSystem">
             <a-select-option value="data-platform">data-platform</a-select-option>
             <a-select-option value="algorithm-transform">algorithm-transform</a-select-option>
@@ -296,16 +326,16 @@ onMounted(load)
             <a-select-option value="mcp-gateway">mcp-gateway</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="目标软件任务/对象编码">
-          <a-input v-model:value="assignForm.assigneeRef" placeholder="引用编码（可空）" />
+        <a-form-item :label="t('requirements.assigneeRefLabel')">
+          <a-input v-model:value="assignForm.assigneeRef" :placeholder="t('requirements.assigneeRefPlaceholder')" />
         </a-form-item>
       </a-form>
     </a-modal>
 
-    <a-modal v-model:open="closeOpen" title="完成需求" :confirm-loading="closing" @ok="complete">
+    <a-modal v-model:open="closeOpen" :title="t('requirements.completeModal')" :confirm-loading="closing" @ok="complete">
       <a-form layout="vertical">
-        <a-form-item label="结项说明（必填，闭环证据）" required>
-          <a-textarea v-model:value="closeForm.closedNote" placeholder="例如：数据回填完成并验收" :rows="3" />
+        <a-form-item :label="t('requirements.closedNoteLabel')" required>
+          <a-textarea v-model:value="closeForm.closedNote" :placeholder="t('requirements.closedNotePlaceholder')" :rows="3" />
         </a-form-item>
       </a-form>
     </a-modal>
