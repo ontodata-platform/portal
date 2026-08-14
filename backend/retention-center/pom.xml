@@ -10,9 +10,9 @@
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>portal-server</artifactId>
-    <name>portal-server</name>
-    <description>启动与装配模块：聚合各模块为可运行服务（端口 18085）</description>
+    <artifactId>portal-retention-center</artifactId>
+    <name>portal-retention-center</name>
+    <description>Retention Center：数据保留与归档删除（M5，只清理超过保留期的终态记录）</description>
 
     <dependencies>
         <dependency>
@@ -40,43 +40,18 @@
             <artifactId>portal-operations-center</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.runisys.ontodata</groupId>
-            <artifactId>portal-aggregation-center</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.runisys.ontodata</groupId>
-            <artifactId>portal-personal-center</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.runisys.ontodata</groupId>
-            <artifactId>portal-retention-center</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 </project>

@@ -17,6 +17,11 @@ spring:
 server:
   port: ${SERVER_PORT:18085}
 
+ontodata:
+  retention:
+    # 数据保留（M5）：超过保留期的终态记录可清理（dryRun 先演练），默认 180 天
+    days: ${RETENTION_DAYS:180}
+
 management:
   endpoints:
     web:
