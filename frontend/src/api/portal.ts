@@ -13,6 +13,7 @@ import type {
   PortalResult,
   PortalTask,
   RequirementRequest,
+  UpstreamAggregation,
 } from '@/types/portal'
 
 export interface ListParams {
@@ -80,4 +81,18 @@ export const operationsApi = {
   handleFeedback: (code: string, body: { handleNote: string }) =>
     client.post<Feedback>(`/operations/feedbacks/${code}/handle`, body).then((r) => r.data),
   statistics: () => client.get<OperationsStatistics>('/operations/statistics').then((r) => r.data),
+}
+
+/** 数据商城：经管理平台正式 REST 契约聚合数据服务目录（降级展示契约）。 */
+export const marketplaceApi = {
+  dataServices: (params: ListParams) =>
+    client.get<UpstreamAggregation>('/marketplace/data-services', { params }).then((r) => r.data),
+}
+
+/** 算法工作台：能力目录（算法转换工具）与工作流模板（算法重组平台）聚合。 */
+export const workbenchApi = {
+  capabilities: (params: ListParams) =>
+    client.get<UpstreamAggregation>('/workbench/capabilities', { params }).then((r) => r.data),
+  workflowTemplates: (params: ListParams) =>
+    client.get<UpstreamAggregation>('/workbench/workflow-templates', { params }).then((r) => r.data),
 }

@@ -25,6 +25,7 @@ portal/
 │  ├─ result-center/  # 结果中心（结果引用登记）
 │  ├─ requirement-center/ # 需求管理（req-* 需求单，接收/去重/分派/关闭）
 │  ├─ operations-center/  # 门户运营（ntc-* 公告、fb-* 反馈、运营统计）
+│  ├─ aggregation-center/ # 数据商城/算法工作台聚合（各软件正式 REST 契约，降级展示）
 │  └─ server/         # 启动与装配（端口 18085）
 └─ frontend/          # Vue 3 管理门户界面（端口 5175，五中心页面）
 ```

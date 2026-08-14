@@ -25,6 +25,7 @@
         <module>result-center</module>
         <module>requirement-center</module>
         <module>operations-center</module>
+        <module>aggregation-center</module>
         <module>server</module>
     </modules>
 
@@ -64,6 +65,11 @@
             <dependency>
                 <groupId>com.runisys.ontodata</groupId>
                 <artifactId>portal-operations-center</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.runisys.ontodata</groupId>
+                <artifactId>portal-aggregation-center</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

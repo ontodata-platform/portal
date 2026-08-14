@@ -112,3 +112,19 @@ export interface OperationsStatistics {
   publishedNotices: number
   pendingFeedbacks: number
 }
+
+/** 上游目录条目（数据商城/算法工作台聚合透传，字段与各软件目录响应同构）。 */
+export interface CatalogEntry {
+  code: string
+  name: string
+  status: string
+  currentVersion: number | string
+}
+
+/** 上游聚合响应（aggregation-center）：available=false 时展示降级卡片。 */
+export interface UpstreamAggregation {
+  sourceSystem: string
+  available: boolean
+  message?: string
+  body?: { total: number; items: CatalogEntry[] }
+}

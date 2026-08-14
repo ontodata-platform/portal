@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import {
+  AppstoreOutlined,
   AuditOutlined,
   CarryOutOutlined,
   FileDoneOutlined,
   HomeOutlined,
+  ShopOutlined,
   SolutionOutlined,
 } from '@ant-design/icons-vue'
 import type { MenuProps } from 'ant-design-vue'
@@ -18,6 +20,8 @@ const messageStore = useMessageStore()
 
 const menus = [
   { key: '/operations', label: '门户运营', icon: HomeOutlined },
+  { key: '/marketplace', label: '数据商城', icon: ShopOutlined },
+  { key: '/workbench', label: '算法工作台', icon: AppstoreOutlined },
   { key: '/tasks', label: '统一任务中心', icon: CarryOutOutlined },
   { key: '/approvals', label: '审批中心', icon: AuditOutlined },
   { key: '/results', label: '结果中心', icon: FileDoneOutlined },
