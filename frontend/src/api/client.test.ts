@@ -1,6 +1,7 @@
 import { AxiosHeaders, type InternalAxiosRequestConfig } from 'axios'
 import { afterEach, describe, expect, it } from 'vitest'
 
+import { clearSession, saveSession } from '@/auth/session'
 import { DEFAULT_TENANT, setTenant } from '@/tenant'
 import { ApiError, client, parseJsonOrThrow } from './client'
 
@@ -66,6 +67,7 @@ describe('parseJsonOrThrow', () => {
 describe('X-Tenant-Id 请求拦截器', () => {
   afterEach(() => {
     setTenant(DEFAULT_TENANT)
+    clearSession()
   })
 
   it('每个请求按当前租户注入 X-Tenant-Id 请求头', () => {
@@ -85,5 +87,17 @@ describe('X-Tenant-Id 请求拦截器', () => {
     handler?.fulfilled?.(config)
 
     expect(config.headers.get('X-Tenant-Id')).toBe(DEFAULT_TENANT)
+  })
+
+  it('登录后附加 Bearer 访问令牌（M5 IAM），登出/过期后不附加', () => {
+    saveSession({ accessToken: 'token-1', expiresAt: Date.now() + 60_000 })
+    const withToken = { headers: new AxiosHeaders() } as unknown as InternalAxiosRequestConfig
+    client.interceptors.request.handlers?.[0]?.fulfilled?.(withToken)
+    expect(withToken.headers.get('Authorization')).toBe('Bearer token-1')
+
+    clearSession()
+    const withoutToken = { headers: new AxiosHeaders() } as unknown as InternalAxiosRequestConfig
+    client.interceptors.request.handlers?.[0]?.fulfilled?.(withoutToken)
+    expect(withoutToken.headers.get('Authorization')).toBeUndefined()
   })
 })

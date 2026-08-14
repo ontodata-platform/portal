@@ -35,6 +35,7 @@ export const zhCn = {
     defaultTenant: 'default（缺省租户）',
     tenantA: 'tenant-a（验收租户 A）',
     tenantB: 'tenant-b（验收租户 B）',
+    logout: '退出登录',
   },
   menu: {
     operations: '门户运营',
@@ -238,6 +239,7 @@ export const enUs: MessageSchema = {
     defaultTenant: 'default (default tenant)',
     tenantA: 'tenant-a (acceptance tenant A)',
     tenantB: 'tenant-b (acceptance tenant B)',
+    logout: 'Logout',
   },
   menu: {
     operations: 'Operations',

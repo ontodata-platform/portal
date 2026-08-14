@@ -15,6 +15,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api/client'
+import { authState, clearSession } from '@/auth/session'
 import { setLocale } from '@/i18n'
 import { useMessageStore } from '@/stores/message'
 import { useTenantStore } from '@/stores/tenant'
@@ -70,6 +71,12 @@ const handleTenantChange = (value: unknown) => {
 const handleLocaleChange = (value: unknown) => {
   setLocale(String(value ?? 'zh-CN'))
 }
+
+/** 退出登录（M5 IAM）：清除会话后回登录页（未启用 IAM 时按钮不显示）。 */
+const handleLogout = () => {
+  clearSession()
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -107,6 +114,9 @@ const handleLocaleChange = (value: unknown) => {
           class="tenant-select"
           @change="handleTenantChange"
         />
+        <a-button v-if="authState.session" class="logout" type="link" @click="handleLogout">
+          {{ t('layout.logout') }}
+        </a-button>
       </a-layout-header>
       <a-layout-content class="content">
         <a-alert
@@ -160,6 +170,10 @@ const handleLocaleChange = (value: unknown) => {
 
 .tenant-select {
   width: 240px;
+}
+
+.logout {
+  margin-left: 16px;
 }
 
 .title {

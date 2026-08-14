@@ -47,7 +47,9 @@ spring-security-test 的 `jwt()` 后处理器注入，解码器不被调用）�
 
 ### 2.4 后续（IAM 其余项）
 
-- 浏览器登录（authorization code + 会话）与前端 OIDC 登录流程（各软件 UI）；
+- 浏览器登录（authorization code + PKCE）：前端 SPA 骨架已落地（`VITE_IAM_ENABLED`
+  门控 + `/login`/`/auth/callback` + 会话存储 + Bearer 附加，见 frontend
+  `src/auth/oidc.ts`），待 IdP 部署后联调启用（生产必须 HTTPS）；
 - 服务间调用客户端凭据（client-credentials）：MCP 网关 → 门户已落地
   （`mcp-gateway` 仓库 `2026-08-15-productization-iam-service-credentials.md`，
   Bearer 令牌 + fail-closed）；其余服务间调用按同构模式接入；

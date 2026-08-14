@@ -24,6 +24,7 @@ const stubs = {
   'a-layout-content': { template: '<div><slot /></div>' },
   'a-menu': { props: ['theme', 'mode', 'selectedKeys'], emits: ['click'], template: '<div><slot /></div>' },
   'a-menu-item': { template: '<div><slot /></div>' },
+  'a-button': { props: ['type'], emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' },
   'a-alert': { props: ['type', 'message', 'description', 'showIcon', 'closable'], emits: ['close'], template: '<div class="alert"><slot /></div>' },
   'a-select': {
     props: ['value', 'mode', 'options'],

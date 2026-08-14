@@ -10,6 +10,14 @@ export default createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/login',
+      component: () => import('@/views/LoginView.vue'),
+    },
+    {
+      path: '/auth/callback',
+      component: () => import('@/views/CallbackView.vue'),
+    },
+    {
       path: '/',
       component: MainLayout,
       children: [

@@ -6,6 +6,7 @@
  */
 import axios, { type AxiosError } from 'axios'
 
+import { accessToken } from '@/auth/session'
 import type { ApiErrorBody } from '@/types/portal'
 import { tenantState } from '@/tenant'
 
@@ -64,8 +65,13 @@ export const client = axios.create({
 })
 
 // M5 多租户：每个请求携带 X-Tenant-Id（后端 TenantContextFilter 装载租户上下文）
+// M5 IAM：已登录时附加 Bearer 访问令牌（门户 IAM 模式校验 JWT；未登录/未启用不附加）
 client.interceptors.request.use((config) => {
   config.headers.set('X-Tenant-Id', tenantState.tenantId)
+  const token = accessToken()
+  if (token) {
+    config.headers.set('Authorization', `Bearer ${token}`)
+  }
   return config
 })
 
