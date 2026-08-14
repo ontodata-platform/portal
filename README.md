@@ -1,39 +1,35 @@
-# ontodata 门户（portal）
+# ontodata 管理门户（portal）
 
-自然语言入口子系统：连接用户意图与确定性语义执行，向业务用户交付可解释、可审计的结果。
+用户入口子系统：组织权限界面、需求管理、数据商城、算法工作台、统一任务中心、审批中心、智能助手、结果中心。对齐《统一业务平台总体设计说明》§5。
 
 ## 定位与边界
 
-- **属于**：ontodata 一体化平台中的体验层。
-- **职责**：本体选择、意图识别、参数提取、执行规划（只消费运行契约 3.0）、会话管理、结果解释与追问（LLM）、SSE 流式呈现、审计与授权。
-- **不负责**：任何确定性执行（取数、物化、推理、评分、能力调用全部由 ontology-platform 运行引擎执行）；不接触 SQL、凭据、连接串、原始业务记录。
-- **对外契约**：消费 `contracts` 仓库 `runtime/`（运行契约 3.0）；不产生新契约。
+- **职责**：六个基础模块（Identity/Organization、Navigation、Task Center、Approval Center、AI Assistant、Result Center）+ 业务模块（需求管理、数据商城、算法工作台、个人中心、审批管理、门户运营、集成运维）。
+- **不负责**：任何确定性执行与业务规则；任务权威归产生它的软件（§12.3），门户只聚合展示；模型只做规划与解释，降级路径（普通搜索/页面操作/人工办理）始终可用。
+- **对外契约**：消费各软件 REST/事件契约（任务模型 §12.3、事件信封）；不产生新契约。
 
-## 关键原则
+## 技术栈（ADR-001）
 
-- 大模型只做规划与解释，不生成 SQL、不读凭据、不修改确定性结果。
-- **保留手动模式降级入口**：模型不可用时可显式选择场景并填写参数（高级入口），运行验证可用性不绑定在 LLM 供应商上。
-- LLM 基础设施（受控连接、白名单、SSE、配额、取消）平移自 ontology-platform 的 `llm` 模块。
-- 前端零领域硬编码（沿用领域耦合守卫测试思路）。
+- 后端：Java 21 LTS、Spring Boot 3.3.x、Spring Security 6（jakarta）、Spring Data JPA + Flyway 10、MySQL 8.0+。
+- 前端：Vue 3.5 + TypeScript + Vite 7 + Ant Design Vue 4（与 data-platform/ui 同基线）。
 
-## 技术栈（2026-08 决策）
-
-- 后端：Java 21 LTS、Spring Boot 3.3.x、Spring Security 6
-- 前端：Vue 3.5 + TypeScript 5.8 + Vite 7 + Ant Design Vue 4（与 ontology-platform 前端同基线）
-
-## 仓库结构（规划）
+## 仓库结构（M4 首版）
 
 ```text
 portal/
-├─ backend/          # 意图识别、参数提取、会话、SSE 编排
-├─ frontend/         # 问答界面、结果呈现、追问交互
-└─ docs/
+├─ docs/              # 设计文档
+├─ backend/
+│  ├─ common/         # 分页、错误协议、请求追踪（与各软件同构移植）
+│  ├─ task-center/    # 统一任务中心（聚合副本，taskId 幂等 upsert）
+│  ├─ approval-center/# 审批中心（apr-* 审批单，终态防重）
+│  ├─ result-center/  # 结果中心（结果引用登记）
+│  └─ server/         # 启动与装配（端口 18085）
+└─ frontend/          # Vue 3 管理门户界面（下一工作块）
 ```
 
-## 里程碑
-
-- M4（8 周）：门户子系统建设，三领域样例自然语言端到端跑通。
+设计详见 `docs/design/2026-08-14-portal-design.md`。
 
 ## 约定
 
-- 测试先行、中文 Conventional Commit；任何"跨层直连"（直查数据源、直读本体草稿）一律拒绝。
+- 测试先行、中文 Conventional Commit、Google Java Format（Spotless）、非显然逻辑中文注释。
+- 任何"跨层直连"（直查数据源、直读本体草稿）一律拒绝；结果可追踪率 100%。
