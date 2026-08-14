@@ -11,61 +11,71 @@ import {
 } from '@ant-design/icons-vue'
 import type { MenuProps } from 'ant-design-vue'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api/client'
+import { setLocale } from '@/i18n'
 import { useMessageStore } from '@/stores/message'
 import { useTenantStore } from '@/stores/tenant'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const messageStore = useMessageStore()
 const tenantStore = useTenantStore()
 
+/** 菜单与页面标题按界面语言解析（M5 国际化）。 */
+const menus = computed(() => [
+  { key: '/operations', label: t('menu.operations'), icon: HomeOutlined },
+  { key: '/marketplace', label: t('menu.marketplace'), icon: ShopOutlined },
+  { key: '/workbench', label: t('menu.workbench'), icon: AppstoreOutlined },
+  { key: '/tasks', label: t('menu.tasks'), icon: CarryOutOutlined },
+  { key: '/approvals', label: t('menu.approvals'), icon: AuditOutlined },
+  { key: '/results', label: t('menu.results'), icon: FileDoneOutlined },
+  { key: '/requirements', label: t('menu.requirements'), icon: SolutionOutlined },
+  { key: '/personal', label: t('menu.personal'), icon: UserOutlined },
+])
+
+const selectedKey = computed(() => route.path)
+const pageTitle = computed(() =>
+  route.meta.titleKey ? t(route.meta.titleKey as string) : t('layout.appName'),
+)
+
 /** M5 多租户验收租户清单；combobox 允许输入自定义租户标识（非法时退回 default）。 */
-const tenantOptions = [
-  { value: 'default', label: 'default（缺省租户）' },
-  { value: 'tenant-a', label: 'tenant-a（验收租户 A）' },
-  { value: 'tenant-b', label: 'tenant-b（验收租户 B）' },
+const tenantOptions = computed(() => [
+  { value: 'default', label: t('layout.defaultTenant') },
+  { value: 'tenant-a', label: t('layout.tenantA') },
+  { value: 'tenant-b', label: t('layout.tenantB') },
+])
+
+/** 语言清单：切换即时生效并持久化（M5 国际化）。 */
+const localeOptions = [
+  { value: 'zh-CN', label: '中文' },
+  { value: 'en-US', label: 'English' },
 ]
+
+const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
+  router.push(key as string)
+}
 
 const handleTenantChange = (value: unknown) => {
   const typed = String(value ?? '')
   const effective = tenantStore.switchTenant(typed)
   if (typed.trim() !== effective) {
-    messageStore.reportError(
-      new ApiError(
-        400,
-        'INVALID_TENANT',
-        '租户标识只能包含小写字母、数字与连字符（1-64 位），已恢复为缺省租户',
-      ),
-    )
+    messageStore.reportError(new ApiError(400, 'INVALID_TENANT', t('layout.invalidTenant')))
   }
 }
 
-const menus = [
-  { key: '/operations', label: '门户运营', icon: HomeOutlined },
-  { key: '/marketplace', label: '数据商城', icon: ShopOutlined },
-  { key: '/workbench', label: '算法工作台', icon: AppstoreOutlined },
-  { key: '/tasks', label: '统一任务中心', icon: CarryOutOutlined },
-  { key: '/approvals', label: '审批中心', icon: AuditOutlined },
-  { key: '/results', label: '结果中心', icon: FileDoneOutlined },
-  { key: '/requirements', label: '需求管理', icon: SolutionOutlined },
-  { key: '/personal', label: '个人中心', icon: UserOutlined },
-]
-
-const selectedKey = computed(() => route.path)
-const pageTitle = computed(() => (route.meta.title as string | undefined) ?? 'ontodata 管理门户')
-
-const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
-  router.push(key as string)
+const handleLocaleChange = (value: unknown) => {
+  setLocale(String(value ?? 'zh-CN'))
 }
 </script>
 
 <template>
   <a-layout style="min-height: 100vh">
     <a-layout-sider theme="dark">
-      <div class="logo">ontodata 管理门户</div>
+      <div class="logo">{{ t('layout.appName') }}</div>
       <a-menu
         theme="dark"
         mode="inline"
@@ -82,7 +92,14 @@ const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
       <a-layout-header class="header">
         <span class="title">{{ pageTitle }}</span>
         <div class="header-spacer"></div>
-        <span class="tenant-label">租户</span>
+        <span class="header-label">{{ t('layout.locale') }}</span>
+        <a-select
+          :value="$i18n.locale"
+          :options="localeOptions"
+          class="locale-select"
+          @change="handleLocaleChange"
+        />
+        <span class="header-label">{{ t('layout.tenant') }}</span>
         <a-select
           :value="tenantStore.tenantId"
           mode="combobox"
@@ -98,7 +115,7 @@ const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
           :message="messageStore.feedback.content"
           :description="
             messageStore.feedback.traceId
-              ? `如问题持续，请向平台管理员提供追踪编号 ${messageStore.feedback.traceId}`
+              ? t('layout.feedbackTrace', { traceId: messageStore.feedback.traceId })
               : undefined
           "
           show-icon
@@ -131,9 +148,14 @@ const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
   flex: 1;
 }
 
-.tenant-label {
+.header-label {
   color: rgba(0, 0, 0, 0.45);
   margin-right: 8px;
+}
+
+.locale-select {
+  width: 110px;
+  margin-right: 16px;
 }
 
 .tenant-select {

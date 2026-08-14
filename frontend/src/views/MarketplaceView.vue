@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { marketplaceApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 
+const { t } = useI18n()
 const messageStore = useMessageStore()
 
 const loading = ref(false)
@@ -13,12 +15,12 @@ const rows = ref<CatalogEntry[]>([])
 const total = ref(0)
 const query = reactive({ page: 1, size: 20, keyword: '' })
 
-const columns = [
-  { title: '稳定编码', dataIndex: 'code', key: 'code' },
-  { title: '名称', dataIndex: 'name', key: 'name' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-  { title: '当前版本', dataIndex: 'currentVersion', key: 'currentVersion' },
-]
+const columns = computed(() => [
+  { title: t('common.stableCode'), dataIndex: 'code', key: 'code' },
+  { title: t('common.name'), dataIndex: 'name', key: 'name' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status' },
+  { title: t('common.currentVersion'), dataIndex: 'currentVersion', key: 'currentVersion' },
+])
 
 async function load() {
   loading.value = true
@@ -47,14 +49,14 @@ onMounted(load)
       type="warning"
       show-icon
       style="margin-bottom: 12px"
-      :message="aggregation.message ?? '管理平台数据服务目录不可用'"
-      description="数据商城为聚合展示：申请、订阅与交付请在管理平台数据服务页面办理。"
+      :message="aggregation.message ?? t('marketplace.unavailable')"
+      :description="t('marketplace.description')"
     />
 
     <a-space style="margin-bottom: 12px">
       <a-input-search
         v-model:value="query.keyword"
-        placeholder="按名称/编码搜索"
+        :placeholder="t('marketplace.searchPlaceholder')"
         style="width: 240px"
         @search="
           query.page = 1;

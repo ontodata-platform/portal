@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { workbenchApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 
+const { t } = useI18n()
 const messageStore = useMessageStore()
 
 const capabilityLoading = ref(false)
@@ -19,12 +21,12 @@ const templateRows = ref<CatalogEntry[]>([])
 const templateTotal = ref(0)
 const templateQuery = reactive({ page: 1, size: 20 })
 
-const columns = [
-  { title: '稳定编码', dataIndex: 'code', key: 'code' },
-  { title: '名称', dataIndex: 'name', key: 'name' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-  { title: '当前版本', dataIndex: 'currentVersion', key: 'currentVersion' },
-]
+const columns = computed(() => [
+  { title: t('common.stableCode'), dataIndex: 'code', key: 'code' },
+  { title: t('common.name'), dataIndex: 'name', key: 'name' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status' },
+  { title: t('common.currentVersion'), dataIndex: 'currentVersion', key: 'currentVersion' },
+])
 
 async function loadCapabilities() {
   capabilityLoading.value = true
@@ -79,11 +81,11 @@ onMounted(() => {
       type="warning"
       show-icon
       style="margin-bottom: 12px"
-      :message="capabilityAggregation.message ?? '算法转换工具能力目录不可用'"
-      description="能力引用与准入由重组平台发布校验把关；此处仅为目录展示。"
+      :message="capabilityAggregation.message ?? t('workbench.capabilityUnavailable')"
+      :description="t('workbench.capabilityDescription')"
     />
 
-    <a-card title="能力目录（算法转换工具）" size="small" :bordered="false" style="margin-bottom: 16px">
+    <a-card :title="t('workbench.capabilityTitle')" size="small" :bordered="false" style="margin-bottom: 16px">
       <a-table
         :columns="columns"
         :data-source="capabilityRows"
@@ -104,11 +106,11 @@ onMounted(() => {
       type="warning"
       show-icon
       style="margin-bottom: 12px"
-      :message="templateAggregation.message ?? '算法重组平台工作流模板目录不可用'"
-      description="编排与执行请在算法重组平台工作台办理；此处仅为目录展示。"
+      :message="templateAggregation.message ?? t('workbench.templateUnavailable')"
+      :description="t('workbench.templateDescription')"
     />
 
-    <a-card title="工作流模板（算法重组平台）" size="small" :bordered="false">
+    <a-card :title="t('workbench.templateTitle')" size="small" :bordered="false">
       <a-table
         :columns="columns"
         :data-source="templateRows"

@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { operationsApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { Feedback, Notice, OperationsStatistics } from '@/types/portal'
 
+const { t } = useI18n()
 const messageStore = useMessageStore()
 
 const statistics = ref<OperationsStatistics>({ noticeTotal: 0, publishedNotices: 0, pendingFeedbacks: 0 })
@@ -13,13 +15,13 @@ const noticeLoading = ref(false)
 const notices = ref<Notice[]>([])
 const noticeTotal = ref(0)
 const noticeQuery = reactive({ page: 1, size: 20, status: '', section: '' })
-const noticeColumns = [
-  { title: '编码', dataIndex: 'code', key: 'code' },
-  { title: '标题', dataIndex: 'title', key: 'title' },
-  { title: '栏目', dataIndex: 'section', key: 'section' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-  { title: '操作', dataIndex: 'action', key: 'action' },
-]
+const noticeColumns = computed(() => [
+  { title: t('common.code'), dataIndex: 'code', key: 'code' },
+  { title: t('common.title'), dataIndex: 'title', key: 'title' },
+  { title: t('common.section'), dataIndex: 'section', key: 'section' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status' },
+  { title: t('common.action'), dataIndex: 'action', key: 'action' },
+])
 
 const noticeOpen = ref(false)
 const noticeCreating = ref(false)
@@ -29,13 +31,13 @@ const feedbackLoading = ref(false)
 const feedbacks = ref<Feedback[]>([])
 const feedbackTotal = ref(0)
 const feedbackQuery = reactive({ page: 1, size: 20, status: '' })
-const feedbackColumns = [
-  { title: '编码', dataIndex: 'code', key: 'code' },
-  { title: '标题', dataIndex: 'title', key: 'title' },
-  { title: '状态', dataIndex: 'status', key: 'status' },
-  { title: '处理说明', dataIndex: 'handleNote', key: 'handleNote' },
-  { title: '操作', dataIndex: 'action', key: 'action' },
-]
+const feedbackColumns = computed(() => [
+  { title: t('common.code'), dataIndex: 'code', key: 'code' },
+  { title: t('common.title'), dataIndex: 'title', key: 'title' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status' },
+  { title: t('common.handleNote'), dataIndex: 'handleNote', key: 'handleNote' },
+  { title: t('common.action'), dataIndex: 'action', key: 'action' },
+])
 
 const feedbackOpen = ref(false)
 const feedbackCreating = ref(false)
@@ -50,6 +52,17 @@ const noticeStatusColor: Record<string, string> = {
   DRAFT: 'default',
   PUBLISHED: 'success',
   ARCHIVED: 'default',
+}
+
+/** 公告/反馈状态展示文案（状态值本身是后端协议编码，界面按语言翻译展示）。 */
+const noticeStatusText: Record<string, string> = {
+  DRAFT: t('operations.draft'),
+  PUBLISHED: t('operations.published'),
+  ARCHIVED: t('operations.archived'),
+}
+const feedbackStatusText: Record<string, string> = {
+  PENDING: t('operations.pending'),
+  HANDLED: t('operations.handled'),
 }
 
 async function loadStatistics() {
@@ -103,7 +116,7 @@ async function createNotice() {
       content: noticeForm.content,
       section: noticeForm.section,
     })
-    messageStore.success('公告已创建（草稿状态，发布后对外可见）')
+    messageStore.success(t('operations.noticeCreated'))
     noticeOpen.value = false
     noticeForm.title = ''
     noticeForm.content = ''
@@ -118,7 +131,7 @@ async function createNotice() {
 async function publishNotice(record: Notice) {
   try {
     await operationsApi.publishNotice(record.code)
-    messageStore.success(`公告 ${record.code} 已发布`)
+    messageStore.success(t('operations.noticePublished', { code: record.code }))
     await Promise.all([loadNotices(), loadStatistics()])
   } catch (error) {
     messageStore.reportError(error)
@@ -128,7 +141,7 @@ async function publishNotice(record: Notice) {
 async function archiveNotice(record: Notice) {
   try {
     await operationsApi.archiveNotice(record.code)
-    messageStore.success(`公告 ${record.code} 已归档`)
+    messageStore.success(t('operations.noticeArchived', { code: record.code }))
     await Promise.all([loadNotices(), loadStatistics()])
   } catch (error) {
     messageStore.reportError(error)
@@ -143,7 +156,7 @@ async function createFeedback() {
       content: feedbackForm.content,
       contact: feedbackForm.contact || undefined,
     })
-    messageStore.success('反馈已提交，感谢您的建议')
+    messageStore.success(t('operations.feedbackSubmitted'))
     feedbackOpen.value = false
     feedbackForm.title = ''
     feedbackForm.content = ''
@@ -168,7 +181,7 @@ async function handleFeedback() {
   handling.value = true
   try {
     await operationsApi.handleFeedback(handleTarget.value.code, { handleNote: handleForm.handleNote })
-    messageStore.success(`反馈 ${handleTarget.value.code} 已处理`)
+    messageStore.success(t('operations.feedbackHandled', { code: handleTarget.value.code }))
     handleOpen.value = false
     await Promise.all([loadFeedbacks(), loadStatistics()])
   } catch (error) {
@@ -189,23 +202,23 @@ onMounted(() => {
   <a-card>
     <a-row :gutter="16" style="margin-bottom: 16px">
       <a-col :span="8">
-        <a-statistic title="公告总数" :value="statistics.noticeTotal" />
+        <a-statistic :title="t('operations.noticeTotal')" :value="statistics.noticeTotal" />
       </a-col>
       <a-col :span="8">
-        <a-statistic title="已发布公告" :value="statistics.publishedNotices" />
+        <a-statistic :title="t('operations.publishedNotices')" :value="statistics.publishedNotices" />
       </a-col>
       <a-col :span="8">
-        <a-statistic title="待处理反馈" :value="statistics.pendingFeedbacks" :value-style="{ color: statistics.pendingFeedbacks > 0 ? '#cf1322' : undefined }" />
+        <a-statistic :title="t('operations.pendingFeedbacks')" :value="statistics.pendingFeedbacks" :value-style="{ color: statistics.pendingFeedbacks > 0 ? '#cf1322' : undefined }" />
       </a-col>
     </a-row>
 
     <a-space style="margin-bottom: 12px" wrap>
-      <a-select v-model:value="noticeQuery.status" placeholder="公告状态" allow-clear style="width: 140px">
-        <a-select-option value="DRAFT">草稿</a-select-option>
-        <a-select-option value="PUBLISHED">已发布</a-select-option>
-        <a-select-option value="ARCHIVED">已归档</a-select-option>
+      <a-select v-model:value="noticeQuery.status" :placeholder="t('operations.noticeStatusPlaceholder')" allow-clear style="width: 140px">
+        <a-select-option value="DRAFT">{{ t('operations.draft') }}</a-select-option>
+        <a-select-option value="PUBLISHED">{{ t('operations.published') }}</a-select-option>
+        <a-select-option value="ARCHIVED">{{ t('operations.archived') }}</a-select-option>
       </a-select>
-      <a-input v-model:value="noticeQuery.section" placeholder="栏目" style="width: 160px" />
+      <a-input v-model:value="noticeQuery.section" :placeholder="t('operations.sectionPlaceholder')" style="width: 160px" />
       <a-button
         type="primary"
         @click="
@@ -213,9 +226,9 @@ onMounted(() => {
           loadNotices()
         "
       >
-        查询公告
+        {{ t('operations.queryNotices') }}
       </a-button>
-      <a-button @click="noticeOpen = true">发布公告</a-button>
+      <a-button @click="noticeOpen = true">{{ t('operations.publishNotice') }}</a-button>
     </a-space>
 
     <a-table
@@ -233,27 +246,27 @@ onMounted(() => {
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
-          <a-tag :color="noticeStatusColor[record.status]">{{ record.status }}</a-tag>
+          <a-tag :color="noticeStatusColor[record.status]">{{ noticeStatusText[record.status] ?? record.status }}</a-tag>
         </template>
         <template v-else-if="column.key === 'action'">
           <a-space>
             <a-button v-if="record.status === 'DRAFT'" size="small" type="primary" @click="publishNotice(record)">
-              发布
+              {{ t('operations.publish') }}
             </a-button>
             <a-button v-if="record.status === 'PUBLISHED'" size="small" @click="archiveNotice(record)">
-              归档
+              {{ t('operations.archive') }}
             </a-button>
           </a-space>
         </template>
       </template>
     </a-table>
 
-    <a-divider orientation="left">用户反馈</a-divider>
+    <a-divider orientation="left">{{ t('operations.userFeedback') }}</a-divider>
 
     <a-space style="margin-bottom: 12px" wrap>
-      <a-select v-model:value="feedbackQuery.status" placeholder="反馈状态" allow-clear style="width: 140px">
-        <a-select-option value="PENDING">待处理</a-select-option>
-        <a-select-option value="HANDLED">已处理</a-select-option>
+      <a-select v-model:value="feedbackQuery.status" :placeholder="t('operations.feedbackStatusPlaceholder')" allow-clear style="width: 140px">
+        <a-select-option value="PENDING">{{ t('operations.pending') }}</a-select-option>
+        <a-select-option value="HANDLED">{{ t('operations.handled') }}</a-select-option>
       </a-select>
       <a-button
         type="primary"
@@ -262,9 +275,9 @@ onMounted(() => {
           loadFeedbacks()
         "
       >
-        查询反馈
+        {{ t('operations.queryFeedbacks') }}
       </a-button>
-      <a-button @click="feedbackOpen = true">提交反馈</a-button>
+      <a-button @click="feedbackOpen = true">{{ t('operations.submitFeedback') }}</a-button>
     </a-space>
 
     <a-table
@@ -282,48 +295,48 @@ onMounted(() => {
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
-          <a-tag :color="record.status === 'HANDLED' ? 'success' : 'processing'">{{ record.status }}</a-tag>
+          <a-tag :color="record.status === 'HANDLED' ? 'success' : 'processing'">{{ feedbackStatusText[record.status] ?? record.status }}</a-tag>
         </template>
         <template v-else-if="column.key === 'action'">
           <a-button size="small" type="primary" :disabled="record.status !== 'PENDING'" @click="openHandle(record)">
-            处理
+            {{ t('operations.handle') }}
           </a-button>
         </template>
       </template>
     </a-table>
 
-    <a-modal v-model:open="noticeOpen" title="发布公告" :confirm-loading="noticeCreating" @ok="createNotice">
+    <a-modal v-model:open="noticeOpen" :title="t('operations.noticeModalTitle')" :confirm-loading="noticeCreating" @ok="createNotice">
       <a-form layout="vertical">
-        <a-form-item label="标题" required>
-          <a-input v-model:value="noticeForm.title" placeholder="公告标题" />
+        <a-form-item :label="t('operations.formTitle')" required>
+          <a-input v-model:value="noticeForm.title" :placeholder="t('operations.noticeTitlePlaceholder')" />
         </a-form-item>
-        <a-form-item label="内容" required>
-          <a-textarea v-model:value="noticeForm.content" placeholder="公告内容" :rows="4" />
+        <a-form-item :label="t('operations.formContent')" required>
+          <a-textarea v-model:value="noticeForm.content" :placeholder="t('operations.noticeContentPlaceholder')" :rows="4" />
         </a-form-item>
-        <a-form-item label="栏目" required>
-          <a-input v-model:value="noticeForm.section" placeholder="如 announcement" />
+        <a-form-item :label="t('operations.formSection')" required>
+          <a-input v-model:value="noticeForm.section" :placeholder="t('operations.sectionExample')" />
         </a-form-item>
       </a-form>
     </a-modal>
 
-    <a-modal v-model:open="feedbackOpen" title="提交反馈" :confirm-loading="feedbackCreating" @ok="createFeedback">
+    <a-modal v-model:open="feedbackOpen" :title="t('operations.feedbackModalTitle')" :confirm-loading="feedbackCreating" @ok="createFeedback">
       <a-form layout="vertical">
-        <a-form-item label="标题" required>
-          <a-input v-model:value="feedbackForm.title" placeholder="反馈标题" />
+        <a-form-item :label="t('operations.formTitle')" required>
+          <a-input v-model:value="feedbackForm.title" :placeholder="t('operations.feedbackTitlePlaceholder')" />
         </a-form-item>
-        <a-form-item label="内容" required>
-          <a-textarea v-model:value="feedbackForm.content" placeholder="反馈内容" :rows="4" />
+        <a-form-item :label="t('operations.formContent')" required>
+          <a-textarea v-model:value="feedbackForm.content" :placeholder="t('operations.feedbackContentPlaceholder')" :rows="4" />
         </a-form-item>
-        <a-form-item label="联系方式">
-          <a-input v-model:value="feedbackForm.contact" placeholder="联系方式（可空）" />
+        <a-form-item :label="t('operations.formContact')">
+          <a-input v-model:value="feedbackForm.contact" :placeholder="t('operations.contactPlaceholder')" />
         </a-form-item>
       </a-form>
     </a-modal>
 
-    <a-modal v-model:open="handleOpen" title="处理反馈" :confirm-loading="handling" @ok="handleFeedback">
+    <a-modal v-model:open="handleOpen" :title="t('operations.handleModalTitle')" :confirm-loading="handling" @ok="handleFeedback">
       <a-form layout="vertical">
-        <a-form-item label="处理说明（必填，办理证据）" required>
-          <a-textarea v-model:value="handleForm.handleNote" placeholder="例如：已排期下个版本增加搜索" :rows="3" />
+        <a-form-item :label="t('operations.handleNoteLabel')" required>
+          <a-textarea v-model:value="handleForm.handleNote" :placeholder="t('operations.handleNotePlaceholder')" :rows="3" />
         </a-form-item>
       </a-form>
     </a-modal>

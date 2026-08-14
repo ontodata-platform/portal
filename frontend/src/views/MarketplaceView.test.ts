@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 
+import { i18n } from '@/i18n'
 import MarketplaceView from './MarketplaceView.vue'
 
 const dataServicesMock = vi.fn()
@@ -27,7 +28,7 @@ function mountView() {
       components: { MarketplaceView },
       template: '<MarketplaceView />',
     }),
-    { global: { plugins: [createPinia()], stubs } },
+    { global: { plugins: [createPinia(), i18n], stubs } },
   )
 }
 
