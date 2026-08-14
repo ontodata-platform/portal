@@ -1,12 +1,13 @@
 package com.runisys.ontodata.portal.resultcenter.api;
 
+import com.runisys.ontodata.portal.common.security.DataClassification;
 import com.runisys.ontodata.portal.resultcenter.domain.PortalResult;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/** 结果引用对外视图。 */
+/** 结果引用对外视图（含 M5 ABAC 数据密级）。 */
 public class PortalResultResponse {
 
   private final String resultId;
@@ -16,6 +17,7 @@ public class PortalResultResponse {
   private final Map<String, Object> metadata;
   private final String sourceTaskId;
   private final String traceId;
+  private final DataClassification classification;
   private final Instant createdAt;
   private final Instant updatedAt;
 
@@ -27,6 +29,7 @@ public class PortalResultResponse {
       Map<String, Object> metadata,
       String sourceTaskId,
       String traceId,
+      DataClassification classification,
       Instant createdAt,
       Instant updatedAt) {
     this.resultId = resultId;
@@ -36,6 +39,7 @@ public class PortalResultResponse {
     this.metadata = metadata;
     this.sourceTaskId = sourceTaskId;
     this.traceId = traceId;
+    this.classification = classification;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -51,6 +55,7 @@ public class PortalResultResponse {
         parseMap(mapper, result.getMetadataJson()),
         result.getSourceTaskId(),
         result.getTraceId(),
+        result.getClassification(),
         result.getCreatedAt(),
         result.getUpdatedAt());
   }
@@ -107,6 +112,10 @@ public class PortalResultResponse {
 
   public String getTraceId() {
     return traceId;
+  }
+
+  public DataClassification getClassification() {
+    return classification;
   }
 
   public Instant getCreatedAt() {

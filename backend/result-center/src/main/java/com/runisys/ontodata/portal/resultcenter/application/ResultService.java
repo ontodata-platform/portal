@@ -2,10 +2,14 @@ package com.runisys.ontodata.portal.resultcenter.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.runisys.ontodata.portal.common.PermissionContext;
 import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
+import com.runisys.ontodata.portal.common.api.ResourceAccessDeniedException;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
+import com.runisys.ontodata.portal.common.security.AbacPolicyEngine;
+import com.runisys.ontodata.portal.common.security.DataClassification;
 import com.runisys.ontodata.portal.resultcenter.api.PortalResultResponse;
 import com.runisys.ontodata.portal.resultcenter.api.RegisterPortalResultRequest;
 import com.runisys.ontodata.portal.resultcenter.domain.PortalResult;
@@ -39,10 +43,15 @@ public class ResultService {
   }
 
   private final PortalResultRepository resultRepository;
+  private final AbacPolicyEngine policyEngine;
   private final ObjectMapper objectMapper;
 
-  public ResultService(PortalResultRepository resultRepository, ObjectMapper objectMapper) {
+  public ResultService(
+      PortalResultRepository resultRepository,
+      AbacPolicyEngine policyEngine,
+      ObjectMapper objectMapper) {
     this.resultRepository = resultRepository;
+    this.policyEngine = policyEngine;
     this.objectMapper = objectMapper;
   }
 
@@ -51,6 +60,7 @@ public class ResultService {
       String sourceSystem, String resultId, RegisterPortalResultRequest request) {
     Instant now = Instant.now();
     String tenantId = TenantContext.current();
+    DataClassification classification = DataClassification.fromString(request.getClassification());
     PortalResult existing =
         resultRepository
             .findBySourceSystemAndResultIdAndTenantId(
@@ -67,6 +77,7 @@ public class ResultService {
                   toJson(request.getMetadata()),
                   trimToNull(request.getSourceTaskId()),
                   trimToNull(request.getTraceId()),
+                  classification,
                   tenantId,
                   now));
       return PortalResultResponse.from(created);
@@ -77,13 +88,24 @@ public class ResultService {
         toJson(request.getMetadata()),
         trimToNull(request.getSourceTaskId()),
         trimToNull(request.getTraceId()),
+        classification,
         now);
     return PortalResultResponse.from(existing);
   }
 
   @Transactional(readOnly = true)
   public PortalResultResponse find(String sourceSystem, String resultId) {
-    return PortalResultResponse.from(require(sourceSystem, resultId));
+    PortalResult result = require(sourceSystem, resultId);
+    // M5 ABAC：租户隔离之外按密级判定——许可不足 403（明确拒绝，不伪装 404）
+    if (!policyEngine.allow(
+        TenantContext.current(),
+        PermissionContext.clearance(),
+        result.getTenantId(),
+        result.getClassification())) {
+      throw new ResourceAccessDeniedException(
+          "数据密级不足：该结果密级为 " + result.getClassification() + "，当前许可密级不允许访问");
+    }
+    return PortalResultResponse.from(result);
   }
 
   @Transactional(readOnly = true)
@@ -92,6 +114,11 @@ public class ResultService {
     // M5 多租户：列表按请求租户隔离
     predicates.add(
         (root, query, builder) -> builder.equal(root.get("tenantId"), TenantContext.current()));
+    // M5 ABAC：列表只返回许可密级可见的行（不泄露高密级数据的存在性）
+    predicates.add(
+        (root, query, builder) ->
+            root.get("classification")
+                .in(policyEngine.accessibleLevels(PermissionContext.clearance())));
     if (parameters.getDomain() != null) {
       predicates.add(
           (root, query, builder) ->

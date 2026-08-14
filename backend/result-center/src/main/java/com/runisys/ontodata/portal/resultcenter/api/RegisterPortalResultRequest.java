@@ -25,6 +25,9 @@ public class RegisterPortalResultRequest {
   @Size(max = 128, message = "链路标识不能超过 128 个字符")
   private String traceId;
 
+  /** 数据密级（M5 ABAC）：缺省 PUBLIC；非法值拒绝 400。 */
+  private String classification;
+
   public String getResultType() {
     return resultType;
   }
@@ -63,5 +66,13 @@ public class RegisterPortalResultRequest {
 
   public void setTraceId(String traceId) {
     this.traceId = traceId;
+  }
+
+  public String getClassification() {
+    return classification;
+  }
+
+  public void setClassification(String classification) {
+    this.classification = classification;
   }
 }

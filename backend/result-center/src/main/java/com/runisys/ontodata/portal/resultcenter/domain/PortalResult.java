@@ -1,7 +1,10 @@
 package com.runisys.ontodata.portal.resultcenter.domain;
 
+import com.runisys.ontodata.portal.common.security.DataClassification;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -14,7 +17,7 @@ import java.util.UUID;
  * 结果引用登记（总体设计 §13.4）：可追踪率 100%。
  *
  * <p>结果权威归产生它的软件：门户只存资源引用与元数据，大对象走对象存储； (sourceSystem, resultId) 唯一标识一个结果，重复登记按幂等更新折叠； sourceTaskId
- * 关联统一任务中心，实现“任务 → 结果”双向追踪。
+ * 关联统一任务中心，实现“任务 → 结果”双向追踪。 M5 ABAC：结果携带数据密级（缺省 PUBLIC），访问判定由策略引擎按主体许可密级比较。
  */
 @Entity
 @Table(
@@ -53,6 +56,11 @@ public class PortalResult {
   @Column(name = "trace_id", length = 128)
   private String traceId;
 
+  /** 数据密级（M5 ABAC）：缺省 PUBLIC，访问需主体许可密级 ≥ 资源密级。 */
+  @Enumerated(EnumType.STRING)
+  @Column(name = "data_classification", nullable = false, length = 32)
+  private DataClassification classification;
+
   @Column(name = "tenant_id", nullable = false, length = 64)
   private String tenantId;
 
@@ -72,6 +80,7 @@ public class PortalResult {
       String metadataJson,
       String sourceTaskId,
       String traceId,
+      DataClassification classification,
       String tenantId,
       Instant now) {
     this.id = UUID.randomUUID().toString();
@@ -82,24 +91,27 @@ public class PortalResult {
     this.metadataJson = metadataJson;
     this.sourceTaskId = sourceTaskId;
     this.traceId = traceId;
+    this.classification = classification;
     this.tenantId = tenantId;
     this.createdAt = now;
     this.updatedAt = now;
   }
 
-  /** 幂等更新：引用与元数据以源软件最新上报为准。 */
+  /** 幂等更新：引用与元数据以源软件最新上报为准（密级随最新登记同步）。 */
   public void update(
       String resultType,
       String resourceRefsJson,
       String metadataJson,
       String sourceTaskId,
       String traceId,
+      DataClassification classification,
       Instant now) {
     this.resultType = resultType;
     this.resourceRefsJson = resourceRefsJson;
     this.metadataJson = metadataJson;
     this.sourceTaskId = sourceTaskId;
     this.traceId = traceId;
+    this.classification = classification;
     this.updatedAt = now;
   }
 
@@ -144,6 +156,10 @@ public class PortalResult {
 
   public String getTraceId() {
     return traceId;
+  }
+
+  public DataClassification getClassification() {
+    return classification;
   }
 
   public String getTenantId() {
