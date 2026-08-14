@@ -23,6 +23,8 @@
         <module>task-center</module>
         <module>approval-center</module>
         <module>result-center</module>
+        <module>requirement-center</module>
+        <module>operations-center</module>
         <module>server</module>
     </modules>
 
@@ -52,6 +54,16 @@
             <dependency>
                 <groupId>com.runisys.ontodata</groupId>
                 <artifactId>portal-result-center</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.runisys.ontodata</groupId>
+                <artifactId>portal-requirement-center</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.runisys.ontodata</groupId>
+                <artifactId>portal-operations-center</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

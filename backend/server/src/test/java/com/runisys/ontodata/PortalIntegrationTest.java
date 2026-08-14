@@ -20,15 +20,17 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * 门户端到端（M4 Task 1 验收）：
+ * 门户端到端（M4 Task 1 + Task 2 验收）：
  *
  * <ol>
  *   <li>任务聚合副本幂等 upsert（重复事件不产生脏数据、进度只增），按状态/来源过滤；
  *   <li>审批单 PENDING→APPROVED/REJECTED，终态重复审批 409；
- *   <li>结果登记与查询，缺来源信息拒绝登记（路径强约束）。
+ *   <li>结果登记与查询，缺来源信息拒绝登记（路径强约束）；
+ *   <li>需求单全生命周期（登记/去重/计划/分派/完成/取消），终态防重 409，按类型/状态过滤；
+ *   <li>公告草稿→发布→归档单向流转、草稿不公开；反馈处理说明必填、重复处理 409；运营统计一致。
  * </ol>
  *
- * <p>独立 H2 内存库；三个中心同库联测，验证 server 装配与 Flyway 迁移一致。
+ * <p>独立 H2 内存库；各中心同库联测，验证 server 装配与 Flyway 迁移一致。
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -302,5 +304,306 @@ class PortalIntegrationTest {
 
     // 不存在的结果
     mockMvc.perform(get("/api/v1/results/data-platform/nope-1")).andExpect(status().isNotFound());
+  }
+
+  @Test
+  void requirementCenterLifecycleDedupeAndTerminalProtection() throws Exception {
+    // 登记需求
+    String created =
+        mockMvc
+            .perform(
+                post("/api/v1/requirements")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                          "requirementType": "DATA",
+                          "title": "客户主数据补全",
+                          "description": "补全缺失字段并回填历史数据",
+                          "requester": "alice"
+                        }
+                        """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.code").value(org.hamcrest.Matchers.startsWith("req-")))
+            .andExpect(jsonPath("$.status").value("OPEN"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String code = objectMapper.readTree(created).path("code").asText();
+
+    // 同类型同归一化标题（带多余空白）的非终态重复登记 → 409 去重
+    mockMvc
+        .perform(
+            post("/api/v1/requirements")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "requirementType": "DATA",
+                      "title": "  客户主数据补全  ",
+                      "requester": "bob"
+                    }
+                    """))
+        .andExpect(status().isConflict());
+
+    // 计划调整（OPEN 阶段允许）
+    mockMvc
+        .perform(
+            put("/api/v1/requirements/{code}/plan", code)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"plan\":{\"milestone\":\"M4\",\"owner\":\"carol\"}}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.plan.milestone").value("M4"));
+
+    // 分析 → 分派（平台内软件 + 引用编码 + 分派时计划）
+    mockMvc
+        .perform(post("/api/v1/requirements/{code}/analyze", code))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("ANALYZING"));
+    mockMvc
+        .perform(
+            post("/api/v1/requirements/{code}/assign", code)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "assigneeSystem": "data-platform",
+                      "assigneeRef": "task-100",
+                      "plan": {"milestone": "M4", "owner": "dave"}
+                    }
+                    """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("ASSIGNED"))
+        .andExpect(jsonPath("$.assigneeSystem").value("data-platform"))
+        .andExpect(jsonPath("$.assigneeRef").value("task-100"));
+
+    // 分派后不允许再调整计划 → 409
+    mockMvc
+        .perform(
+            put("/api/v1/requirements/{code}/plan", code)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"plan\":{\"milestone\":\"M5\"}}"))
+        .andExpect(status().isConflict());
+
+    // 分派目标必须平台内业务软件 → 400
+    mockMvc
+        .perform(
+            post("/api/v1/requirements/{code}/assign", code)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"assigneeSystem\":\"unknown-system\"}"))
+        .andExpect(status().isBadRequest());
+
+    // 进行中 → 完成（结项说明必填）
+    mockMvc
+        .perform(post("/api/v1/requirements/{code}/progress", code))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+    mockMvc
+        .perform(
+            post("/api/v1/requirements/{code}/complete", code)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"closedNote\":\"\"}"))
+        .andExpect(status().isBadRequest());
+    mockMvc
+        .perform(
+            post("/api/v1/requirements/{code}/complete", code)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"closedNote\":\"数据回填完成并验收\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("COMPLETED"))
+        .andExpect(jsonPath("$.closedNote").value("数据回填完成并验收"));
+
+    // 终态防重：完成后再流转/再完成 → 409
+    mockMvc
+        .perform(
+            post("/api/v1/requirements/{code}/complete", code)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"closedNote\":\"再完成一次\"}"))
+        .andExpect(status().isConflict());
+
+    // 第二条需求：取消分支（OPEN 直接取消）
+    String second =
+        mockMvc
+            .perform(
+                post("/api/v1/requirements")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                          "requirementType": "ALGORITHM",
+                          "title": "实时风控指标加工",
+                          "requester": "alice"
+                        }
+                        """))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String secondCode = objectMapper.readTree(second).path("code").asText();
+    mockMvc
+        .perform(
+            post("/api/v1/requirements/{code}/cancel", secondCode)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"closedNote\":\"业务范围调整\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("CANCELED"));
+    mockMvc
+        .perform(
+            post("/api/v1/requirements/{code}/cancel", secondCode)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"closedNote\":\"重复取消\"}"))
+        .andExpect(status().isConflict());
+
+    // 过滤：状态与类型
+    mockMvc
+        .perform(get("/api/v1/requirements").param("status", "COMPLETED"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1))
+        .andExpect(jsonPath("$.items[0].code").value(code));
+    mockMvc
+        .perform(get("/api/v1/requirements").param("type", "ALGORITHM"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1))
+        .andExpect(jsonPath("$.items[0].code").value(secondCode));
+    mockMvc
+        .perform(get("/api/v1/requirements").param("keyword", "客户主数据"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1));
+
+    // 详情与不存在
+    mockMvc
+        .perform(get("/api/v1/requirements/{code}", code))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.assigneeRef").value("task-100"));
+    mockMvc.perform(get("/api/v1/requirements/req-deadbeef")).andExpect(status().isNotFound());
+  }
+
+  @Test
+  void operationsCenterNoticesFeedbacksAndStatistics() throws Exception {
+    // 公告：草稿 → 发布（带 publishedAt）→ 归档，单向流转
+    String noticeJson =
+        mockMvc
+            .perform(
+                post("/api/v1/operations/notices")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                          "title": "M4 门户上线公告",
+                          "content": "管理门户三中心与业务模块已上线。",
+                          "section": "announcement"
+                        }
+                        """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.code").value(org.hamcrest.Matchers.startsWith("ntc-")))
+            .andExpect(jsonPath("$.status").value("DRAFT"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String noticeCode = objectMapper.readTree(noticeJson).path("code").asText();
+
+    mockMvc
+        .perform(post("/api/v1/operations/notices/{code}/publish", noticeCode))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("PUBLISHED"))
+        .andExpect(jsonPath("$.publishedAt").exists());
+
+    // 重复发布 → 409（单向状态机）
+    mockMvc
+        .perform(post("/api/v1/operations/notices/{code}/publish", noticeCode))
+        .andExpect(status().isConflict());
+
+    // 第二条公告保持草稿，验证公开列表默认不可见草稿
+    mockMvc
+        .perform(
+            post("/api/v1/operations/notices")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "title": "草稿公告",
+                      "content": "尚未发布。",
+                      "section": "announcement"
+                    }
+                    """))
+        .andExpect(status().isCreated());
+
+    mockMvc
+        .perform(get("/api/v1/operations/notices"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1))
+        .andExpect(jsonPath("$.items[0].code").value(noticeCode));
+    mockMvc
+        .perform(get("/api/v1/operations/notices").param("status", "DRAFT"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1));
+
+    // 归档后重复归档 → 409
+    mockMvc
+        .perform(post("/api/v1/operations/notices/{code}/archive", noticeCode))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("ARCHIVED"));
+    mockMvc
+        .perform(post("/api/v1/operations/notices/{code}/archive", noticeCode))
+        .andExpect(status().isConflict());
+
+    // 反馈：待处理 → 已处理（说明必填），重复处理 409
+    String feedbackJson =
+        mockMvc
+            .perform(
+                post("/api/v1/operations/feedbacks")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                          "title": "数据商城没有搜索入口",
+                          "content": "希望增加全文检索。",
+                          "contact": "alice@example.com"
+                        }
+                        """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.code").value(org.hamcrest.Matchers.startsWith("fb-")))
+            .andExpect(jsonPath("$.status").value("PENDING"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String feedbackCode = objectMapper.readTree(feedbackJson).path("code").asText();
+
+    mockMvc
+        .perform(
+            post("/api/v1/operations/feedbacks/{code}/handle", feedbackCode)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"handleNote\":\"\"}"))
+        .andExpect(status().isBadRequest());
+    mockMvc
+        .perform(
+            post("/api/v1/operations/feedbacks/{code}/handle", feedbackCode)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"handleNote\":\"已排期 M4.3 增加搜索\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("HANDLED"))
+        .andExpect(jsonPath("$.handledAt").exists());
+    mockMvc
+        .perform(
+            post("/api/v1/operations/feedbacks/{code}/handle", feedbackCode)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"handleNote\":\"重复处理\"}"))
+        .andExpect(status().isConflict());
+
+    // 运营统计与登记数据一致：公告 2 条（1 条已归档，公开 0）、反馈待处理 0
+    mockMvc
+        .perform(get("/api/v1/operations/statistics"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.noticeTotal").value(2))
+        .andExpect(jsonPath("$.publishedNotices").value(0))
+        .andExpect(jsonPath("$.pendingFeedbacks").value(0));
+
+    // 不存在
+    mockMvc
+        .perform(get("/api/v1/operations/notices/ntc-deadbeef"))
+        .andExpect(status().isNotFound());
+    mockMvc
+        .perform(get("/api/v1/operations/feedbacks/fb-deadbeef"))
+        .andExpect(status().isNotFound());
   }
 }

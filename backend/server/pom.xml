@@ -32,6 +32,14 @@
             <artifactId>portal-result-center</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.runisys.ontodata</groupId>
+            <artifactId>portal-requirement-center</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.runisys.ontodata</groupId>
+            <artifactId>portal-operations-center</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
