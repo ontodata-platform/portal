@@ -18,6 +18,12 @@ server:
   port: ${SERVER_PORT:18085}
 
 ontodata:
+  security:
+    oauth2:
+      # M5 IAM：true 时启用 OIDC Bearer JWT 认证（resource server），租户/组织/项目/密级
+      # 从令牌 claim 映射（此时显式 X-Tenant-Id 等请求头被忽略）；缺省 false=显式头模式
+      #（开发/演示）。启用必须同时配置 spring.security.oauth2.resourceserver.jwt.issuer-uri。
+      enabled: ${IAM_ENABLED:false}
   retention:
     # 数据保留（M5）：超过保留期的终态记录可清理（dryRun 先演练），默认 180 天
     days: ${RETENTION_DAYS:180}
