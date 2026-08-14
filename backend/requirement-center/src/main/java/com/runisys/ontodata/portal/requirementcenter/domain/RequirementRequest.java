@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -13,10 +14,17 @@ import java.util.UUID;
  * 需求单（总体设计 §5 需求管理）：门户本地权威业务对象。
  *
  * <p>状态机（单向推进，终态防重）： OPEN → ANALYZING → ASSIGNED → IN_PROGRESS → COMPLETED；OPEN/ANALYZING 可
- * CANCELED。 分派只登记目标软件与引用编码，不替目标软件执行；normalizedTitle 用于去重（同类型同 归一化标题存在非终态单时拒绝新登记）。
+ * CANCELED。 分派只登记目标软件与引用编码，不替目标软件执行；normalizedTitle 用于去重（同类型同 归一化标题存在非终态单时拒绝新登记）。 M5 多租户：code 唯一约束为
+ * (tenant_id, code) 复合，同一编码可在不同租户独立存在。
  */
 @Entity
-@Table(name = "portal_requirement")
+@Table(
+    name = "portal_requirement",
+    uniqueConstraints = {
+      @UniqueConstraint(
+          name = "uk_portal_requirement_code",
+          columnNames = {"tenant_id", "code"})
+    })
 public class RequirementRequest {
 
   public static final String STATUS_OPEN = "OPEN";
@@ -32,7 +40,7 @@ public class RequirementRequest {
   private String id;
 
   /** 稳定编码 req-*：跨软件引用（分派后目标软件回链），生成后永不变更。 */
-  @Column(nullable = false, updatable = false, length = 40, unique = true)
+  @Column(nullable = false, updatable = false, length = 40)
   private String code;
 
   @Column(name = "requirement_type", nullable = false, updatable = false, length = 40)
@@ -83,6 +91,7 @@ public class RequirementRequest {
       String normalizedTitle,
       String description,
       String requester,
+      String tenantId,
       Instant now) {
     this.id = UUID.randomUUID().toString();
     this.code = code;
@@ -92,7 +101,7 @@ public class RequirementRequest {
     this.description = description;
     this.requester = requester;
     this.status = STATUS_OPEN;
-    this.tenantId = DEFAULT_TENANT;
+    this.tenantId = tenantId;
     this.createdAt = now;
     this.updatedAt = now;
   }

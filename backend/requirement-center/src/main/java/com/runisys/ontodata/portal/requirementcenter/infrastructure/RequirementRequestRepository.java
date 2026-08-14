@@ -15,11 +15,15 @@ public interface RequirementRequestRepository
     extends JpaRepository<RequirementRequest, String>,
         JpaSpecificationExecutor<RequirementRequest> {
 
-  Optional<RequirementRequest> findByCode(String code);
+  Optional<RequirementRequest> findByCodeAndTenantId(String code, String tenantId);
 
-  /** 去重：同类型同归一化标题、且未到终态的需求单视为重复。 */
-  Optional<RequirementRequest> findFirstByRequirementTypeAndNormalizedTitleAndStatusNotIn(
-      String requirementType, String normalizedTitle, Collection<String> terminalStatuses);
+  /** 去重：同类型同归一化标题、同租户内未到终态的需求单视为重复（M5 租户隔离）。 */
+  Optional<RequirementRequest>
+      findFirstByRequirementTypeAndNormalizedTitleAndTenantIdAndStatusNotIn(
+          String requirementType,
+          String normalizedTitle,
+          String tenantId,
+          Collection<String> terminalStatuses);
 
   /** 数据保留（M5，租户隔离）：只统计本租户超过保留期的终态需求。 */
   @Query(

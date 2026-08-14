@@ -2,6 +2,7 @@ package com.runisys.ontodata.portal.aggregationcenter.infrastructure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.runisys.ontodata.portal.common.TenantContext;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -28,10 +29,15 @@ public class UpstreamHttpClient {
     this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
   }
 
-  /** GET 上游目录并解析 JSON 响应体。 */
+  /** GET 上游目录并解析 JSON 响应体；透传 X-Tenant-Id（M5 租户上下文贯通门户→各软件）。 */
   public JsonNode get(String baseUrl, String path, String label) {
     HttpRequest request =
-        HttpRequest.newBuilder().uri(URI.create(baseUrl + path)).timeout(TIMEOUT).GET().build();
+        HttpRequest.newBuilder()
+            .uri(URI.create(baseUrl + path))
+            .header(TenantContext.HEADER, TenantContext.current())
+            .timeout(TIMEOUT)
+            .GET()
+            .build();
     try {
       HttpResponse<String> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());

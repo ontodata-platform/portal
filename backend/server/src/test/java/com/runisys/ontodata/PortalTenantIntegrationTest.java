@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -30,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class PortalTenantIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
+  @Autowired private ObjectMapper objectMapper;
 
   @Test
   void tenantHeaderIsolatesTasksAndApprovals() throws Exception {
@@ -111,5 +113,175 @@ class PortalTenantIntegrationTest {
     mockMvc
         .perform(get("/api/v1/tasks").header("X-Tenant-Id", "BAD TENANT!"))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void remainingCentersAreTenantIsolated() throws Exception {
+    // ---- tenant-a：结果/需求/公告/反馈登记 ----
+    mockMvc
+        .perform(
+            put("/api/v1/results/data-platform/ds-tenant")
+                .header("X-Tenant-Id", "tenant-a")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"resultType\":\"DATASET\",\"resourceRefs\":[],\"metadata\":{}}"))
+        .andExpect(status().isOk());
+
+    String requirementJson =
+        mockMvc
+            .perform(
+                post("/api/v1/requirements")
+                    .header("X-Tenant-Id", "tenant-a")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {"requirementType":"DATA","title":"租户隔离验收需求","requester":"alice"}
+                        """))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String requirementCode = objectMapper.readTree(requirementJson).path("code").asText();
+
+    String noticeJson =
+        mockMvc
+            .perform(
+                post("/api/v1/operations/notices")
+                    .header("X-Tenant-Id", "tenant-a")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {"title":"租户 A 公告","content":"内容","section":"announcement"}
+                        """))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String noticeCode = objectMapper.readTree(noticeJson).path("code").asText();
+    mockMvc
+        .perform(
+            post("/api/v1/operations/notices/{code}/publish", noticeCode)
+                .header("X-Tenant-Id", "tenant-a"))
+        .andExpect(status().isOk());
+
+    String feedbackJson =
+        mockMvc
+            .perform(
+                post("/api/v1/operations/feedbacks")
+                    .header("X-Tenant-Id", "tenant-a")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"title\":\"租户 A 反馈\",\"content\":\"内容\"}"))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String feedbackCode = objectMapper.readTree(feedbackJson).path("code").asText();
+
+    // ---- tenant-b：列表互不可见、find 404 ----
+    mockMvc
+        .perform(get("/api/v1/results").header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(0));
+    mockMvc
+        .perform(get("/api/v1/results/data-platform/ds-tenant").header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isNotFound());
+    mockMvc
+        .perform(get("/api/v1/requirements").header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(0));
+    mockMvc
+        .perform(
+            get("/api/v1/requirements/{code}", requirementCode).header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isNotFound());
+    mockMvc
+        .perform(get("/api/v1/operations/notices").header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(0));
+    mockMvc
+        .perform(
+            get("/api/v1/operations/notices/{code}", noticeCode).header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isNotFound());
+    mockMvc
+        .perform(get("/api/v1/operations/feedbacks").header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(0));
+    mockMvc
+        .perform(
+            get("/api/v1/operations/feedbacks/{code}", feedbackCode)
+                .header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isNotFound());
+
+    // ---- 个人中心租户隔离：tenant-a 的 alice 数据对 tenant-b 不可见 ----
+    mockMvc
+        .perform(
+            get("/api/v1/personal/todos")
+                .param("requester", "alice")
+                .header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.pendingApprovalCount").value(0))
+        .andExpect(jsonPath("$.myOpenRequirementCount").value(0))
+        .andExpect(jsonPath("$.myRequirementCount").value(0))
+        .andExpect(jsonPath("$.myApprovalCount").value(0));
+
+    // ---- 跨租户同自然键不冲突：幂等键含租户维度 ----
+    mockMvc
+        .perform(
+            put("/api/v1/results/data-platform/ds-tenant")
+                .header("X-Tenant-Id", "tenant-b")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"resultType\":\"DATASET\",\"resourceRefs\":[],\"metadata\":{}}"))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(
+            post("/api/v1/requirements")
+                .header("X-Tenant-Id", "tenant-b")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"requirementType":"DATA","title":"租户隔离验收需求","requester":"bob"}
+                    """))
+        .andExpect(status().isCreated());
+    // 同租户内同标题重复登记仍然 409 去重
+    mockMvc
+        .perform(
+            post("/api/v1/requirements")
+                .header("X-Tenant-Id", "tenant-b")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"requirementType":"DATA","title":"租户隔离验收需求","requester":"carol"}
+                    """))
+        .andExpect(status().isConflict());
+
+    // 各租户只看到自己的登记
+    mockMvc
+        .perform(get("/api/v1/results").header("X-Tenant-Id", "tenant-a"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1));
+    mockMvc
+        .perform(get("/api/v1/results").header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1));
+    mockMvc
+        .perform(get("/api/v1/requirements").header("X-Tenant-Id", "tenant-a"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1));
+    mockMvc
+        .perform(get("/api/v1/requirements").header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1));
+
+    // ---- 运营统计租户隔离 ----
+    mockMvc
+        .perform(get("/api/v1/operations/statistics").header("X-Tenant-Id", "tenant-a"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.noticeTotal").value(1))
+        .andExpect(jsonPath("$.publishedNotices").value(1))
+        .andExpect(jsonPath("$.pendingFeedbacks").value(1));
+    mockMvc
+        .perform(get("/api/v1/operations/statistics").header("X-Tenant-Id", "tenant-b"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.noticeTotal").value(0))
+        .andExpect(jsonPath("$.publishedNotices").value(0))
+        .andExpect(jsonPath("$.pendingFeedbacks").value(0));
   }
 }

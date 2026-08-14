@@ -2,6 +2,7 @@ package com.runisys.ontodata.portal.resultcenter.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
@@ -49,9 +50,11 @@ public class ResultService {
   public PortalResultResponse register(
       String sourceSystem, String resultId, RegisterPortalResultRequest request) {
     Instant now = Instant.now();
+    String tenantId = TenantContext.current();
     PortalResult existing =
         resultRepository
-            .findBySourceSystemAndResultId(sourceSystem.trim(), resultId.trim())
+            .findBySourceSystemAndResultIdAndTenantId(
+                sourceSystem.trim(), resultId.trim(), tenantId)
             .orElse(null);
     if (existing == null) {
       PortalResult created =
@@ -64,6 +67,7 @@ public class ResultService {
                   toJson(request.getMetadata()),
                   trimToNull(request.getSourceTaskId()),
                   trimToNull(request.getTraceId()),
+                  tenantId,
                   now));
       return PortalResultResponse.from(created);
     }
@@ -85,6 +89,9 @@ public class ResultService {
   @Transactional(readOnly = true)
   public PageResponse<PortalResultResponse> list(PageRequestParameters parameters) {
     List<Specification<PortalResult>> predicates = new ArrayList<>();
+    // M5 多租户：列表按请求租户隔离
+    predicates.add(
+        (root, query, builder) -> builder.equal(root.get("tenantId"), TenantContext.current()));
     if (parameters.getDomain() != null) {
       predicates.add(
           (root, query, builder) ->
@@ -107,7 +114,7 @@ public class ResultService {
 
   private PortalResult require(String sourceSystem, String resultId) {
     return resultRepository
-        .findBySourceSystemAndResultId(sourceSystem, resultId)
+        .findBySourceSystemAndResultIdAndTenantId(sourceSystem, resultId, TenantContext.current())
         .orElseThrow(() -> new ResourceNotFoundException("结果不存在：" + sourceSystem + "/" + resultId));
   }
 

@@ -14,9 +14,11 @@ import org.springframework.data.repository.query.Param;
 public interface NoticeRepository
     extends JpaRepository<Notice, String>, JpaSpecificationExecutor<Notice> {
 
-  Optional<Notice> findByCode(String code);
+  Optional<Notice> findByCodeAndTenantId(String code, String tenantId);
 
-  long countByStatus(String status);
+  long countByTenantId(String tenantId);
+
+  long countByStatusAndTenantId(String status, String tenantId);
 
   /** 数据保留（M5，租户隔离）：只统计本租户超过保留期的已归档公告。 */
   @Query(

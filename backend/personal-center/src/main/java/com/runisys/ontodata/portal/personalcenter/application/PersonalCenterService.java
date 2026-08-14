@@ -3,6 +3,7 @@ package com.runisys.ontodata.portal.personalcenter.application;
 import com.runisys.ontodata.portal.approvalcenter.api.ApprovalRequestResponse;
 import com.runisys.ontodata.portal.approvalcenter.domain.ApprovalRequest;
 import com.runisys.ontodata.portal.approvalcenter.infrastructure.ApprovalRequestRepository;
+import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
 import com.runisys.ontodata.portal.personalcenter.api.PersonalTodoResponse;
@@ -44,11 +45,13 @@ public class PersonalCenterService {
     this.approvalRepository = approvalRepository;
   }
 
-  /** 我的需求（按提出人过滤，分页与各中心协议同构）。 */
+  /** 我的需求（按提出人过滤，分页与各中心协议同构；M5 租户隔离）。 */
   @Transactional(readOnly = true)
   public PageResponse<RequirementRequestResponse> myRequirements(
       String requester, PageRequestParameters parameters) {
     List<Specification<RequirementRequest>> predicates = new ArrayList<>();
+    predicates.add(
+        (root, query, builder) -> builder.equal(root.get("tenantId"), TenantContext.current()));
     predicates.add(
         (root, query, builder) -> builder.equal(root.get("requester"), requester.trim()));
     if (parameters.getStatus() != null) {
@@ -67,11 +70,13 @@ public class PersonalCenterService {
     return PageResponse.map(page, RequirementRequestResponse::from);
   }
 
-  /** 我的申请（按申请人过滤）。 */
+  /** 我的申请（按申请人过滤；M5 租户隔离）。 */
   @Transactional(readOnly = true)
   public PageResponse<ApprovalRequestResponse> myApprovals(
       String requester, PageRequestParameters parameters) {
     List<Specification<ApprovalRequest>> predicates = new ArrayList<>();
+    predicates.add(
+        (root, query, builder) -> builder.equal(root.get("tenantId"), TenantContext.current()));
     predicates.add(
         (root, query, builder) -> builder.equal(root.get("requester"), requester.trim()));
     if (parameters.getStatus() != null) {
@@ -85,28 +90,38 @@ public class PersonalCenterService {
     return PageResponse.map(page, ApprovalRequestResponse::from);
   }
 
-  /** 待办统计：待审批（全体 PENDING，IAM 后按审批人过滤）、我的进行中需求、我的需求/申请总数。 */
+  /** 待办统计：待审批（全体 PENDING，IAM 后按审批人过滤）、我的进行中需求、我的需求/申请总数（M5 租户隔离）。 */
   @Transactional(readOnly = true)
   public PersonalTodoResponse todos(String requester) {
     String normalized = requester.trim();
+    String tenantId = TenantContext.current();
     long pendingApprovals =
         approvalRepository.count(
             (root, query, builder) ->
-                builder.equal(root.get("status"), ApprovalRequest.STATUS_PENDING));
+                builder.and(
+                    builder.equal(root.get("tenantId"), tenantId),
+                    builder.equal(root.get("status"), ApprovalRequest.STATUS_PENDING)));
     long myOpenRequirements =
         requirementRepository.count(
             (root, query, builder) ->
                 builder.and(
+                    builder.equal(root.get("tenantId"), tenantId),
                     builder.equal(root.get("requester"), normalized),
                     builder.or(
                         builder.equal(root.get("status"), RequirementRequest.STATUS_OPEN),
                         builder.equal(root.get("status"), RequirementRequest.STATUS_ANALYZING))));
     long myRequirements =
         requirementRepository.count(
-            (root, query, builder) -> builder.equal(root.get("requester"), normalized));
+            (root, query, builder) ->
+                builder.and(
+                    builder.equal(root.get("tenantId"), tenantId),
+                    builder.equal(root.get("requester"), normalized)));
     long myApprovals =
         approvalRepository.count(
-            (root, query, builder) -> builder.equal(root.get("requester"), normalized));
+            (root, query, builder) ->
+                builder.and(
+                    builder.equal(root.get("tenantId"), tenantId),
+                    builder.equal(root.get("requester"), normalized)));
     return new PersonalTodoResponse(
         pendingApprovals, myOpenRequirements, myRequirements, myApprovals);
   }

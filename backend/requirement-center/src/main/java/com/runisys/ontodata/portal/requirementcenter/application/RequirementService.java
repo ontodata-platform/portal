@@ -3,6 +3,7 @@ package com.runisys.ontodata.portal.requirementcenter.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.runisys.ontodata.portal.common.PortalIdentityService;
+import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
@@ -90,10 +91,11 @@ public class RequirementService {
   public RequirementRequestResponse create(CreateRequirementRequest request) {
     String requirementType = request.getRequirementType().trim();
     String normalizedTitle = normalize(request.getTitle());
+    String tenantId = TenantContext.current();
     RequirementRequest duplicate =
         requirementRepository
-            .findFirstByRequirementTypeAndNormalizedTitleAndStatusNotIn(
-                requirementType, normalizedTitle, TERMINAL_STATUSES)
+            .findFirstByRequirementTypeAndNormalizedTitleAndTenantIdAndStatusNotIn(
+                requirementType, normalizedTitle, tenantId, TERMINAL_STATUSES)
             .orElse(null);
     if (duplicate != null) {
       throw new ResourceStateConflictException(
@@ -108,6 +110,7 @@ public class RequirementService {
                 normalizedTitle,
                 trimToNull(request.getDescription()),
                 request.getRequester().trim(),
+                tenantId,
                 Instant.now()));
     return RequirementRequestResponse.from(created);
   }
@@ -177,6 +180,9 @@ public class RequirementService {
   @Transactional(readOnly = true)
   public PageResponse<RequirementRequestResponse> list(PageRequestParameters parameters) {
     List<Specification<RequirementRequest>> predicates = new ArrayList<>();
+    // M5 多租户：列表按请求租户隔离
+    predicates.add(
+        (root, query, builder) -> builder.equal(root.get("tenantId"), TenantContext.current()));
     if (parameters.getStatus() != null) {
       predicates.add(
           (root, query, builder) -> builder.equal(root.get("status"), parameters.getStatus()));
@@ -218,7 +224,7 @@ public class RequirementService {
 
   private RequirementRequest require(String code) {
     return requirementRepository
-        .findByCode(code)
+        .findByCodeAndTenantId(code, TenantContext.current())
         .orElseThrow(() -> new ResourceNotFoundException("需求不存在：" + code));
   }
 

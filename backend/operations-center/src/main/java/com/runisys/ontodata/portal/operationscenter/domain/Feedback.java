@@ -6,16 +6,23 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.UUID;
 
 /**
  * 门户反馈（总体设计 §5 门户运营）：PENDING → HANDLED，终态防重。
  *
- * <p>处理说明必填（可追踪的办理证据）；重复处理 409。
+ * <p>处理说明必填（可追踪的办理证据）；重复处理 409。M5 多租户：code 唯一约束为 (tenant_id, code) 复合，反馈编码只在租户内唯一。
  */
 @Entity
-@Table(name = "portal_feedback")
+@Table(
+    name = "portal_feedback",
+    uniqueConstraints = {
+      @UniqueConstraint(
+          name = "uk_portal_feedback_code",
+          columnNames = {"tenant_id", "code"})
+    })
 public class Feedback {
 
   public static final String STATUS_PENDING = "PENDING";
@@ -26,7 +33,7 @@ public class Feedback {
   @Column(length = 36, nullable = false, updatable = false)
   private String id;
 
-  @Column(nullable = false, updatable = false, length = 40, unique = true)
+  @Column(nullable = false, updatable = false, length = 40)
   private String code;
 
   @Column(nullable = false, length = 200)
@@ -58,14 +65,15 @@ public class Feedback {
 
   protected Feedback() {}
 
-  public Feedback(String code, String title, String content, String contact, Instant now) {
+  public Feedback(
+      String code, String title, String content, String contact, String tenantId, Instant now) {
     this.id = UUID.randomUUID().toString();
     this.code = code;
     this.title = title;
     this.content = content;
     this.contact = contact;
     this.status = STATUS_PENDING;
-    this.tenantId = DEFAULT_TENANT;
+    this.tenantId = tenantId;
     this.createdAt = now;
     this.updatedAt = now;
   }

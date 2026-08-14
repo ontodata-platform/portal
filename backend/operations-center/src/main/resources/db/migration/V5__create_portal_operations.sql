@@ -1,6 +1,7 @@
 -- Portal Operations：门户运营（总体设计 §5 门户运营）。
 -- 公告单向流转：DRAFT → PUBLISHED → ARCHIVED（发布时落 published_at，归档后不再变更）；
 -- 反馈 PENDING → HANDLED（处理说明必填），终态防重由服务层保证。
+-- M5 多租户：公告/反馈编码唯一约束为 (tenant_id, code) 复合，编码只在租户内唯一。
 CREATE TABLE portal_notice (
     id VARCHAR(36) NOT NULL,
     code VARCHAR(40) NOT NULL,
@@ -13,7 +14,7 @@ CREATE TABLE portal_notice (
     created_at TIMESTAMP(6) NOT NULL,
     updated_at TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
-    CONSTRAINT uk_portal_notice_code UNIQUE (code),
+    CONSTRAINT uk_portal_notice_code UNIQUE (tenant_id, code),
     INDEX idx_portal_notice_section (section, status, published_at)
 );
 
@@ -30,6 +31,6 @@ CREATE TABLE portal_feedback (
     created_at TIMESTAMP(6) NOT NULL,
     updated_at TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
-    CONSTRAINT uk_portal_feedback_code UNIQUE (code),
+    CONSTRAINT uk_portal_feedback_code UNIQUE (tenant_id, code),
     INDEX idx_portal_feedback_status (status, created_at)
 );

@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +59,9 @@ class PortalAggregationIntegrationTest {
   private final AtomicBoolean failDataPlatform = new AtomicBoolean(false);
   private final AtomicBoolean failTransform = new AtomicBoolean(false);
 
+  /** 管理平台桩捕获到的 X-Tenant-Id（M5 租户上下文透传验收）。 */
+  private final AtomicReference<String> capturedTenant = new AtomicReference<>();
+
   /** 重组平台桩直接断开（模拟不可达，客户端得到 EOF IOException）。 */
   private final AtomicBoolean recombineEof = new AtomicBoolean(false);
 
@@ -77,11 +82,22 @@ class PortalAggregationIntegrationTest {
     failDataPlatform.set(false);
     failTransform.set(false);
     recombineEof.set(false);
+    capturedTenant.set(null);
 
     dataPlatformStub =
-        jsonStub(dataPlatformPort, "/api/v1/data-services", failDataPlatform, DATA_SERVICES_BODY);
+        jsonStub(
+            dataPlatformPort,
+            "/api/v1/data-services",
+            failDataPlatform,
+            DATA_SERVICES_BODY,
+            capturedTenant);
     transformStub =
-        jsonStub(transformPort, "/api/v1/capabilities", failTransform, CAPABILITIES_BODY);
+        jsonStub(
+            transformPort,
+            "/api/v1/capabilities",
+            failTransform,
+            CAPABILITIES_BODY,
+            new AtomicReference<>());
     recombineStub = HttpServer.create(new InetSocketAddress(recombinePort), 0);
     recombineStub.createContext(
         "/api/v1/workflow-templates",
@@ -99,12 +115,14 @@ class PortalAggregationIntegrationTest {
     recombineStub.start();
   }
 
-  private HttpServer jsonStub(int port, String path, AtomicBoolean failFlag, String okBody)
+  private HttpServer jsonStub(
+      int port, String path, AtomicBoolean failFlag, String okBody, AtomicReference<String> tenant)
       throws Exception {
     HttpServer stub = HttpServer.create(new InetSocketAddress(port), 0);
     stub.createContext(
         path,
         exchange -> {
+          tenant.set(exchange.getRequestHeaders().getFirst("X-Tenant-Id"));
           if (failFlag.get()) {
             exchange.sendResponseHeaders(500, -1);
             exchange.close();
@@ -150,6 +168,20 @@ class PortalAggregationIntegrationTest {
         .andExpect(jsonPath("$.sourceSystem").value("algorithm-recombine"))
         .andExpect(jsonPath("$.available").value(true))
         .andExpect(jsonPath("$.body.items[0].code").value("wf-12345678"));
+  }
+
+  @Test
+  void propagatesTenantHeaderToUpstream() throws Exception {
+    // 请求租户上下文随聚合调用透传到上游软件（M5：门户→各软件租户贯通）
+    mockMvc
+        .perform(get("/api/v1/marketplace/data-services").header("X-Tenant-Id", "tenant-propagate"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.available").value(true));
+    Assertions.assertEquals("tenant-propagate", capturedTenant.get(), "上游应收到 X-Tenant-Id 透传头");
+
+    // 缺省头 = default 租户，同样透传
+    mockMvc.perform(get("/api/v1/marketplace/data-services")).andExpect(status().isOk());
+    Assertions.assertEquals("default", capturedTenant.get(), "缺省租户 default 同样透传");
   }
 
   @Test

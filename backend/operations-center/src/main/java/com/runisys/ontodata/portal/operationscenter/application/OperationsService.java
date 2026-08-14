@@ -1,6 +1,7 @@
 package com.runisys.ontodata.portal.operationscenter.application;
 
 import com.runisys.ontodata.portal.common.PortalIdentityService;
+import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
@@ -66,6 +67,7 @@ public class OperationsService {
                 request.getTitle().trim(),
                 request.getContent().trim(),
                 request.getSection().trim(),
+                TenantContext.current(),
                 Instant.now()));
     return NoticeResponse.from(created);
   }
@@ -99,6 +101,9 @@ public class OperationsService {
   @Transactional(readOnly = true)
   public PageResponse<NoticeResponse> listNotices(PageRequestParameters parameters) {
     List<Specification<Notice>> predicates = new ArrayList<>();
+    // M5 多租户：列表按请求租户隔离
+    predicates.add(
+        (root, query, builder) -> builder.equal(root.get("tenantId"), TenantContext.current()));
     String status =
         parameters.getStatus() == null ? Notice.STATUS_PUBLISHED : parameters.getStatus();
     predicates.add((root, query, builder) -> builder.equal(root.get("status"), status));
@@ -128,6 +133,7 @@ public class OperationsService {
                 request.getTitle().trim(),
                 request.getContent().trim(),
                 trimToNull(request.getContact()),
+                TenantContext.current(),
                 Instant.now()));
     return FeedbackResponse.from(created);
   }
@@ -154,6 +160,9 @@ public class OperationsService {
   @Transactional(readOnly = true)
   public PageResponse<FeedbackResponse> listFeedbacks(PageRequestParameters parameters) {
     List<Specification<Feedback>> predicates = new ArrayList<>();
+    // M5 多租户：列表按请求租户隔离
+    predicates.add(
+        (root, query, builder) -> builder.equal(root.get("tenantId"), TenantContext.current()));
     if (parameters.getStatus() != null) {
       predicates.add(
           (root, query, builder) -> builder.equal(root.get("status"), parameters.getStatus()));
@@ -171,23 +180,25 @@ public class OperationsService {
 
   // ---- 运营统计 ----
 
+  /** 统计按请求租户隔离（M5）：各租户只看到本租户的公告/反馈数量。 */
   @Transactional(readOnly = true)
   public OperationsStatisticsResponse statistics() {
+    String tenantId = TenantContext.current();
     return new OperationsStatisticsResponse(
-        noticeRepository.count(),
-        noticeRepository.countByStatus(Notice.STATUS_PUBLISHED),
-        feedbackRepository.countByStatus(Feedback.STATUS_PENDING));
+        noticeRepository.countByTenantId(tenantId),
+        noticeRepository.countByStatusAndTenantId(Notice.STATUS_PUBLISHED, tenantId),
+        feedbackRepository.countByStatusAndTenantId(Feedback.STATUS_PENDING, tenantId));
   }
 
   private Notice requireNotice(String code) {
     return noticeRepository
-        .findByCode(code)
+        .findByCodeAndTenantId(code, TenantContext.current())
         .orElseThrow(() -> new ResourceNotFoundException("公告不存在：" + code));
   }
 
   private Feedback requireFeedback(String code) {
     return feedbackRepository
-        .findByCode(code)
+        .findByCodeAndTenantId(code, TenantContext.current())
         .orElseThrow(() -> new ResourceNotFoundException("反馈不存在：" + code));
   }
 

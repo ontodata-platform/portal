@@ -22,7 +22,7 @@ import java.util.UUID;
     uniqueConstraints = {
       @UniqueConstraint(
           name = "uk_portal_result_identity",
-          columnNames = {"source_system", "result_id"})
+          columnNames = {"tenant_id", "source_system", "result_id"})
     })
 public class PortalResult {
 
@@ -72,6 +72,7 @@ public class PortalResult {
       String metadataJson,
       String sourceTaskId,
       String traceId,
+      String tenantId,
       Instant now) {
     this.id = UUID.randomUUID().toString();
     this.resultId = resultId;
@@ -81,7 +82,7 @@ public class PortalResult {
     this.metadataJson = metadataJson;
     this.sourceTaskId = sourceTaskId;
     this.traceId = traceId;
-    this.tenantId = DEFAULT_TENANT;
+    this.tenantId = tenantId;
     this.createdAt = now;
     this.updatedAt = now;
   }

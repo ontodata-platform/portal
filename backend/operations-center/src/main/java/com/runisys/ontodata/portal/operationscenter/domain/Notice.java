@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -13,10 +14,16 @@ import java.util.UUID;
  * 门户公告（总体设计 §5 门户运营）：栏目化内容，单向状态机。
  *
  * <p>DRAFT → PUBLISHED → ARCHIVED：发布时落 publishedAt；草稿不出现在公开查询 （不带状态参数的列表只返回 PUBLISHED），归档后不再变更（终态防重
- * 409）。
+ * 409）。M5 多租户：code 唯一约束为 (tenant_id, code) 复合，公告编码只在租户内唯一。
  */
 @Entity
-@Table(name = "portal_notice")
+@Table(
+    name = "portal_notice",
+    uniqueConstraints = {
+      @UniqueConstraint(
+          name = "uk_portal_notice_code",
+          columnNames = {"tenant_id", "code"})
+    })
 public class Notice {
 
   public static final String STATUS_DRAFT = "DRAFT";
@@ -28,7 +35,7 @@ public class Notice {
   @Column(length = 36, nullable = false, updatable = false)
   private String id;
 
-  @Column(nullable = false, updatable = false, length = 40, unique = true)
+  @Column(nullable = false, updatable = false, length = 40)
   private String code;
 
   @Column(nullable = false, length = 200)
@@ -57,14 +64,15 @@ public class Notice {
 
   protected Notice() {}
 
-  public Notice(String code, String title, String content, String section, Instant now) {
+  public Notice(
+      String code, String title, String content, String section, String tenantId, Instant now) {
     this.id = UUID.randomUUID().toString();
     this.code = code;
     this.title = title;
     this.content = content;
     this.section = section;
     this.status = STATUS_DRAFT;
-    this.tenantId = DEFAULT_TENANT;
+    this.tenantId = tenantId;
     this.createdAt = now;
     this.updatedAt = now;
   }

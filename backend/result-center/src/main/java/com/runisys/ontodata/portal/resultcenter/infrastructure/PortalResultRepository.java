@@ -9,5 +9,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface PortalResultRepository
     extends JpaRepository<PortalResult, String>, JpaSpecificationExecutor<PortalResult> {
 
-  Optional<PortalResult> findBySourceSystemAndResultId(String sourceSystem, String resultId);
+  Optional<PortalResult> findBySourceSystemAndResultIdAndTenantId(
+      String sourceSystem, String resultId, String tenantId);
 }

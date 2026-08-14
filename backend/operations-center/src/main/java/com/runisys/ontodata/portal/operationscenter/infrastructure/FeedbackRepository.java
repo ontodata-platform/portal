@@ -14,9 +14,9 @@ import org.springframework.data.repository.query.Param;
 public interface FeedbackRepository
     extends JpaRepository<Feedback, String>, JpaSpecificationExecutor<Feedback> {
 
-  Optional<Feedback> findByCode(String code);
+  Optional<Feedback> findByCodeAndTenantId(String code, String tenantId);
 
-  long countByStatus(String status);
+  long countByStatusAndTenantId(String status, String tenantId);
 
   /** 数据保留（M5，租户隔离）：只统计本租户超过保留期的已处理反馈。 */
   @Query(
