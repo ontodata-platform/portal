@@ -18,14 +18,22 @@ public interface FeedbackRepository
 
   long countByStatus(String status);
 
-  /** 数据保留（M5）：只统计超过保留期的已处理反馈。 */
-  @Query("select count(f) from Feedback f where f.status in :statuses and f.createdAt < :cutoff")
+  /** 数据保留（M5，租户隔离）：只统计本租户超过保留期的已处理反馈。 */
+  @Query(
+      "select count(f) from Feedback f where f.status in :statuses"
+          + " and f.createdAt < :cutoff and f.tenantId = :tenantId")
   long countTerminalOlderThan(
-      @Param("statuses") Collection<String> statuses, @Param("cutoff") Instant cutoff);
+      @Param("statuses") Collection<String> statuses,
+      @Param("cutoff") Instant cutoff,
+      @Param("tenantId") String tenantId);
 
-  /** 数据保留（M5）：删除超过保留期的已处理反馈。 */
+  /** 数据保留（M5，租户隔离）：删除本租户超过保留期的已处理反馈。 */
   @Modifying
-  @Query("delete from Feedback f where f.status in :statuses and f.createdAt < :cutoff")
+  @Query(
+      "delete from Feedback f where f.status in :statuses"
+          + " and f.createdAt < :cutoff and f.tenantId = :tenantId")
   int deleteTerminalOlderThan(
-      @Param("statuses") Collection<String> statuses, @Param("cutoff") Instant cutoff);
+      @Param("statuses") Collection<String> statuses,
+      @Param("cutoff") Instant cutoff,
+      @Param("tenantId") String tenantId);
 }

@@ -21,15 +21,22 @@ public interface RequirementRequestRepository
   Optional<RequirementRequest> findFirstByRequirementTypeAndNormalizedTitleAndStatusNotIn(
       String requirementType, String normalizedTitle, Collection<String> terminalStatuses);
 
-  /** 数据保留（M5）：只统计超过保留期的终态需求。 */
+  /** 数据保留（M5，租户隔离）：只统计本租户超过保留期的终态需求。 */
   @Query(
-      "select count(r) from RequirementRequest r where r.status in :statuses and r.createdAt < :cutoff")
+      "select count(r) from RequirementRequest r where r.status in :statuses"
+          + " and r.createdAt < :cutoff and r.tenantId = :tenantId")
   long countTerminalOlderThan(
-      @Param("statuses") Collection<String> statuses, @Param("cutoff") Instant cutoff);
+      @Param("statuses") Collection<String> statuses,
+      @Param("cutoff") Instant cutoff,
+      @Param("tenantId") String tenantId);
 
-  /** 数据保留（M5）：删除超过保留期的终态需求。 */
+  /** 数据保留（M5，租户隔离）：删除本租户超过保留期的终态需求。 */
   @Modifying
-  @Query("delete from RequirementRequest r where r.status in :statuses and r.createdAt < :cutoff")
+  @Query(
+      "delete from RequirementRequest r where r.status in :statuses"
+          + " and r.createdAt < :cutoff and r.tenantId = :tenantId")
   int deleteTerminalOlderThan(
-      @Param("statuses") Collection<String> statuses, @Param("cutoff") Instant cutoff);
+      @Param("statuses") Collection<String> statuses,
+      @Param("cutoff") Instant cutoff,
+      @Param("tenantId") String tenantId);
 }

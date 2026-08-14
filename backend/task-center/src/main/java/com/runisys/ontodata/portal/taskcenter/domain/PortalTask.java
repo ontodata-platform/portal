@@ -76,6 +76,7 @@ public class PortalTask {
       String resourceRefsJson,
       String resultRefsJson,
       String traceId,
+      String tenantId,
       Instant now) {
     this.id = UUID.randomUUID().toString();
     this.taskId = taskId;
@@ -88,7 +89,7 @@ public class PortalTask {
     this.resourceRefsJson = resourceRefsJson;
     this.resultRefsJson = resultRefsJson;
     this.traceId = traceId;
-    this.tenantId = DEFAULT_TENANT;
+    this.tenantId = tenantId;
     this.createdAt = now;
     this.updatedAt = now;
   }

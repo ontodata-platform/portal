@@ -8,6 +8,7 @@ import com.runisys.ontodata.portal.approvalcenter.api.DecideApprovalRequest;
 import com.runisys.ontodata.portal.approvalcenter.domain.ApprovalRequest;
 import com.runisys.ontodata.portal.approvalcenter.infrastructure.ApprovalRequestRepository;
 import com.runisys.ontodata.portal.common.PortalIdentityService;
+import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
@@ -65,6 +66,7 @@ public class ApprovalService {
                 request.getTitle().trim(),
                 toJson(request.getDetail()),
                 request.getRequester().trim(),
+                TenantContext.current(),
                 Instant.now()));
     return ApprovalRequestResponse.from(created);
   }
@@ -91,6 +93,9 @@ public class ApprovalService {
   @Transactional(readOnly = true)
   public PageResponse<ApprovalRequestResponse> list(PageRequestParameters parameters) {
     List<Specification<ApprovalRequest>> predicates = new ArrayList<>();
+    // M5 多租户：列表按请求租户隔离
+    predicates.add(
+        (root, query, builder) -> builder.equal(root.get("tenantId"), TenantContext.current()));
     if (parameters.getStatus() != null) {
       predicates.add(
           (root, query, builder) -> builder.equal(root.get("status"), parameters.getStatus()));
@@ -108,7 +113,7 @@ public class ApprovalService {
 
   private ApprovalRequest require(String code) {
     return approvalRepository
-        .findByCode(code)
+        .findByCodeAndTenantId(code, TenantContext.current())
         .orElseThrow(() -> new ResourceNotFoundException("审批单不存在：" + code));
   }
 

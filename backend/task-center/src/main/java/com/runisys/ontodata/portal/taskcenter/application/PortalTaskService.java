@@ -2,6 +2,7 @@ package com.runisys.ontodata.portal.taskcenter.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
@@ -47,7 +48,9 @@ public class PortalTaskService {
   @Transactional
   public PortalTaskResponse upsert(UpsertPortalTaskRequest request) {
     Instant now = Instant.now();
-    PortalTask existing = taskRepository.findByTaskId(request.getTaskId().trim()).orElse(null);
+    String tenantId = TenantContext.current();
+    PortalTask existing =
+        taskRepository.findByTaskIdAndTenantId(request.getTaskId().trim(), tenantId).orElse(null);
     if (existing == null) {
       PortalTask created =
           taskRepository.saveAndFlush(
@@ -62,6 +65,7 @@ public class PortalTaskService {
                   toJson(request.getResourceRefs()),
                   toJson(request.getResultRefs()),
                   trimToNull(request.getTraceId()),
+                  tenantId,
                   now));
       return PortalTaskResponse.from(created);
     }
@@ -88,6 +92,9 @@ public class PortalTaskService {
   @Transactional(readOnly = true)
   public PageResponse<PortalTaskResponse> list(PageRequestParameters parameters) {
     List<Specification<PortalTask>> predicates = new ArrayList<>();
+    // M5 多租户：列表按请求租户隔离
+    predicates.add(
+        (root, query, builder) -> builder.equal(root.get("tenantId"), TenantContext.current()));
     if (parameters.getStatus() != null) {
       predicates.add(
           (root, query, builder) -> builder.equal(root.get("status"), parameters.getStatus()));
@@ -109,7 +116,7 @@ public class PortalTaskService {
 
   private PortalTask require(String taskId) {
     return taskRepository
-        .findByTaskId(taskId)
+        .findByTaskIdAndTenantId(taskId, TenantContext.current())
         .orElseThrow(() -> new ResourceNotFoundException("任务不存在：" + taskId));
   }
 

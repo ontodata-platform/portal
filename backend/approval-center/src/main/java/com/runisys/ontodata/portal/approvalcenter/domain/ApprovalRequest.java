@@ -81,6 +81,7 @@ public class ApprovalRequest {
       String title,
       String detailJson,
       String requester,
+      String tenantId,
       Instant now) {
     this.id = UUID.randomUUID().toString();
     this.code = code;
@@ -91,7 +92,7 @@ public class ApprovalRequest {
     this.detailJson = detailJson;
     this.requester = requester;
     this.status = STATUS_PENDING;
-    this.tenantId = DEFAULT_TENANT;
+    this.tenantId = tenantId;
     this.createdAt = now;
     this.updatedAt = now;
   }

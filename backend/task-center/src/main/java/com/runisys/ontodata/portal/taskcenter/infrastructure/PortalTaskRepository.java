@@ -14,16 +14,24 @@ import org.springframework.data.repository.query.Param;
 public interface PortalTaskRepository
     extends JpaRepository<PortalTask, String>, JpaSpecificationExecutor<PortalTask> {
 
-  Optional<PortalTask> findByTaskId(String taskId);
+  Optional<PortalTask> findByTaskIdAndTenantId(String taskId, String tenantId);
 
-  /** 数据保留（M5）：只统计超过保留期的终态任务（非终态永不清理）。 */
-  @Query("select count(t) from PortalTask t where t.status in :statuses and t.createdAt < :cutoff")
+  /** 数据保留（M5，租户隔离）：只统计本租户超过保留期的终态任务。 */
+  @Query(
+      "select count(t) from PortalTask t where t.status in :statuses and t.createdAt < :cutoff"
+          + " and t.tenantId = :tenantId")
   long countTerminalOlderThan(
-      @Param("statuses") Collection<String> statuses, @Param("cutoff") Instant cutoff);
+      @Param("statuses") Collection<String> statuses,
+      @Param("cutoff") Instant cutoff,
+      @Param("tenantId") String tenantId);
 
-  /** 数据保留（M5）：删除超过保留期的终态任务（非终态永不清理）。 */
+  /** 数据保留（M5，租户隔离）：删除本租户超过保留期的终态任务。 */
   @Modifying
-  @Query("delete from PortalTask t where t.status in :statuses and t.createdAt < :cutoff")
+  @Query(
+      "delete from PortalTask t where t.status in :statuses and t.createdAt < :cutoff"
+          + " and t.tenantId = :tenantId")
   int deleteTerminalOlderThan(
-      @Param("statuses") Collection<String> statuses, @Param("cutoff") Instant cutoff);
+      @Param("statuses") Collection<String> statuses,
+      @Param("cutoff") Instant cutoff,
+      @Param("tenantId") String tenantId);
 }

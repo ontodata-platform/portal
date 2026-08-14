@@ -18,14 +18,22 @@ public interface NoticeRepository
 
   long countByStatus(String status);
 
-  /** 数据保留（M5）：只统计超过保留期的已归档公告。 */
-  @Query("select count(n) from Notice n where n.status in :statuses and n.createdAt < :cutoff")
+  /** 数据保留（M5，租户隔离）：只统计本租户超过保留期的已归档公告。 */
+  @Query(
+      "select count(n) from Notice n where n.status in :statuses"
+          + " and n.createdAt < :cutoff and n.tenantId = :tenantId")
   long countTerminalOlderThan(
-      @Param("statuses") Collection<String> statuses, @Param("cutoff") Instant cutoff);
+      @Param("statuses") Collection<String> statuses,
+      @Param("cutoff") Instant cutoff,
+      @Param("tenantId") String tenantId);
 
-  /** 数据保留（M5）：删除超过保留期的已归档公告。 */
+  /** 数据保留（M5，租户隔离）：删除本租户超过保留期的已归档公告。 */
   @Modifying
-  @Query("delete from Notice n where n.status in :statuses and n.createdAt < :cutoff")
+  @Query(
+      "delete from Notice n where n.status in :statuses"
+          + " and n.createdAt < :cutoff and n.tenantId = :tenantId")
   int deleteTerminalOlderThan(
-      @Param("statuses") Collection<String> statuses, @Param("cutoff") Instant cutoff);
+      @Param("statuses") Collection<String> statuses,
+      @Param("cutoff") Instant cutoff,
+      @Param("tenantId") String tenantId);
 }

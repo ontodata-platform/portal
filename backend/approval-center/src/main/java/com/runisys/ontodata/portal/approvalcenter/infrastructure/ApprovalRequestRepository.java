@@ -14,17 +14,24 @@ import org.springframework.data.repository.query.Param;
 public interface ApprovalRequestRepository
     extends JpaRepository<ApprovalRequest, String>, JpaSpecificationExecutor<ApprovalRequest> {
 
-  Optional<ApprovalRequest> findByCode(String code);
+  Optional<ApprovalRequest> findByCodeAndTenantId(String code, String tenantId);
 
-  /** 数据保留（M5）：只统计超过保留期的终态审批单。 */
+  /** 数据保留（M5，租户隔离）：只统计本租户超过保留期的终态审批单。 */
   @Query(
-      "select count(a) from ApprovalRequest a where a.status in :statuses and a.createdAt < :cutoff")
+      "select count(a) from ApprovalRequest a where a.status in :statuses"
+          + " and a.createdAt < :cutoff and a.tenantId = :tenantId")
   long countTerminalOlderThan(
-      @Param("statuses") Collection<String> statuses, @Param("cutoff") Instant cutoff);
+      @Param("statuses") Collection<String> statuses,
+      @Param("cutoff") Instant cutoff,
+      @Param("tenantId") String tenantId);
 
-  /** 数据保留（M5）：删除超过保留期的终态审批单。 */
+  /** 数据保留（M5，租户隔离）：删除本租户超过保留期的终态审批单。 */
   @Modifying
-  @Query("delete from ApprovalRequest a where a.status in :statuses and a.createdAt < :cutoff")
+  @Query(
+      "delete from ApprovalRequest a where a.status in :statuses"
+          + " and a.createdAt < :cutoff and a.tenantId = :tenantId")
   int deleteTerminalOlderThan(
-      @Param("statuses") Collection<String> statuses, @Param("cutoff") Instant cutoff);
+      @Param("statuses") Collection<String> statuses,
+      @Param("cutoff") Instant cutoff,
+      @Param("tenantId") String tenantId);
 }
