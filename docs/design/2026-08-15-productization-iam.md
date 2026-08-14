@@ -48,7 +48,8 @@ spring-security-test 的 `jwt()` 后处理器注入，解码器不被调用）�
 ### 2.4 后续（IAM 其余项）
 
 - 浏览器登录（authorization code + 会话）与前端 OIDC 登录流程（各软件 UI）；
-- 服务间调用客户端凭据（client-credentials）：MCP 网关 → 门户等内部 REST 调用
-  自动附加令牌，替换当前的纯内网信任；
+- 服务间调用客户端凭据（client-credentials）：MCP 网关 → 门户已落地
+  （`mcp-gateway` 仓库 `2026-08-15-productization-iam-service-credentials.md`，
+  Bearer 令牌 + fail-closed）；其余服务间调用按同构模式接入；
 - IdP 选型与 claim 协议固化；令牌撤销/过期与密钥轮换演练；
 - 各软件后端按 portal 同构接入（模式与代码同构移植）。
