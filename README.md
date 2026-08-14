@@ -26,7 +26,7 @@ portal/
 │  ├─ requirement-center/ # 需求管理（req-* 需求单，接收/去重/分派/关闭）
 │  ├─ operations-center/  # 门户运营（ntc-* 公告、fb-* 反馈、运营统计）
 │  └─ server/         # 启动与装配（端口 18085）
-└─ frontend/          # Vue 3 管理门户界面（下一工作块）
+└─ frontend/          # Vue 3 管理门户界面（端口 5175，五中心页面）
 ```
 
 设计详见 `docs/design/2026-08-14-portal-design.md`。
