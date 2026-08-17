@@ -2,12 +2,14 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 
-import { loadPkce } from '@/auth/session'
+import { consumeLoginRedirect, loadPkce } from '@/auth/session'
 import LoginView from './LoginView.vue'
 
 const replaceMock = vi.fn()
+const routeQuery = vi.fn((): Record<string, string> => ({}))
 
 vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: routeQuery() }),
   useRouter: () => ({ replace: replaceMock }),
 }))
 
@@ -68,5 +70,21 @@ describe('LoginView（M5 IAM 浏览器登录）', () => {
     expect(pkce).not.toBeNull()
     expect(pkce!.state).toBe(params.get('state'))
     expect(pkce!.codeVerifier.length).toBeGreaterThanOrEqual(43)
+  })
+
+  it('IAM 启用且带 redirect 参数：登录前目标地址先存 sessionStorage（供回调页回跳）', async () => {
+    vi.stubEnv('VITE_IAM_ENABLED', 'true')
+    vi.stubEnv('VITE_OIDC_CLIENT_ID', 'portal-ui')
+    vi.stubEnv('VITE_OIDC_AUTHORIZE_ENDPOINT', 'https://idp.example/auth')
+    vi.stubEnv('VITE_OIDC_TOKEN_ENDPOINT', 'https://idp.example/token')
+    routeQuery.mockReturnValue({ redirect: '/tasks?tab=mine' })
+    const assign = vi.fn()
+    vi.stubGlobal('location', { assign, origin: 'http://localhost:5175' })
+
+    mountView()
+    await flushPromises()
+
+    expect(assign).toHaveBeenCalledTimes(1)
+    expect(consumeLoginRedirect()).toBe('/tasks?tab=mine')
   })
 })

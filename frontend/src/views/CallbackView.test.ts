@@ -2,7 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 
-import { savePkce } from '@/auth/session'
+import { saveLoginRedirect, savePkce } from '@/auth/session'
 import CallbackView from './CallbackView.vue'
 
 const replaceMock = vi.fn()
@@ -70,6 +70,17 @@ describe('CallbackView（M5 IAM 授权回调）', () => {
     expect(stored.refreshToken).toBe('refresh-1')
     expect(stored.expiresAt).toBeGreaterThan(Date.now())
     expect(replaceMock).toHaveBeenCalledWith('/')
+  })
+
+  it('登录成功后回跳守卫记录的目标地址（无记录回首页）', async () => {
+    savePkce('state-1', 'verifier-1')
+    saveLoginRedirect('/tasks?tab=mine')
+    mountView()
+    await flushPromises()
+
+    expect(replaceMock).toHaveBeenCalledWith('/tasks?tab=mine')
+    // 回跳地址一次性消费
+    expect(window.sessionStorage.getItem('ontodata.auth.redirect')).toBeNull()
   })
 
   it('state 不匹配（防 CSRF）拒绝交换并回登录页', async () => {

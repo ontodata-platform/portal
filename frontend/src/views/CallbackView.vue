@@ -3,14 +3,15 @@ import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { buildTokenRequest, iamEnabled, oidcConfig, parseTokenResponse } from '@/auth/oidc'
-import { clearPkce, loadPkce, saveSession } from '@/auth/session'
+import { clearPkce, consumeLoginRedirect, loadPkce, saveSession } from '@/auth/session'
 
 const route = useRoute()
 const router = useRouter()
 
 /**
  * 授权回调（M5 IAM 浏览器登录）：校验 state（防 CSRF）→ 令牌端点以 code + code_verifier
- * 交换访问令牌（PKCE）→ 保存会话 → 回首页。任何失败清除中间态并回登录页（fail-closed）。
+ * 交换访问令牌（PKCE）→ 保存会话 → 回跳登录前目标地址（无记录回首页）。
+ * 任何失败清除中间态并回登录页（fail-closed）。
  */
 onMounted(async () => {
   if (!iamEnabled()) {
@@ -43,7 +44,8 @@ onMounted(async () => {
       expiresAt: token.expiresAt,
     })
     clearPkce()
-    router.replace('/')
+    // WP-07：登录成功后回跳守卫记录的目标地址（无记录回首页）
+    router.replace(consumeLoginRedirect() ?? '/')
   } catch {
     clearPkce()
     router.replace('/login')
