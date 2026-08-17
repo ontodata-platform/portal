@@ -58,4 +58,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        # WP-09 可观测性：新增 prometheus 指标端点（仅集群内抓取，网络层收敛，不对公网暴露）
+        include: health,info,prometheus
+  metrics:
+    tags:
+      # 通用维度：Prometheus 告警/看板按 application 标签区分五个后端
+      application: ${spring.application.name}

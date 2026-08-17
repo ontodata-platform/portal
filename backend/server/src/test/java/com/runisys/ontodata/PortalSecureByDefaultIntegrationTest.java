@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -30,6 +31,9 @@ import org.springframework.test.web.servlet.MockMvc;
       "spring.flyway.enabled=true"
     })
 @AutoConfigureMockMvc
+// WP-09：Boot 测试默认禁用指标导出（management.defaults.metrics.export.enabled=false，
+// 优先级高于内联属性），显式 metrics=true 才能验证 /actuator/prometheus 端到端匿名可达
+@AutoConfigureObservability(metrics = true)
 class PortalSecureByDefaultIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
@@ -54,5 +58,7 @@ class PortalSecureByDefaultIntegrationTest {
         .andExpect(status().isUnauthorized());
     // 健康检查保持放行（监控探活不依赖令牌）
     mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
+    // WP-09：指标端点同样匿名放行——供集群内 Prometheus 抓取，网络层收敛不对公网暴露
+    mockMvc.perform(get("/actuator/prometheus")).andExpect(status().isOk());
   }
 }

@@ -23,8 +23,9 @@ import org.springframework.security.web.SecurityFilterChain;
  *
  * <ul>
  *   <li><b>启用（缺省，生产形态）</b>：OIDC Bearer JWT 认证（stateless resource server），仅放行
- *       /actuator/health、/actuator/info，其余端点必须携带有效令牌；租户/组织/项目/密级上下文由 ClaimContextFilter 从已验证令牌的
- *       claim 装载（此时 TenantContextFilter 不注册，显式 X-Tenant-Id 等请求头不作为事实来源）；
+ *       /actuator/health、/actuator/info、/actuator/prometheus（指标端点供集群内 Prometheus 抓取，网络层由
+ *       NetworkPolicy/内网收敛，不对公网暴露），其余端点必须携带有效令牌；租户/组织/项目/密级上下文由 ClaimContextFilter 从已验证令牌的 claim
+ *       装载（此时 TenantContextFilter 不注册，显式 X-Tenant-Id 等请求头不作为事实来源）；
  *   <li><b>关闭（显式 enabled=false，仅限本地开发/演示）</b>：全部请求匿名放行，租户等上下文由 TenantContextFilter
  *       从可伪造的请求头装载——身份没有任何真实性保证，严禁用于生产； 启动时打印 WARN 日志醒目提示。
  * </ul>
@@ -66,7 +67,9 @@ public class SecurityConfiguration {
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/actuator/health", "/actuator/info")
+                // /actuator/prometheus 为 WP-09 新增的指标端点：供集群内 Prometheus 抓取，
+                // 网络层由 NetworkPolicy/内网收敛，不对公网暴露，故随 health/info 一并匿名放行
+                auth.requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
