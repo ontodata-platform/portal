@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.regex.Pattern;
 import org.slf4j.MDC;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -18,10 +19,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * 请求级上下文过滤器（M5 多租户 + ABAC 基础）：从请求头装载租户（X-Tenant-Id）、
  * 组织（X-Org-Id）、项目（X-Project-Id）与许可密级（X-Clearance-Level）， 租户同步写入 MDC（日志按租户检索）。
  *
+ * <p><b>仅开发模式注册</b>：自 WP-02 起 IAM 缺省即安全模式（{@code ontodata.security.oauth2.enabled} 缺省
+ * true），本过滤器只在<b>显式</b> {@code enabled=false} 时注册——请求头可任意伪造， 绝不能作为安全模式下的事实来源；安全模式下上下文由
+ * ClaimContextFilter 从已验证令牌的 claim 写入（其条件与本过滤器互斥，二者不会同时生效）。
+ *
  * <p>校验规则：租户/组织/项目只允许小写字母/数字/连字符（1-64 位，组织与项目缺省为 空）；密级只允许 PUBLIC/INTERNAL/CONFIDENTIAL/SECRET（缺省
- * INTERNAL）；非法值拒绝 400（IAM 接入后这些属性来自认证上下文）。
+ * INTERNAL）；非法值拒绝 400。
  */
 @Component
+@ConditionalOnProperty(name = "ontodata.security.oauth2.enabled", havingValue = "false")
 @Order(1)
 public class TenantContextFilter extends OncePerRequestFilter {
 

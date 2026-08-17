@@ -9,3 +9,11 @@ spring:
       ddl-auto: none
   flyway:
     enabled: true
+
+ontodata:
+  security:
+    oauth2:
+      # WP-02 起缺省即安全模式（true）；既有非安全主题测试仍走显式头模式，
+      # 这里显式关闭以保持其语义不变（安全路径由 PortalIamIntegrationTest 等
+      # 逐类用 TestPropertySource 显式 enabled=true 覆盖）
+      enabled: false

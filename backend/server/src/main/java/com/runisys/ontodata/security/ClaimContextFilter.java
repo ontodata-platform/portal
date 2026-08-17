@@ -20,9 +20,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 /**
  * 身份上下文过滤器（M5 IAM）：认证完成后从令牌 claim 装载租户/组织/项目/密级上下文。
  *
- * <p>仅当 {@code ontodata.security.oauth2.enabled=true} 时注册；Order(10) 保证运行在 Spring Security
- * 过滤器链（-100）之后——身份已由 JWT 校验。装载后覆盖 TenantContextFilter 从请求头 读取的值：IAM 模式下显式 X-Tenant-Id 等头被忽略（claims
- * 优先）。 缺少租户 claim 视为不可信身份，403 拒绝。
+ * <p>仅当 {@code ontodata.security.oauth2.enabled=true}（缺省即安全模式）时注册；Order(10) 保证运行在 Spring Security
+ * 过滤器链（-100）之后——身份已由 JWT 校验。与 TenantContextFilter 互斥：安全模式下请求头装载 过滤器不注册，显式 X-Tenant-Id
+ * 等头不会成为事实来源（claims 唯一权威）。 缺少租户 claim 视为不可信身份，403 拒绝。
  */
 @Component
 @ConditionalOnProperty(name = "ontodata.security.oauth2.enabled", havingValue = "true")

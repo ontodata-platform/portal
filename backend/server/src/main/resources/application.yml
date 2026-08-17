@@ -13,6 +13,14 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  # WP-02 身份底座：安全模式（默认）下必须配置 issuer-uri 指向 IdP 的 OIDC issuer
+  #（据此拉取 JWK 集验签），未配置则启动即失败（拒绝半配置运行）。
+  # 环境变量：IAM_ISSUER_URI；本地 Keycloak 示例：http://localhost:8180/realms/ontodata
+  # security:
+  #   oauth2:
+  #     resourceserver:
+  #       jwt:
+  #         issuer-uri: ${IAM_ISSUER_URI:http://localhost:8180/realms/ontodata}
 
 server:
   port: ${SERVER_PORT:18085}
@@ -20,10 +28,12 @@ server:
 ontodata:
   security:
     oauth2:
-      # M5 IAM：true 时启用 OIDC Bearer JWT 认证（resource server），租户/组织/项目/密级
-      # 从令牌 claim 映射（此时显式 X-Tenant-Id 等请求头被忽略）；缺省 false=显式头模式
-      #（开发/演示）。启用必须同时配置 spring.security.oauth2.resourceserver.jwt.issuer-uri。
-      enabled: ${IAM_ENABLED:false}
+      # WP-02 身份底座：缺省 true=安全模式（OIDC Bearer JWT，resource server），租户/组织/项目/密级
+      # 从已验证令牌 claim 映射（ClaimContextFilter），显式 X-Tenant-Id 等请求头不作为事实来源；
+      # 必须同时配置 spring.security.oauth2.resourceserver.jwt.issuer-uri（见上方注释块），
+      # 未配置则启动即失败。仅本地无 IdP 开发/演示可显式 IAM_ENABLED=false 退回显式头模式
+      #（全部请求匿名放行，启动日志有 WARN 提示，严禁用于生产）。
+      enabled: ${IAM_ENABLED:true}
   retention:
     # 数据保留（M5）：超过保留期的终态记录可清理（dryRun 先演练），默认 180 天
     days: ${RETENTION_DAYS:180}
