@@ -70,6 +70,22 @@ export function buildTokenRequest(
   }
 }
 
+/** 构造刷新令牌请求：grant_type=refresh_token 换发新令牌（WP-07 令牌续期）。 */
+export function buildRefreshTokenRequest(
+  config: OidcConfig,
+  refreshToken: string,
+): { url: string; headers: Record<string, string>; body: URLSearchParams } {
+  return {
+    url: config.tokenEndpoint,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: config.clientId,
+      refresh_token: refreshToken,
+    }),
+  }
+}
+
 /** 解析令牌响应：缺失 access_token/expires_in 视为协议错误（中文异常）。 */
 export function parseTokenResponse(json: unknown): TokenResult {
   const body = (json ?? {}) as Record<string, unknown>

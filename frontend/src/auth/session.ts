@@ -5,10 +5,14 @@
  */
 import { reactive } from 'vue'
 
-import { iamEnabled } from './oidc'
+import { buildRefreshTokenRequest, iamEnabled, oidcConfig, parseTokenResponse } from './oidc'
 
 const AUTH_STORAGE_KEY = 'ontodata.auth'
 export const PKCE_STORAGE_KEY = 'ontodata.pkce'
+/** 登录前目标地址（登录成功后回跳）：存 sessionStorage 以跨越 IdP 往返。 */
+export const LOGIN_REDIRECT_STORAGE_KEY = 'ontodata.auth.redirect'
+/** 续期提前量：距过期不足 60 秒即视为"临期"，发请求前先续期（避免请求途中令牌过期）。 */
+export const REFRESH_SKEW_MS = 60_000
 
 export interface AuthSession {
   accessToken: string
@@ -63,6 +67,85 @@ export function clearSession(): void {
     window.localStorage.removeItem(AUTH_STORAGE_KEY)
   } catch {
     // 忽略
+  }
+}
+
+/**
+ * 确保拿到有效访问令牌（WP-07 令牌续期）：会话有效直接返回；临期（距过期不足
+ * REFRESH_SKEW_MS）或已过期时用 refreshToken 调令牌端点换发新令牌并更新存储。
+ * 无 refreshToken 无法续期返回 null（由路由守卫/拦截器按未登录处理）；
+ * 续期失败清空会话并整页跳登录页（fail-closed，记录当前地址供登录后回跳）。
+ * 并发调用共享同一进行中的 Promise，避免重复续期（refreshToken 旋转时并发会互踢）。
+ */
+export function ensureAccessToken(): Promise<string | null> {
+  const session = authState.session
+  if (!session) {
+    return Promise.resolve(null)
+  }
+  if (session.expiresAt - REFRESH_SKEW_MS > Date.now()) {
+    return Promise.resolve(session.accessToken)
+  }
+  if (!session.refreshToken) {
+    return Promise.resolve(null)
+  }
+  if (!refreshPromise) {
+    refreshPromise = refreshSession(session.refreshToken).finally(() => {
+      refreshPromise = null
+    })
+  }
+  return refreshPromise
+}
+
+/** 进行中的续期 Promise（并发去重，见 ensureAccessToken）。 */
+let refreshPromise: Promise<string | null> | null = null
+
+async function refreshSession(refreshToken: string): Promise<string | null> {
+  try {
+    const request = buildRefreshTokenRequest(oidcConfig(), refreshToken)
+    const response = await fetch(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: request.body,
+    })
+    if (!response.ok) {
+      throw new Error(`IdP 令牌端点返回错误（${response.status}）`)
+    }
+    const token = parseTokenResponse(await response.json())
+    saveSession({
+      accessToken: token.accessToken,
+      // IdP 未旋转 refreshToken 时沿用旧值（响应缺省 refresh_token）
+      refreshToken: token.refreshToken ?? refreshToken,
+      expiresAt: token.expiresAt,
+    })
+    return token.accessToken
+  } catch {
+    clearSession()
+    saveLoginRedirect(`${window.location.pathname}${window.location.search}`)
+    window.location.assign('/login')
+    return null
+  }
+}
+
+/** 记录登录前目标地址（仅接受站内路径，防开放式重定向）。 */
+export function saveLoginRedirect(target: string): void {
+  if (!target.startsWith('/')) {
+    return
+  }
+  try {
+    window.sessionStorage.setItem(LOGIN_REDIRECT_STORAGE_KEY, target)
+  } catch {
+    // 持久化失败仅影响回跳，不影响登录本身
+  }
+}
+
+/** 取出并清除登录前目标地址（一次性消费；无记录时返回 null）。 */
+export function consumeLoginRedirect(): string | null {
+  try {
+    const target = window.sessionStorage.getItem(LOGIN_REDIRECT_STORAGE_KEY)
+    window.sessionStorage.removeItem(LOGIN_REDIRECT_STORAGE_KEY)
+    return target && target.startsWith('/') ? target : null
+  } catch {
+    return null
   }
 }
 
