@@ -83,6 +83,13 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- WP-07：用 contracts 仓库的载荷 Schema 校验实际产生的事件（与 data-platform 同版本） -->
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <version>1.0.88</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -13,8 +13,12 @@ import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
 import com.runisys.ontodata.portal.common.api.ResourceStateConflictException;
+import com.runisys.ontodata.portal.common.event.OutboxEventService;
+import com.runisys.ontodata.portal.common.security.OperatorContext;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.data.domain.Page;
@@ -26,10 +30,17 @@ import org.springframework.transaction.annotation.Transactional;
  * 审批中心服务：审批流骨架（apr-* 审批单）。
  *
  * <p>不变量：PENDING → APPROVED/REJECTED 单向状态机；终态防重（重复审批 409）。 审批不替代业务软件确认链路：MCP 网关 R4
- * 工具把确认卡升级为审批单后，网关按 code 回查审批结果；决策结果由网关轮询拉取（本骨架不向业务软件推送）。
+ * 工具把确认卡升级为审批单后，WP-07 起决策落定同事务发布版本化事件 portal.approval.decided （Outbox，主题
+ * ontodata.portal.approval.v1），网关订阅事件替代轮询回查；GET 查询端点保留为过渡兼容路径， 事件链路稳定后下线。
  */
 @Service
 public class ApprovalService {
+
+  /** 审批决定事件类型（契约 integration/event-types/portal-approval-decided.schema.json）。 */
+  public static final String EVENT_APPROVAL_DECIDED = "portal.approval.decided";
+
+  /** 决策落定是审批单生命周期的第一个事件版本（PENDING→终态单向状态机，聚合版本从 1 起单调递增）。 */
+  private static final String AGGREGATE_VERSION_DECIDED = "1";
 
   private static final Map<String, String> SORT_FIELDS;
 
@@ -44,14 +55,17 @@ public class ApprovalService {
   private final ApprovalRequestRepository approvalRepository;
   private final PortalIdentityService identityService;
   private final ObjectMapper objectMapper;
+  private final OutboxEventService outboxEventService;
 
   public ApprovalService(
       ApprovalRequestRepository approvalRepository,
       PortalIdentityService identityService,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      OutboxEventService outboxEventService) {
     this.approvalRepository = approvalRepository;
     this.identityService = identityService;
     this.objectMapper = objectMapper;
+    this.outboxEventService = outboxEventService;
   }
 
   @Transactional
@@ -82,7 +96,43 @@ public class ApprovalService {
         request.getDecisionBy().trim(),
         trimToNull(request.getDecisionNote()),
         Instant.now());
+    // WP-07：决策落定同事务发布 portal.approval.decided（Outbox）；终态防重在上方，
+    // 重复决策抛 409 回滚，不会重复发事件。
+    recordApprovalDecidedEvent(approval);
     return ApprovalRequestResponse.from(approval);
+  }
+
+  /**
+   * 审批决定事件（契约 portal-approval-decided.schema.json，主题 ontodata.portal.approval.v1）： 信封
+   * aggregateType=ApprovalRequest、aggregateId=approvalCode、aggregateVersion=1（决策落定，单向状态机首个版本）；
+   * 载荷只放决定结果与源系统回查引用，不放审批明细原文。
+   */
+  private void recordApprovalDecidedEvent(ApprovalRequest approval) {
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("approvalCode", approval.getCode());
+    payload.put("approvalType", approval.getApprovalType());
+    payload.put("sourceSystem", approval.getSourceSystem());
+    // sourceCode 契约必填：源系统升级来的审批单（如 mcp-gateway 的 cfm-*）必带；
+    // 门户原生审批单无源对象时缺省该字段（无回查订阅方）。
+    if (approval.getSourceCode() != null) {
+      payload.put("sourceCode", approval.getSourceCode());
+    }
+    payload.put("decision", approval.getStatus());
+    // decidedBy 取当前认证主体（安全模式 JWT subject）；无认证上下文（开发模式/系统调用）
+    // 按仓库现有约定兜底为审批请求登记的审批人（DecideApprovalRequest.decisionBy）。
+    String authenticatedName = OperatorContext.authenticatedName();
+    payload.put(
+        "decidedBy", authenticatedName != null ? authenticatedName : approval.getDecisionBy());
+    payload.put("decidedAt", DateTimeFormatter.ISO_INSTANT.format(approval.getDecisionAt()));
+    if (approval.getDecisionNote() != null) {
+      payload.put("decisionNote", approval.getDecisionNote());
+    }
+    outboxEventService.record(
+        EVENT_APPROVAL_DECIDED,
+        "ApprovalRequest",
+        approval.getCode(),
+        AGGREGATE_VERSION_DECIDED,
+        payload);
   }
 
   @Transactional(readOnly = true)

@@ -41,8 +41,15 @@ ontodata:
     kafka:
       # WP-03 事件驱动的任务投影：缺省 true=订阅六个域主题构建任务投影（消费组
       # portal.task-projection，DLQ <topic>.dlq，ADR-006）；显式 false 关闭消费装配
-      #（未部署总线的环境与测试使用）
+      #（未部署总线的环境与测试使用）。
+      # WP-07 起同一开关同时控制 Outbox → Kafka 发布器（portal.approval.decided 等
+      # 门户生产事件投递 ontodata.portal.approval.v1）；关闭时事件留在 outbox_event 表，
+      # 主流程不受影响，恢复后自动补投。
       enabled: ${KAFKA_EVENTS_ENABLED:true}
+    outbox:
+      # WP-07 Outbox 发布器轮询参数（毫秒）：投递间隔与首次启动延迟
+      poll-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:5000}
+      initial-delay-ms: ${OUTBOX_INITIAL_DELAY_MS:10000}
   retention:
     # 数据保留（M5）：超过保留期的终态记录可清理（dryRun 先演练），默认 180 天
     days: ${RETENTION_DAYS:180}

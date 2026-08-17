@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 审批中心 REST 接口。
  *
- * <p>创建与决策分离：业务软件（MCP 网关）只创建审批单；人工决策通过 POST /approvals/{code}/decision 落库，终态重复决策 409。
+ * <p>创建与决策分离：业务软件（MCP 网关）只创建审批单；人工决策通过 POST /approvals/{code}/decision 落库，终态重复决策 409。 WP-07 起决策落定发布
+ * portal.approval.decided 事件（Outbox → ontodata.portal.approval.v1），源系统订阅事件拿结果。
  */
 @RestController
 @RequestMapping("/api/v1/approvals")
@@ -40,6 +41,10 @@ public class ApprovalController {
     return approvalService.decide(code, request);
   }
 
+  /**
+   * 按编码查询审批单（mcp-gateway 轮询回查审批结果的兼容路径）。WP-07 起审批决定走 portal.approval.decided
+   * 事件推送，本端点保留不动，待事件链路稳定后下线。
+   */
   @GetMapping("/{code}")
   public ApprovalRequestResponse find(@PathVariable String code) {
     return approvalService.find(code);
