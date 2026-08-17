@@ -2,8 +2,8 @@
 
 日期：2026-08-15
 
-状态：设计记录（M5 IAM 第一项落地——resource server 认证 + claim 映射，
-属性开关默认关闭；浏览器登录流程与客户端凭据服务间调用后续轮次）
+状态：设计记录（M5 IAM 第一项落地——resource server 认证 + claim 映射；
+WP-02 起属性开关默认翻转为安全模式；浏览器登录流程与客户端凭据服务间调用后续轮次）
 
 仓库：`wpp/ontodata/portal`
 
@@ -18,14 +18,16 @@ claim 映射——多租户与 ABAC 的调用方接口形状不变（`TenantCont
 
 ### 2.1 双模式（属性开关）
 
-`ontodata.security.oauth2.enabled`（缺省 false）：
+`ontodata.security.oauth2.enabled`（WP-02 起缺省 true，默认即安全）：
 
-- **false（显式头模式，开发/演示）**：现状行为——`TenantContextFilter` 从
-  `X-Tenant-Id` 等请求头装载上下文；生产严禁；
-- **true（IAM 模式）**：`SecurityConfiguration.secureChain` 启用 stateless JWT
-  resource server（`/actuator/health`、`/actuator/info` 放行，其余端点必须携带令牌）；
-  `ClaimContextFilter`（Order(10)，运行在 Security 链 -100 之后）从令牌 claim
-  装载上下文并**覆盖**请求头装载值——显式头被忽略（claims 优先），防止头冒充身份。
+- **true（IAM 模式，缺省生效）**：`SecurityConfiguration.secureChain`（matchIfMissing=true）
+  启用 stateless JWT resource server（`/actuator/health`、`/actuator/info` 放行，
+  其余端点必须携带令牌）；`ClaimContextFilter`（Order(10)，运行在 Security 链 -100 之后）
+  从令牌 claim 装载上下文。此模式下 `TenantContextFilter` 不注册——显式
+  `X-Tenant-Id` 等请求头不作为事实来源，防止头冒充身份；
+- **false（显式头模式，仅限本地开发/演示，须显式配置）**：`SecurityConfiguration.openChain`
+  全部匿名放行（启动日志打 WARN 醒目提示），`TenantContextFilter` 从
+  `X-Tenant-Id` 等请求头装载上下文；生产严禁。
 
 ### 2.2 claim 约定（与 IdP 声明协议一致）
 
