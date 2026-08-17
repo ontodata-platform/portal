@@ -33,6 +33,10 @@ portal/
 
 设计详见 `docs/design/2026-08-14-portal-design.md`。
 
+## 容器化（WP-09）
+
+- 后端镜像：`backend/Dockerfile`（多阶段 Maven 构建、非 root 运行、JVM 参数走 `JAVA_OPTS`）；前端镜像：`frontend/Dockerfile`（pnpm 构建 + nginx-unprivileged 托管 `dist/`）。
+
 ## 约定
 
 - 测试先行、中文 Conventional Commit、Google Java Format（Spotless）、非显然逻辑中文注释。
