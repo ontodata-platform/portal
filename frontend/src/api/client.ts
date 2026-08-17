@@ -6,7 +6,8 @@
  */
 import axios, { type AxiosError } from 'axios'
 
-import { accessToken } from '@/auth/session'
+import { iamEnabled } from '@/auth/oidc'
+import { ensureAccessToken } from '@/auth/session'
 import type { ApiErrorBody } from '@/types/portal'
 import { tenantState } from '@/tenant'
 
@@ -64,11 +65,15 @@ export const client = axios.create({
   timeout: 15000,
 })
 
-// M5 多租户：每个请求携带 X-Tenant-Id（后端 TenantContextFilter 装载租户上下文）
-// M5 IAM：已登录时附加 Bearer 访问令牌（门户 IAM 模式校验 JWT；未登录/未启用不附加）
-client.interceptors.request.use((config) => {
-  config.headers.set('X-Tenant-Id', tenantState.tenantId)
-  const token = accessToken()
+// M5 多租户（仅开发模式）：IAM 关闭时携带 X-Tenant-Id，后端 TenantContextFilter 据此装载
+// 租户上下文；IAM 启用时不携带——请求头可伪造，安全模式下后端以访问令牌中的租户 claim 为准、
+// 忽略该头，前端发送它只会造成"UI 租户"与"实际生效租户"不一致的误导（WP-07 租户头治理）。
+// M5 IAM：发请求前确保令牌有效（临期先 await 续期，并发续期内部去重），再附加 Bearer。
+client.interceptors.request.use(async (config) => {
+  if (!iamEnabled()) {
+    config.headers.set('X-Tenant-Id', tenantState.tenantId)
+  }
+  const token = await ensureAccessToken()
   if (token) {
     config.headers.set('Authorization', `Bearer ${token}`)
   }

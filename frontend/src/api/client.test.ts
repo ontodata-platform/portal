@@ -1,5 +1,5 @@
 import { AxiosHeaders, type InternalAxiosRequestConfig } from 'axios'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { clearSession, saveSession } from '@/auth/session'
 import { DEFAULT_TENANT, setTenant } from '@/tenant'
@@ -68,36 +68,50 @@ describe('X-Tenant-Id 请求拦截器', () => {
   afterEach(() => {
     setTenant(DEFAULT_TENANT)
     clearSession()
+    vi.unstubAllEnvs()
   })
 
-  it('每个请求按当前租户注入 X-Tenant-Id 请求头', () => {
-    setTenant('tenant-a')
+  function runInterceptor() {
     const config = { headers: new AxiosHeaders() } as unknown as InternalAxiosRequestConfig
     const handler = client.interceptors.request.handlers?.[0]
+    return { config, done: handler?.fulfilled?.(config) as Promise<unknown> }
+  }
 
-    handler?.fulfilled?.(config)
+  it('IAM 关闭（开发模式）：每个请求按当前租户注入 X-Tenant-Id 请求头', async () => {
+    setTenant('tenant-a')
+    const { config, done } = runInterceptor()
+    await done
 
     expect(config.headers.get('X-Tenant-Id')).toBe('tenant-a')
   })
 
-  it('缺省租户 default 同样注入请求头', () => {
-    const config = { headers: new AxiosHeaders() } as unknown as InternalAxiosRequestConfig
-    const handler = client.interceptors.request.handlers?.[0]
-
-    handler?.fulfilled?.(config)
+  it('IAM 关闭（开发模式）：缺省租户 default 同样注入请求头', async () => {
+    const { config, done } = runInterceptor()
+    await done
 
     expect(config.headers.get('X-Tenant-Id')).toBe(DEFAULT_TENANT)
   })
 
-  it('登录后附加 Bearer 访问令牌（M5 IAM），登出/过期后不附加', () => {
-    saveSession({ accessToken: 'token-1', expiresAt: Date.now() + 60_000 })
-    const withToken = { headers: new AxiosHeaders() } as unknown as InternalAxiosRequestConfig
-    client.interceptors.request.handlers?.[0]?.fulfilled?.(withToken)
-    expect(withToken.headers.get('Authorization')).toBe('Bearer token-1')
+  it('IAM 启用（安全模式）：不携带 X-Tenant-Id——头可伪造，后端以令牌租户 claim 为准', async () => {
+    vi.stubEnv('VITE_IAM_ENABLED', 'true')
+    setTenant('tenant-a')
+    saveSession({ accessToken: 'token-1', expiresAt: Date.now() + 600_000 })
+    const { config, done } = runInterceptor()
+    await done
+
+    expect(config.headers.get('X-Tenant-Id')).toBeUndefined()
+    expect(config.headers.get('Authorization')).toBe('Bearer token-1')
+  })
+
+  it('登录后附加 Bearer 访问令牌（M5 IAM），登出/过期后不附加', async () => {
+    saveSession({ accessToken: 'token-1', expiresAt: Date.now() + 600_000 })
+    const withToken = runInterceptor()
+    await withToken.done
+    expect(withToken.config.headers.get('Authorization')).toBe('Bearer token-1')
 
     clearSession()
-    const withoutToken = { headers: new AxiosHeaders() } as unknown as InternalAxiosRequestConfig
-    client.interceptors.request.handlers?.[0]?.fulfilled?.(withoutToken)
-    expect(withoutToken.headers.get('Authorization')).toBeUndefined()
+    const withoutToken = runInterceptor()
+    await withoutToken.done
+    expect(withoutToken.config.headers.get('Authorization')).toBeUndefined()
   })
 })
