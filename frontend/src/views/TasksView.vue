@@ -20,7 +20,7 @@ const detail = ref<PortalTask | null>(null)
 const columns = computed(() => [
   { title: t('tasks.taskId'), dataIndex: 'taskId', key: 'taskId' },
   { title: t('common.type'), dataIndex: 'taskType', key: 'taskType' },
-  { title: t('common.sourceSystem'), dataIndex: 'ownerSystem', key: 'ownerSystem' },
+  { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem' },
   { title: t('common.status'), dataIndex: 'status', key: 'status' },
   { title: t('common.progress'), dataIndex: 'progress', key: 'progress' },
   { title: t('common.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt' },
@@ -129,7 +129,7 @@ onMounted(load)
       <a-descriptions v-if="detail" :column="1" bordered size="small">
         <a-descriptions-item :label="t('tasks.taskId')">{{ detail.taskId }}</a-descriptions-item>
         <a-descriptions-item :label="t('common.type')">{{ detail.taskType }}</a-descriptions-item>
-        <a-descriptions-item :label="t('common.sourceSystem')">{{ detail.ownerSystem }}</a-descriptions-item>
+        <a-descriptions-item :label="t('common.sourceSystem')">{{ detail.sourceSystem }}</a-descriptions-item>
         <a-descriptions-item :label="t('common.status')">{{ detail.status }}</a-descriptions-item>
         <a-descriptions-item :label="t('tasks.stage')">{{ detail.stage ?? '-' }}</a-descriptions-item>
         <a-descriptions-item :label="t('common.progress')">{{ detail.progress }}%</a-descriptions-item>

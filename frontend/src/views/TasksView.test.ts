@@ -53,7 +53,7 @@ describe('TasksView', () => {
         {
           taskId: 'task-100',
           taskType: 'DATA_INGEST',
-          ownerSystem: 'data-platform',
+          sourceSystem: 'data-platform',
           status: 'RUNNING',
           stage: 'LOAD',
           progress: 30,
@@ -66,7 +66,7 @@ describe('TasksView', () => {
     findMock.mockResolvedValue({
       taskId: 'task-100',
       taskType: 'DATA_INGEST',
-      ownerSystem: 'data-platform',
+      sourceSystem: 'data-platform',
       status: 'RUNNING',
       stage: 'LOAD',
       progress: 30,

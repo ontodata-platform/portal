@@ -20,9 +20,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 统一任务中心服务：各软件任务聚合副本的幂等 upsert 与查询。
+ * 统一任务中心服务：各源系统任务投影的查询，与过渡兼容的回调式幂等 upsert。
  *
- * <p>任务权威归产生它的软件（§12.3）：门户副本按 taskId 幂等更新（重复事件不产生 脏数据），进度只增不回退；按状态/来源系统过滤；详情携带 traceId 供源软件对账。
+ * <p>投影语义（WP-03，收敛文档 §8.1）：门户任务是源系统任务状态的事件投影——权威状态在源系统， 投影可由事件流重放重建；按 taskId
+ * 幂等更新（重复事件不产生脏数据），进度只增不回退； 按状态/来源系统过滤；详情携带 traceId 供源系统对账。
+ *
+ * <p>{@link #upsert} 为 WP-03 之前的回调路径（过渡兼容，事件链路稳定后下线）：因回调请求本身 不携带 eventId/aggregateVersion，无法过消费者
+ * inbox 幂等表——其幂等性由自然键 (tenant_id, task_id) 唯一约束 + "进度只增不回退"不变量保证，与事件路径的裁决结果一致。
  */
 @Service
 public class PortalTaskService {
@@ -57,7 +61,7 @@ public class PortalTaskService {
               new PortalTask(
                   request.getTaskId().trim(),
                   request.getTaskType().trim(),
-                  request.getOwnerSystem().trim(),
+                  request.getSourceSystem().trim(),
                   trimToNull(request.getParentTaskId()),
                   request.getStatus().trim(),
                   trimToNull(request.getStage()),
@@ -105,7 +109,8 @@ public class PortalTaskService {
     }
     if (parameters.getDomain() != null) {
       predicates.add(
-          (root, query, builder) -> builder.equal(root.get("ownerSystem"), parameters.getDomain()));
+          (root, query, builder) ->
+              builder.equal(root.get("sourceSystem"), parameters.getDomain()));
     }
     Specification<PortalTask> combined =
         predicates.stream().reduce(Specification.where(null), Specification::and);

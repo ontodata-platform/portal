@@ -8,9 +8,12 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 /**
- * 任务事件上报请求（总体设计 §12.3）：源软件向统一任务中心上报任务状态变更。
+ * 任务状态上报请求（总体设计 §12.3）——<b>过渡兼容接口</b>。
  *
- * <p>taskId 为源软件内部标识，门户按它做幂等 upsert；同一 taskId 的重复事件被折叠。
+ * <p>WP-03 起任务投影由事件订阅驱动（Kafka 消费统一事件信封），本回调路径仅保留至事件链路 稳定，此后随 ADR-006 弃用边界下线（源系统不再被要求主动推送）。
+ *
+ * <p>taskId 为源系统内部标识，门户按它做幂等 upsert；同一 taskId 的重复上报被折叠。 字段 {@code sourceSystem} 对齐契约 task/v1 与收敛文档
+ * §8.1（WP-03 由 ownerSystem 更名）。
  */
 public class UpsertPortalTaskRequest {
 
@@ -24,7 +27,7 @@ public class UpsertPortalTaskRequest {
 
   @NotBlank(message = "来源系统不能为空")
   @Pattern(regexp = "[a-z][a-z0-9\\-]{0,31}", message = "来源系统只能是 1-32 位小写字母、数字或连字符")
-  private String ownerSystem;
+  private String sourceSystem;
 
   @Size(max = 128, message = "父任务标识不能超过 128 个字符")
   private String parentTaskId;
@@ -63,12 +66,12 @@ public class UpsertPortalTaskRequest {
     this.taskType = taskType;
   }
 
-  public String getOwnerSystem() {
-    return ownerSystem;
+  public String getSourceSystem() {
+    return sourceSystem;
   }
 
-  public void setOwnerSystem(String ownerSystem) {
-    this.ownerSystem = ownerSystem;
+  public void setSourceSystem(String sourceSystem) {
+    this.sourceSystem = sourceSystem;
   }
 
   public String getParentTaskId() {

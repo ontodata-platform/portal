@@ -19,11 +19,11 @@ export interface ApiErrorBody {
   fieldErrors?: Record<string, string>
 }
 
-/** 任务聚合副本（task-center）：权威归产生它的软件。 */
+/** 任务投影（task-center）：权威状态在源系统，门户副本可由事件流重建。 */
 export interface PortalTask {
   taskId: string
   taskType: string
-  ownerSystem: string
+  sourceSystem: string
   parentTaskId?: string
   status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'CANCELED'
   stage?: string

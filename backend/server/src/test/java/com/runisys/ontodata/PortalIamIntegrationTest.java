@@ -80,7 +80,7 @@ class PortalIamIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"taskId":"task-iam","taskType":"DATA_INGEST","ownerSystem":"data-platform",
+                    {"taskId":"task-iam","taskType":"DATA_INGEST","sourceSystem":"data-platform",
                      "status":"RUNNING","progress":10,"resourceRefs":[],"resultRefs":[]}
                     """))
         .andExpect(status().isOk());
@@ -138,7 +138,7 @@ class PortalIamIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"taskId":"task-header","taskType":"DATA_INGEST","ownerSystem":"data-platform",
+                    {"taskId":"task-header","taskType":"DATA_INGEST","sourceSystem":"data-platform",
                      "status":"RUNNING","progress":10,"resourceRefs":[],"resultRefs":[]}
                     """))
         .andExpect(status().isOk());

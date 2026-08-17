@@ -43,7 +43,7 @@ class PortalTenantIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"taskId":"task-tenant","taskType":"DATA_INGEST","ownerSystem":"data-platform",
+                    {"taskId":"task-tenant","taskType":"DATA_INGEST","sourceSystem":"data-platform",
                      "status":"RUNNING","progress":10,"resourceRefs":[],"resultRefs":[]}
                     """))
         .andExpect(status().isOk());
@@ -90,7 +90,7 @@ class PortalTenantIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"taskId":"task-tenant","taskType":"DATA_INGEST","ownerSystem":"data-platform",
+                    {"taskId":"task-tenant","taskType":"DATA_INGEST","sourceSystem":"data-platform",
                      "status":"RUNNING","progress":20,"resourceRefs":[],"resultRefs":[]}
                     """))
         .andExpect(status().isOk());

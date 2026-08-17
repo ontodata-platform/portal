@@ -44,12 +44,12 @@ class PortalIntegrationTest {
   @Autowired private PortalResultRepository resultRepository;
 
   private String taskJson(
-      String taskId, String status, int progress, String ownerSystem, String stage) {
+      String taskId, String status, int progress, String sourceSystem, String stage) {
     return """
         {
           "taskId": "%s",
           "taskType": "DATA_INGEST",
-          "ownerSystem": "%s",
+          "sourceSystem": "%s",
           "status": "%s",
           "stage": "%s",
           "progress": %d,
@@ -58,7 +58,7 @@ class PortalIntegrationTest {
           "traceId": "trace-1"
         }
         """
-        .formatted(taskId, ownerSystem, status, stage, progress);
+        .formatted(taskId, sourceSystem, status, stage, progress);
   }
 
   @Test
@@ -102,7 +102,7 @@ class PortalIntegrationTest {
                 .content(taskJson("exe-200", "RUNNING", 50, "recombine", "NODE-2")))
         .andExpect(status().isOk());
 
-    // 按来源过滤（domain 映射 ownerSystem，来源软件名是小写）
+    // 按来源过滤（domain 映射 sourceSystem，来源软件名是小写）
     mockMvc
         .perform(get("/api/v1/tasks").param("domain", "recombine"))
         .andExpect(status().isOk())

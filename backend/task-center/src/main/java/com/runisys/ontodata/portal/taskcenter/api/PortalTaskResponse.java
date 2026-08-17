@@ -6,12 +6,12 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
-/** 任务聚合副本的对外视图。 */
+/** 任务投影的对外视图（WP-03：投影可由事件流重建，权威状态在源系统）。 */
 public class PortalTaskResponse {
 
   private final String taskId;
   private final String taskType;
-  private final String ownerSystem;
+  private final String sourceSystem;
   private final String parentTaskId;
   private final String status;
   private final String stage;
@@ -25,7 +25,7 @@ public class PortalTaskResponse {
   private PortalTaskResponse(
       String taskId,
       String taskType,
-      String ownerSystem,
+      String sourceSystem,
       String parentTaskId,
       String status,
       String stage,
@@ -37,7 +37,7 @@ public class PortalTaskResponse {
       Instant updatedAt) {
     this.taskId = taskId;
     this.taskType = taskType;
-    this.ownerSystem = ownerSystem;
+    this.sourceSystem = sourceSystem;
     this.parentTaskId = parentTaskId;
     this.status = status;
     this.stage = stage;
@@ -55,7 +55,7 @@ public class PortalTaskResponse {
     return new PortalTaskResponse(
         task.getTaskId(),
         task.getTaskType(),
-        task.getOwnerSystem(),
+        task.getSourceSystem(),
         task.getParentTaskId(),
         task.getStatus(),
         task.getStage(),
@@ -88,8 +88,8 @@ public class PortalTaskResponse {
     return taskType;
   }
 
-  public String getOwnerSystem() {
-    return ownerSystem;
+  public String getSourceSystem() {
+    return sourceSystem;
   }
 
   public String getParentTaskId() {

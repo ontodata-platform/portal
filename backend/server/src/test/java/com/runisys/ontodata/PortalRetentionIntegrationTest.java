@@ -43,7 +43,7 @@ class PortalRetentionIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"taskId":"task-retention","taskType":"DATA_INGEST","ownerSystem":"data-platform",
+                    {"taskId":"task-retention","taskType":"DATA_INGEST","sourceSystem":"data-platform",
                      "status":"SUCCESS","progress":100,"resourceRefs":[],"resultRefs":[]}
                     """))
         .andExpect(status().isOk());
