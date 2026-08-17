@@ -17,3 +17,8 @@ ontodata:
       # 这里显式关闭以保持其语义不变（安全路径由 PortalIamIntegrationTest 等
       # 逐类用 TestPropertySource 显式 enabled=true 覆盖）
       enabled: false
+  events:
+    kafka:
+      # WP-03：测试环境不起 Kafka 消费装配（无 broker）；监听器核心逻辑抽在
+      # TaskProjectionEventHandler，由集成测试直接驱动
+      enabled: false

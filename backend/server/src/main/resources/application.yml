@@ -9,6 +9,9 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+  # WP-03 任务投影消费：bootstrap 走环境变量 KAFKA_BOOTSTRAP_SERVERS（默认本地）
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -34,6 +37,12 @@ ontodata:
       # 未配置则启动即失败。仅本地无 IdP 开发/演示可显式 IAM_ENABLED=false 退回显式头模式
       #（全部请求匿名放行，启动日志有 WARN 提示，严禁用于生产）。
       enabled: ${IAM_ENABLED:true}
+  events:
+    kafka:
+      # WP-03 事件驱动的任务投影：缺省 true=订阅六个域主题构建任务投影（消费组
+      # portal.task-projection，DLQ <topic>.dlq，ADR-006）；显式 false 关闭消费装配
+      #（未部署总线的环境与测试使用）
+      enabled: ${KAFKA_EVENTS_ENABLED:true}
   retention:
     # 数据保留（M5）：超过保留期的终态记录可清理（dryRun 先演练），默认 180 天
     days: ${RETENTION_DAYS:180}

@@ -14,7 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 统一任务中心 REST 接口。
  *
- * <p>PUT /tasks/{taskId} 幂等 upsert：源软件把事件按 taskId 上报，门户折叠重复事件。
+ * <p>查询路径（GET）读取任务投影（WP-03：投影由事件订阅驱动，权威状态在源系统，可由事件流重建）。
+ *
+ * <p>PUT /tasks/{taskId} 为 WP-03 之前的回调式幂等 upsert——<b>过渡兼容保留</b>，事件链路稳定后 随 ADR-006
+ * 弃用边界下线（源系统不再被要求主动推送）。
  */
 @RestController
 @RequestMapping("/api/v1/tasks")
@@ -26,6 +29,15 @@ public class PortalTaskController {
     this.taskService = taskService;
   }
 
+  /**
+   * 回调式幂等 upsert（过渡兼容）。
+   *
+   * <p>为何不过消费者 inbox：回调请求不携带 eventId/aggregateVersion，没有 inbox 去重键； 其幂等性由自然键 (tenant_id, task_id)
+   * 唯一约束 + "进度只增不回退"不变量保证， 与事件路径裁决结果一致（详见 PortalTaskService 类注释）。
+   *
+   * @deprecated WP-03 起任务投影由事件订阅驱动；本端点过渡兼容保留，事件链路稳定后下线。
+   */
+  @Deprecated
   @PutMapping("/{taskId}")
   public PortalTaskResponse upsert(
       @PathVariable String taskId, @Valid @RequestBody UpsertPortalTaskRequest request) {
