@@ -39,6 +39,14 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- S2/B2 收敛：platform-sdk 版本由 BOM 统一管理，sdk-* 依赖不再硬编码版本号 -->
+            <dependency>
+                <groupId>com.runisys.ontodata</groupId>
+                <artifactId>ontodata-sdk-bom</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>com.runisys.ontodata</groupId>
                 <artifactId>portal-common</artifactId>
