@@ -52,6 +52,7 @@ const router = createRouter({
         { path: 'results', component: () => import('@/views/ResultsView.vue'), meta: { titleKey: 'menu.results' } },
         { path: 'requirements', component: () => import('@/views/RequirementsView.vue'), meta: { titleKey: 'menu.requirements' } },
         { path: 'personal', component: () => import('@/views/PersonalCenterView.vue'), meta: { titleKey: 'menu.personal' } },
+        { path: 'agent/chat', component: () => import('@/views/AgentChatView.vue'), meta: { titleKey: 'menu.agentChat' } },
       ],
     },
   ],

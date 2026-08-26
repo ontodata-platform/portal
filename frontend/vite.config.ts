@@ -19,6 +19,11 @@ export default defineConfig({
         target: 'http://localhost:18085',
         changeOrigin: true,
       },
+      // agent-runtime 智能体运行时（端口 18086，REST + SSE；路径原生以 /agent 开头，无需 rewrite）
+      '/agent': {
+        target: 'http://localhost:18086',
+        changeOrigin: true,
+      },
     },
   },
 })

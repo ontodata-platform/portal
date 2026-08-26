@@ -4,7 +4,7 @@
  * 后端（common 模块 GlobalExceptionHandler）错误结构：{ status, code, message, path, traceId, fieldErrors }；
  * 网络层失败（超时/断连）归一为中文 ApiError，traceId 用于后端日志对账。
  */
-import axios, { type AxiosError } from 'axios'
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
 import { iamEnabled } from '@/auth/oidc'
 import { ensureAccessToken } from '@/auth/session'
@@ -60,16 +60,15 @@ export class ApiError extends Error {
   }
 }
 
-export const client = axios.create({
-  baseURL: '/api/v1',
-  timeout: 15000,
-})
-
-// M5 多租户（仅开发模式）：IAM 关闭时携带 X-Tenant-Id，后端 TenantContextFilter 据此装载
-// 租户上下文；IAM 启用时不携带——请求头可伪造，安全模式下后端以访问令牌中的租户 claim 为准、
-// 忽略该头，前端发送它只会造成"UI 租户"与"实际生效租户"不一致的误导（WP-07 租户头治理）。
-// M5 IAM：发请求前确保令牌有效（临期先 await 续期，并发续期内部去重），再附加 Bearer。
-client.interceptors.request.use(async (config) => {
+/**
+ * 认证/租户请求拦截器（门户后端与 agent-runtime 共用）。
+ *
+ * M5 多租户（仅开发模式）：IAM 关闭时携带 X-Tenant-Id，后端 TenantContextFilter 据此装载
+ * 租户上下文；IAM 启用时不携带——请求头可伪造，安全模式下后端以访问令牌中的租户 claim 为准、
+ * 忽略该头，前端发送它只会造成"UI 租户"与"实际生效租户"不一致的误导（WP-07 租户头治理）。
+ * M5 IAM：发请求前确保令牌有效（临期先 await 续期，并发续期内部去重），再附加 Bearer。
+ */
+async function attachAuth(config: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> {
   if (!iamEnabled()) {
     config.headers.set('X-Tenant-Id', tenantState.tenantId)
   }
@@ -78,12 +77,31 @@ client.interceptors.request.use(async (config) => {
     config.headers.set('Authorization', `Bearer ${token}`)
   }
   return config
+}
+
+function rejectApiError(error: unknown): Promise<never> {
+  return Promise.reject(ApiError.from(error))
+}
+
+export const client = axios.create({
+  baseURL: '/api/v1',
+  timeout: 15000,
 })
 
-client.interceptors.response.use(
-  (response) => response,
-  (error) => Promise.reject(ApiError.from(error)),
-)
+client.interceptors.request.use(attachAuth)
+client.interceptors.response.use((response) => response, rejectApiError)
+
+/**
+ * agent-runtime 智能体运行时客户端（A5）：独立服务（端口 18086），baseURL 为 /agent——
+ * dev 由 vite proxy 转发，生产由网关 nginx 按 /agent/* 路由；认证/错误约定与门户后端一致。
+ */
+export const agentClient = axios.create({
+  baseURL: '/agent',
+  timeout: 15000,
+})
+
+agentClient.interceptors.request.use(attachAuth)
+agentClient.interceptors.response.use((response) => response, rejectApiError)
 
 /** 解析 textarea 中的 JSON，失败抛中文 ApiError（表单层捕获提示）。 */
 export function parseJsonOrThrow(text: string, label: string): unknown {

@@ -5,6 +5,7 @@ import {
   CarryOutOutlined,
   FileDoneOutlined,
   HomeOutlined,
+  RobotOutlined,
   ShopOutlined,
   SolutionOutlined,
   UserOutlined,
@@ -36,6 +37,7 @@ const menus = computed(() => [
   { key: '/results', label: t('menu.results'), icon: FileDoneOutlined },
   { key: '/requirements', label: t('menu.requirements'), icon: SolutionOutlined },
   { key: '/personal', label: t('menu.personal'), icon: UserOutlined },
+  { key: '/agent/chat', label: t('menu.agentChat'), icon: RobotOutlined },
 ])
 
 const selectedKey = computed(() => route.path)
