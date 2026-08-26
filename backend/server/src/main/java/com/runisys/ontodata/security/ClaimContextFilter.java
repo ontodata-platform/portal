@@ -56,11 +56,17 @@ public class ClaimContextFilter extends OncePerRequestFilter {
     }
     TenantContext.set(claims.tenantId());
     PermissionContext.set(claims.orgId(), claims.projectId(), claims.clearance());
+    // S2 迁移桥接：SDK OutboxEvent 构造读取 TenantProjectContext（硬边界），
+    // 与旧上下文同步装载/清理；安全模式租户来自已验证 claim，必非空
+    com.runisys.ontodata.sdk.context.TenantProjectContext.populate(
+        claims.tenantId(), claims.projectId(), null,
+        com.runisys.ontodata.sdk.context.TenantProjectContext.Classification.INTERNAL, false);
     MDC.put(TenantContextFilter.MDC_KEY, claims.tenantId());
     try {
       filterChain.doFilter(request, response);
     } finally {
       MDC.remove(TenantContextFilter.MDC_KEY);
+      com.runisys.ontodata.sdk.context.TenantProjectContext.clear();
       TenantContext.clear();
       PermissionContext.clear();
     }

@@ -18,6 +18,8 @@ ontodata:
       # 逐类用 TestPropertySource 显式 enabled=true 覆盖）
       enabled: false
   events:
+    # S2 收敛：集成测试断言信封 producer 字段
+    producer: portal
     kafka:
       # WP-03：测试环境不起 Kafka 消费装配（无 broker）；监听器核心逻辑抽在
       # TaskProjectionEventHandler，由集成测试直接驱动

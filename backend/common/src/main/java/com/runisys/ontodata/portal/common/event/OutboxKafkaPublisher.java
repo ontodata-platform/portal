@@ -1,5 +1,7 @@
 package com.runisys.ontodata.portal.common.event;
 
+import com.runisys.ontodata.sdk.events.OutboxEvent;
+import com.runisys.ontodata.sdk.events.OutboxEventRepository;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +21,7 @@ import org.springframework.stereotype.Component;
  * <p>降级语义：开关 {@code ontodata.events.kafka.enabled=false} 或 Kafka 不可达都不影响主流程—— 前者整个 Bean
  * 不装配，后者本轮发送失败仅记警告、事件留在表内等待恢复后补投。
  */
-@Component
+@Component("portalOutboxKafkaPublisher")
 @ConditionalOnProperty(
     prefix = "ontodata.events.kafka",
     name = "enabled",

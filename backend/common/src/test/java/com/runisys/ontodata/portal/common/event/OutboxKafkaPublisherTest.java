@@ -12,6 +12,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.runisys.ontodata.sdk.context.TenantProjectContext;
+import com.runisys.ontodata.sdk.events.OutboxEvent;
+import com.runisys.ontodata.sdk.events.OutboxEventRepository;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -40,13 +44,21 @@ class OutboxKafkaPublisherTest {
     KafkaTemplate<String, String> template = mock(KafkaTemplate.class);
     kafkaTemplate = template;
     publisher = new OutboxKafkaPublisher(outboxRepository, outboxEventService, kafkaTemplate);
+    // S2 收敛：SDK OutboxEvent 构造读取 TenantProjectContext（硬边界），测试显式装载
+    TenantProjectContext.populate("tenant-a", null, null,
+        TenantProjectContext.Classification.INTERNAL, false);
+  }
+
+  @org.junit.jupiter.api.AfterEach
+  void tearDown() {
+    TenantProjectContext.clear();
   }
 
   private OutboxEvent pendingEvent(String eventId, String aggregateId) {
     return new OutboxEvent(
         eventId,
         "portal.approval.decided",
-        EventTopics.PORTAL_APPROVAL_V1,
+        PortalTopicRegistry.PORTAL_APPROVAL_V1,
         aggregateId,
         "{\"eventId\":\"" + eventId + "\"}",
         Instant.now());
@@ -62,14 +74,14 @@ class OutboxKafkaPublisherTest {
     when(outboxRepository.findByPublishedAtIsNullOrderByOccurredAtAsc(any(Pageable.class)))
         .thenReturn(List.of(event));
     when(kafkaTemplate.send(
-            EventTopics.PORTAL_APPROVAL_V1, "apr-1a2b3c4d", "{\"eventId\":\"evt-1\"}"))
+            PortalTopicRegistry.PORTAL_APPROVAL_V1, "apr-1a2b3c4d", "{\"eventId\":\"evt-1\"}"))
         .thenReturn(completedSend());
 
     publisher.publishPending();
 
     // 键 = aggregateId（同聚合同分区保序），值为信封原文
     verify(kafkaTemplate)
-        .send(EventTopics.PORTAL_APPROVAL_V1, "apr-1a2b3c4d", "{\"eventId\":\"evt-1\"}");
+        .send(PortalTopicRegistry.PORTAL_APPROVAL_V1, "apr-1a2b3c4d", "{\"eventId\":\"evt-1\"}");
     verify(outboxEventService).markPublished("evt-1");
   }
 

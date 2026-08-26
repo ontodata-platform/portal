@@ -38,6 +38,8 @@ ontodata:
       #（全部请求匿名放行，启动日志有 WARN 提示，严禁用于生产）。
       enabled: ${IAM_ENABLED:true}
   events:
+    # S2 收敛：SDK 信封 producer 标识（必填，缺失拒绝记事件）
+    producer: portal
     kafka:
       # WP-03 事件驱动的任务投影：缺省 true=订阅六个域主题构建任务投影（消费组
       # portal.task-projection，DLQ <topic>.dlq，ADR-006）；显式 false 关闭消费装配

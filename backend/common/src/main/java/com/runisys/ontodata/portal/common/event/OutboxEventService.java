@@ -3,6 +3,8 @@ package com.runisys.ontodata.portal.common.event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.runisys.ontodata.portal.common.PermissionContext;
+import com.runisys.ontodata.sdk.events.OutboxEvent;
+import com.runisys.ontodata.sdk.events.OutboxEventRepository;
 import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.RequestTraceFilter;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
@@ -22,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>不变量（契约 integration/README）：载荷只放必要状态变化与资源引用（稳定编码、版本），不放完整业务对象与敏感数据； 消费者按 eventId 去重，以
  * aggregateVersion 防旧事件覆盖；生产 Outbox、消费 Inbox。
  */
-@Service
+@Service("portalOutboxEventService")
 public class OutboxEventService {
 
   /** 信封 producer 枚举值（契约 integration/v1/event-envelope.schema.json）。 */
@@ -33,10 +35,15 @@ public class OutboxEventService {
 
   private final OutboxEventRepository outboxRepository;
   private final ObjectMapper objectMapper;
+  private final com.runisys.ontodata.sdk.events.TopicRegistry topicRegistry;
 
-  public OutboxEventService(OutboxEventRepository outboxRepository, ObjectMapper objectMapper) {
+  public OutboxEventService(
+      OutboxEventRepository outboxRepository,
+      ObjectMapper objectMapper,
+      com.runisys.ontodata.sdk.events.TopicRegistry topicRegistry) {
     this.outboxRepository = outboxRepository;
     this.objectMapper = objectMapper;
+    this.topicRegistry = topicRegistry;
   }
 
   /**
@@ -54,7 +61,7 @@ public class OutboxEventService {
       String aggregateId,
       String aggregateVersion,
       Map<String, Object> payload) {
-    String topic = EventTopics.forEventType(eventType);
+    String topic = topicRegistry.forEventType(eventType);
     Instant now = Instant.now();
     Map<String, Object> envelope = new LinkedHashMap<>();
     String eventId = UUID.randomUUID().toString();

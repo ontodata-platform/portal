@@ -12,9 +12,10 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
-import com.runisys.ontodata.portal.common.event.EventTopics;
-import com.runisys.ontodata.portal.common.event.OutboxEvent;
-import com.runisys.ontodata.portal.common.event.OutboxEventRepository;
+
+import com.runisys.ontodata.portal.common.event.PortalTopicRegistry;
+import com.runisys.ontodata.sdk.events.OutboxEvent;
+import com.runisys.ontodata.sdk.events.OutboxEventRepository;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +93,7 @@ class PortalApprovalDecidedEventTest {
     assertEquals(1, events.size(), "决策落定应恰好产生一条 portal.approval.decided 事件");
     OutboxEvent event = events.get(0);
     assertEquals("portal.approval.decided", event.getEventType());
-    assertEquals(EventTopics.PORTAL_APPROVAL_V1, event.getTopic());
+    assertEquals(PortalTopicRegistry.PORTAL_APPROVAL_V1, event.getTopic());
     assertEquals(code, event.getAggregateId());
     // 测试环境 Kafka 关闭：事件留在表内待投（EVT-01：不影响主流程，恢复后补投）
     assertNull(event.getPublishedAt());

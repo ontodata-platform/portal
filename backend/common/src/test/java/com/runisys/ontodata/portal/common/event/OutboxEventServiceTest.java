@@ -11,6 +11,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.runisys.ontodata.portal.common.PermissionContext;
 import com.runisys.ontodata.portal.common.TenantContext;
+import com.runisys.ontodata.sdk.context.TenantProjectContext;
+import com.runisys.ontodata.sdk.events.OutboxEvent;
+import com.runisys.ontodata.sdk.events.OutboxEventRepository;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,11 +36,15 @@ class OutboxEventServiceTest {
   @BeforeEach
   void setUp() {
     outboxRepository = mock(OutboxEventRepository.class);
-    service = new OutboxEventService(outboxRepository, objectMapper);
+    // S2 收敛：SDK OutboxEvent 构造经 TenantProjectContext.requireTenant()（硬边界），
+    // 生产环境由 ClaimContextFilter/TenantContextFilter 桥接装载，测试按场景显式 populate
+    service =
+        new OutboxEventService(outboxRepository, objectMapper, new PortalTopicRegistry());
   }
 
   @AfterEach
   void tearDown() {
+    TenantProjectContext.clear();
     TenantContext.clear();
     PermissionContext.clear();
   }
@@ -45,6 +52,8 @@ class OutboxEventServiceTest {
   @Test
   void recordBuildsContractEnvelopeAndMapsTopic() throws Exception {
     TenantContext.set("tenant-a");
+    TenantProjectContext.populate("tenant-a", null, null,
+        TenantProjectContext.Classification.INTERNAL, false);
     PermissionContext.set("org-1", null, null);
     Map<String, Object> payload =
         Map.of(
@@ -62,7 +71,7 @@ class OutboxEventServiceTest {
     verify(outboxRepository).save(captor.capture());
     OutboxEvent saved = captor.getValue();
     assertEquals("portal.approval.decided", saved.getEventType());
-    assertEquals(EventTopics.PORTAL_APPROVAL_V1, saved.getTopic());
+    assertEquals(PortalTopicRegistry.PORTAL_APPROVAL_V1, saved.getTopic());
     assertEquals("apr-1a2b3c4d", saved.getAggregateId());
     assertEquals("tenant-a", saved.getTenantId());
 
@@ -82,6 +91,10 @@ class OutboxEventServiceTest {
 
   @Test
   void recordFallsBackToDefaultTenantOutsideRequest() throws Exception {
+    // 非请求线程缺省回落 default：旧上下文自然回落；SDK 硬边界上下文由桥接层（生产）/
+    // 本测试显式 populate 保证语义一致
+    TenantProjectContext.populate(TenantContext.DEFAULT_TENANT, null, null,
+        TenantProjectContext.Classification.INTERNAL, false);
     service.record(
         "portal.approval.decided",
         "ApprovalRequest",
@@ -93,7 +106,7 @@ class OutboxEventServiceTest {
     verify(outboxRepository).save(captor.capture());
     JsonNode envelope = objectMapper.readTree(captor.getValue().getEnvelopeJson());
     assertEquals(TenantContext.DEFAULT_TENANT, envelope.path("tenantId").asText());
-    assertEquals(EventTopics.PORTAL_APPROVAL_V1, captor.getValue().getTopic());
+    assertEquals(PortalTopicRegistry.PORTAL_APPROVAL_V1, captor.getValue().getTopic());
   }
 
   @Test

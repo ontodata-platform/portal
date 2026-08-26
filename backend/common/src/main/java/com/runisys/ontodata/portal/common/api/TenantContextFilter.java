@@ -75,11 +75,17 @@ public class TenantContextFilter extends OncePerRequestFilter {
 
     TenantContext.set(tenantId);
     PermissionContext.set(orgId, projectId, clearance);
+    // S2 迁移桥接：SDK OutboxEvent 构造读取 TenantProjectContext（硬边界），
+    // 与旧上下文同步装载/清理；缺省 default 与旧语义一致
+    com.runisys.ontodata.sdk.context.TenantProjectContext.populate(
+        tenantId, projectId, null,
+        com.runisys.ontodata.sdk.context.TenantProjectContext.Classification.INTERNAL, false);
     MDC.put(MDC_KEY, tenantId);
     try {
       filterChain.doFilter(request, response);
     } finally {
       MDC.remove(MDC_KEY);
+      com.runisys.ontodata.sdk.context.TenantProjectContext.clear();
       TenantContext.clear();
       PermissionContext.clear();
     }
