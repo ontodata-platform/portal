@@ -3,6 +3,7 @@ import {
   AppstoreOutlined,
   AuditOutlined,
   CarryOutOutlined,
+  DeploymentUnitOutlined,
   FileDoneOutlined,
   HomeOutlined,
   RobotOutlined,
@@ -36,6 +37,7 @@ const menus = computed(() => [
   { key: '/approvals', label: t('menu.approvals'), icon: AuditOutlined },
   { key: '/results', label: t('menu.results'), icon: FileDoneOutlined },
   { key: '/requirements', label: t('menu.requirements'), icon: SolutionOutlined },
+  { key: '/scenarios', label: t('menu.scenarios'), icon: DeploymentUnitOutlined },
   { key: '/personal', label: t('menu.personal'), icon: UserOutlined },
   { key: '/agent/chat', label: t('menu.agentChat'), icon: RobotOutlined },
 ])

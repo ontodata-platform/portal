@@ -136,3 +136,41 @@ export interface PersonalTodo {
   myRequirementCount: number
   myApprovalCount: number
 }
+
+/** 场景装配绑定（scenario-center，scenario/v1 契约）：版本一律精确钉扎 x.y.z。 */
+export interface ScenarioBinding {
+  type: 'DATA_SNAPSHOT' | 'CAPABILITY' | 'WORKFLOW_TEMPLATE'
+  ref: string
+  version: string
+  alias?: string
+  sourceSystem: 'DATA_PLATFORM' | 'ALGORITHM_TRANSFORM' | 'ALGORITHM_RECOMBINE'
+}
+
+/** 本体发布包引用：packageCode 为 pkg-*，version 精确钉扎。 */
+export interface ScenarioOntologyRef {
+  packageCode: string
+  version: string
+}
+
+/** 展示配置（可选）：widget 的 bindingAlias 必须指向 bindings[].alias。 */
+export interface ScenarioPresentation {
+  entryView?: string
+  widgets?: { kind: 'TABLE' | 'CHART' | 'METRIC' | 'REPORT_LINK'; bindingAlias: string; config?: Record<string, unknown> }[]
+}
+
+/** 场景（scenario-center）：scn-* 编码 + 不可变语义版本，DRAFT→PUBLISHED→DEPRECATED。 */
+export interface PortalScenario {
+  code: string
+  version: string
+  name: string
+  description?: string
+  projectId?: string
+  status: 'DRAFT' | 'PUBLISHED' | 'DEPRECATED'
+  ontologyRefs?: ScenarioOntologyRef[]
+  bindings: ScenarioBinding[]
+  presentation?: ScenarioPresentation
+  tenantId: string
+  createdBy?: string
+  createdAt: string
+  updatedAt: string
+}

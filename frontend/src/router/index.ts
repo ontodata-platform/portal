@@ -51,6 +51,7 @@ const router = createRouter({
         { path: 'approvals', component: () => import('@/views/ApprovalsView.vue'), meta: { titleKey: 'menu.approvals' } },
         { path: 'results', component: () => import('@/views/ResultsView.vue'), meta: { titleKey: 'menu.results' } },
         { path: 'requirements', component: () => import('@/views/RequirementsView.vue'), meta: { titleKey: 'menu.requirements' } },
+        { path: 'scenarios', component: () => import('@/views/ScenariosView.vue'), meta: { titleKey: 'menu.scenarios' } },
         { path: 'personal', component: () => import('@/views/PersonalCenterView.vue'), meta: { titleKey: 'menu.personal' } },
         { path: 'agent/chat', component: () => import('@/views/AgentChatView.vue'), meta: { titleKey: 'menu.agentChat' } },
       ],

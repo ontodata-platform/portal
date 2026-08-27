@@ -12,8 +12,12 @@ import type {
   PageResponse,
   PersonalTodo,
   PortalResult,
+  PortalScenario,
   PortalTask,
   RequirementRequest,
+  ScenarioOntologyRef,
+  ScenarioBinding,
+  ScenarioPresentation,
   UpstreamAggregation,
 } from '@/types/portal'
 
@@ -96,6 +100,31 @@ export const workbenchApi = {
     client.get<UpstreamAggregation>('/workbench/capabilities', { params }).then((r) => r.data),
   workflowTemplates: (params: ListParams) =>
     client.get<UpstreamAggregation>('/workbench/workflow-templates', { params }).then((r) => r.data),
+}
+
+/** 场景编排器（scenario-center）：scn-* 场景，全量钉扎 + 发布/下线状态机 + 不可变版本。 */
+export const scenarioApi = {
+  list: (params: ListParams) => client.get<PageResponse<PortalScenario>>('/scenarios', { params }).then((r) => r.data),
+  find: (code: string) => client.get<PortalScenario>(`/scenarios/${code}`).then((r) => r.data),
+  create: (body: ScenarioUpsertBody) => client.post<PortalScenario>('/scenarios', body).then((r) => r.data),
+  update: (code: string, version: string, body: ScenarioUpsertBody) =>
+    client.put<PortalScenario>(`/scenarios/${code}/versions/${version}`, body).then((r) => r.data),
+  publish: (code: string, version: string) =>
+    client.post<PortalScenario>(`/scenarios/${code}/versions/${version}/publish`).then((r) => r.data),
+  deprecate: (code: string, version: string) =>
+    client.post<PortalScenario>(`/scenarios/${code}/versions/${version}/deprecate`).then((r) => r.data),
+  createDraft: (code: string) => client.post<PortalScenario>(`/scenarios/${code}/drafts`).then((r) => r.data),
+}
+
+/** 场景创建/草稿更新请求体：bindings 至少一条，版本全部精确钉扎 x.y.z。 */
+export interface ScenarioUpsertBody {
+  name: string
+  description?: string
+  projectId?: string
+  ontologyRefs?: ScenarioOntologyRef[]
+  bindings: ScenarioBinding[]
+  presentation?: ScenarioPresentation
+  createdBy?: string
 }
 
 /** 个人中心：我的需求/我的申请/待办统计（M5 接 IAM 后 requester 改认证上下文）。 */
