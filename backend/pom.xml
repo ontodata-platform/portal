@@ -28,6 +28,7 @@
         <module>aggregation-center</module>
         <module>personal-center</module>
         <module>retention-center</module>
+        <module>scenario-center</module>
         <module>server</module>
     </modules>
 
@@ -90,6 +91,11 @@
             <dependency>
                 <groupId>com.runisys.ontodata</groupId>
                 <artifactId>portal-retention-center</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.runisys.ontodata</groupId>
+                <artifactId>portal-scenario-center</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

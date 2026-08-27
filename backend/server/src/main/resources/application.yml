@@ -55,6 +55,13 @@ ontodata:
   retention:
     # 数据保留（M5）：超过保留期的终态记录可清理（dryRun 先演练），默认 180 天
     days: ${RETENTION_DAYS:180}
+  scenario:
+    reference-check:
+      # 批次 D 场景编排器：发布前 fail-closed 回查引用存在性（transform 能力目录 /
+      # recombine 工作流模板；DATA_SNAPSHOT 端点待 D3 冻结后接入）。默认严格；
+      # 显式 false 为宽松模式（跳过全部回查），仅供离线开发，严禁生产。
+      # 上游地址复用聚合中心的 ontodata.upstream.transform/recombine.base-url。
+      enabled: ${SCENARIO_REFERENCE_CHECK_ENABLED:true}
 
 management:
   endpoints:

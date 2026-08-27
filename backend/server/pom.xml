@@ -52,6 +52,10 @@
             <artifactId>portal-retention-center</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.runisys.ontodata</groupId>
+            <artifactId>portal-scenario-center</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
