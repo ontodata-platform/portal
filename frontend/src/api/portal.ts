@@ -1,5 +1,5 @@
 /**
- * 门户五中心 REST API（对齐 portal 后端 task-center/approval-center/result-center/
+ * 门户 REST API（对齐 portal 后端 task-center/approval-center/result-center/
  * requirement-center/operations-center）。
  */
 import { client } from './client'

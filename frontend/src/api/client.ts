@@ -92,8 +92,8 @@ client.interceptors.request.use(attachAuth)
 client.interceptors.response.use((response) => response, rejectApiError)
 
 /**
- * agent-runtime 智能体运行时客户端（A5）：独立服务（端口 18086），baseURL 为 /agent——
- * dev 由 vite proxy 转发，生产由网关 nginx 按 /agent/* 路由；认证/错误约定与门户后端一致。
+ * agent-runtime 智能体运行时客户端（A5）：独立服务（文档端口 18086，本机开发默认 18087），
+ * baseURL 为 /agent——dev 由 vite proxy 转发，生产由网关 nginx 按 /agent/* 路由。
  */
 export const agentClient = axios.create({
   baseURL: '/agent',

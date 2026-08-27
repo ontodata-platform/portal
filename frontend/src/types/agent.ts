@@ -1,5 +1,5 @@
 /**
- * agent-runtime（智能体运行时，端口 18086）M2 接口类型：会话 REST + SSE 事件载荷。
+ * agent-runtime（智能体运行时，文档端口 18086 / 本机开发 18087）M2 接口类型：会话 REST + SSE 事件载荷。
  * 字段与后端 AgentOut/SessionOut/MessageOut 及 SSE data JSON 一一对应（camelCase）。
  */
 

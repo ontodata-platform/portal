@@ -8,6 +8,12 @@ import { marketplaceApi, scenarioApi, workbenchApi, type ScenarioUpsertBody } fr
 import { catalogItems, pinCatalogVersion } from '@/catalog'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, PortalScenario, ScenarioBinding, ScenarioOntologyRef } from '@/types/portal'
+import {
+  WIDGET_KINDS,
+  bindingAliasSet,
+  buildPresentation,
+  type FormWidgetItem,
+} from './scenarioPresentation'
 
 /**
  * 场景编排页（批次 D 后段，scenario/v1）：场景列表 + 创建/编辑 +
@@ -47,7 +53,11 @@ const form = reactive({
   projectId: '',
   ontologyRefs: [] as FormOntologyRefItem[],
   bindings: [] as FormBindingItem[],
+  entryView: '',
+  widgets: [] as FormWidgetItem[],
 })
+
+const bindingAliases = computed(() => [...bindingAliasSet(form.bindings)])
 
 const capabilityCatalog = ref<CatalogEntry[]>([])
 const templateCatalog = ref<CatalogEntry[]>([])
@@ -177,6 +187,8 @@ function openCreate() {
       alias: 'flow',
     },
   ]
+  form.entryView = ''
+  form.widgets = []
   formError.value = ''
   editOpen.value = true
   void loadCatalogs()
@@ -197,6 +209,11 @@ function openEdit(record: PortalScenario) {
     ref: binding.ref,
     version: binding.version,
     alias: binding.alias ?? '',
+  }))
+  form.entryView = record.presentation?.entryView ?? ''
+  form.widgets = (record.presentation?.widgets ?? []).map((widget) => ({
+    kind: widget.kind,
+    bindingAlias: widget.bindingAlias,
   }))
   formError.value = ''
   editOpen.value = true
@@ -226,6 +243,17 @@ function addOntologyRefRow() {
 
 function removeOntologyRefRow(index: number) {
   form.ontologyRefs.splice(index, 1)
+}
+
+function addWidgetRow() {
+  form.widgets.push({
+    kind: 'TABLE',
+    bindingAlias: bindingAliases.value[0] ?? '',
+  })
+}
+
+function removeWidgetRow(index: number) {
+  form.widgets.splice(index, 1)
 }
 
 /**
@@ -271,12 +299,31 @@ function buildPayload(): ScenarioUpsertBody {
     alias: b.alias.trim() || undefined,
   }))
 
+  let presentation: ScenarioUpsertBody['presentation']
+  try {
+    presentation = buildPresentation(form.entryView, form.widgets, bindingAliasSet(form.bindings))
+  } catch (error) {
+    const code = error instanceof Error ? error.message : ''
+    if (code === 'WIDGET_ALIAS_REQUIRED') {
+      throw new ApiError(400, 'INVALID_ARGUMENT', t('scenarios.widgetAliasRequired'))
+    }
+    if (code.startsWith('WIDGET_ALIAS_UNKNOWN:')) {
+      throw new ApiError(
+        400,
+        'INVALID_ARGUMENT',
+        t('scenarios.widgetAliasUnknown', { alias: code.slice('WIDGET_ALIAS_UNKNOWN:'.length) }),
+      )
+    }
+    throw error
+  }
+
   return {
     name: form.name.trim(),
     description: form.description.trim() || undefined,
     projectId: form.projectId.trim() || undefined,
     ontologyRefs: ontologyRefs.length > 0 ? ontologyRefs : undefined,
     bindings,
+    presentation,
   }
 }
 
@@ -522,6 +569,61 @@ onMounted(load)
         <a-button type="dashed" block style="margin-top: 8px" @click="addOntologyRefRow">
           <template #icon><PlusOutlined /></template>
           {{ t('scenarios.addOntologyRef') }}
+        </a-button>
+
+        <a-divider orientation="left" style="font-size: 14px; margin: 20px 0 12px 0">
+          {{ t('scenarios.presentation') }}
+        </a-divider>
+
+        <a-form-item :label="t('scenarios.entryView')">
+          <a-input v-model:value="form.entryView" :placeholder="t('scenarios.entryViewPlaceholder')" />
+        </a-form-item>
+
+        <a-alert
+          v-if="form.widgets.length > 0 && bindingAliases.length === 0"
+          type="warning"
+          show-icon
+          style="margin-bottom: 8px"
+          :message="t('scenarios.widgetNeedAlias')"
+        />
+
+        <div v-for="(item, idx) in form.widgets" :key="idx" class="binding-row">
+          <a-row :gutter="8" align="middle">
+            <a-col :span="10">
+              <a-select v-model:value="item.kind" style="width: 100%">
+                <a-select-option v-for="kind in WIDGET_KINDS" :key="kind" :value="kind">
+                  {{ t(`scenarios.widgetKind.${kind}`) }}
+                </a-select-option>
+              </a-select>
+            </a-col>
+            <a-col :span="12">
+              <a-select
+                v-if="bindingAliases.length > 0"
+                v-model:value="item.bindingAlias"
+                style="width: 100%"
+                :placeholder="t('scenarios.widgetAliasPlaceholder')"
+              >
+                <a-select-option v-for="alias in bindingAliases" :key="alias" :value="alias">
+                  {{ alias }}
+                </a-select-option>
+              </a-select>
+              <a-input
+                v-else
+                v-model:value="item.bindingAlias"
+                :placeholder="t('scenarios.widgetAliasPlaceholder')"
+              />
+            </a-col>
+            <a-col :span="2" style="text-align: center">
+              <a-button type="text" danger size="small" @click="removeWidgetRow(idx)">
+                <template #icon><DeleteOutlined /></template>
+              </a-button>
+            </a-col>
+          </a-row>
+        </div>
+
+        <a-button type="dashed" block style="margin-top: 8px" @click="addWidgetRow">
+          <template #icon><PlusOutlined /></template>
+          {{ t('scenarios.addWidget') }}
         </a-button>
       </a-form>
     </a-modal>

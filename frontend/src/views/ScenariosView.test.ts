@@ -117,7 +117,53 @@ describe('ScenariosView', () => {
     expect(payload.bindings[0].version).toMatch(/^\d+\.\d+\.\d+$/)
     expect(payload.bindings[0].sourceSystem).toBe('ALGORITHM_RECOMBINE')
     expect(payload.bindings[0].type).toBe('WORKFLOW_TEMPLATE')
+    expect(payload.presentation).toBeUndefined()
     expect(useMessageStore(pinia).feedback?.kind).toBe('success')
+  })
+
+  it('展示配置用动态行提交，未知别名前端拦截', async () => {
+    const { wrapper } = mountView()
+    await flushPromises()
+
+    const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建场景'))
+    await createButton!.trigger('click')
+
+    const vm = wrapper.vm as unknown as {
+      form: {
+        name: string
+        entryView: string
+        bindings: { alias: string; ref: string; version: string }[]
+        widgets: { kind: string; bindingAlias: string }[]
+      }
+      addWidgetRow: () => void
+    }
+    vm.form.name = '带展示配置的场景'
+    vm.form.bindings[0].ref = 'wf-test-1'
+    vm.form.bindings[0].version = '1.0.0'
+    vm.form.bindings[0].alias = 'flow'
+    vm.form.entryView = 'scenario-overview'
+    vm.addWidgetRow()
+    vm.form.widgets[0].bindingAlias = 'ghost'
+
+    await wrapper.find('.modal-ok').trigger('click')
+    await flushPromises()
+
+    expect(createMock).not.toHaveBeenCalled()
+    expect(wrapper.find('.alert').text()).toContain('ghost')
+
+    vm.form.widgets[0].bindingAlias = 'flow'
+    await wrapper.find('.modal-ok').trigger('click')
+    await flushPromises()
+
+    expect(createMock).toHaveBeenCalledTimes(1)
+    const payload = createMock.mock.calls[0][0] as {
+      presentation?: { entryView?: string; widgets?: { kind: string; bindingAlias: string }[] }
+    }
+    expect(payload.presentation).toEqual({
+      entryView: 'scenario-overview',
+      widgets: [{ kind: 'TABLE', bindingAlias: 'flow' }],
+    })
+    expect(wrapper.find('textarea').exists()).toBe(false)
   })
 
   it('钉扎预检：绑定版本为 latest 时前端直接拦截，不调后端', async () => {

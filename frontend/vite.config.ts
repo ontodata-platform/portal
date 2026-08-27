@@ -19,9 +19,10 @@ export default defineConfig({
         target: 'http://localhost:18085',
         changeOrigin: true,
       },
-      // agent-runtime 智能体运行时（端口 18086，REST + SSE；路径原生以 /agent 开头，无需 rewrite）
+      // agent-runtime：文档约定 18086。本机该端口被无关 GSA 占用，开发默认转发 18087。
+      // 其他环境：AGENT_PROXY_TARGET=http://localhost:18086
       '/agent': {
-        target: 'http://localhost:18086',
+        target: process.env.AGENT_PROXY_TARGET || 'http://127.0.0.1:18087',
         changeOrigin: true,
       },
     },

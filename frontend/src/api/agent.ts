@@ -1,7 +1,7 @@
 /**
  * agent-runtime 智能体运行时 API（M2 批次 A5）：会话/智能体 REST + SSE 事件流订阅。
  *
- * - REST 走 agentClient（baseURL /agent，dev 由 vite proxy 转发 18086）；
+ * - REST 走 agentClient（baseURL /agent，dev 由 vite proxy 转发，本机默认 18087）；
  * - SSE 不能用原生 EventSource（无法携带 Authorization 头），改用 fetch + ReadableStream
  *   手动解析事件流，认证/租户头与 axios 拦截器同一约定；调用方以 AbortController 控制断开。
  */

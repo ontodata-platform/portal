@@ -28,7 +28,7 @@ portal/
 │  ├─ aggregation-center/ # 数据商城/算法工作台聚合（各软件正式 REST 契约，降级展示）
 │  ├─ personal-center/ # 个人中心（我的需求/我的申请/待办聚合，身份 M5 接 IAM）
 │  └─ server/         # 启动与装配（端口 18085）
-└─ frontend/          # Vue 3 管理门户界面（端口 5175，五中心页面）
+└─ frontend/          # Vue 3 管理门户界面（端口 5175；默认首页 /personal）
 ```
 
 设计详见 `docs/design/2026-08-14-portal-design.md`。
