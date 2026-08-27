@@ -1,11 +1,9 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { createPinia, type Pinia } from 'pinia'
+import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
 
+import { personalApi } from '@/api/portal'
 import { i18n, setLocale } from '@/i18n'
-import { useMessageStore } from '@/stores/message'
-import { DEFAULT_TENANT, TENANT_STORAGE_KEY, setTenant, tenantState } from '@/tenant'
 import MainLayout from './MainLayout.vue'
 
 const pushMock = vi.fn()
@@ -15,16 +13,23 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: pushMock }),
 }))
 
-/** 布局组件 stub：a-select 渲染为原生 select，change 事件回传选择值（模拟租户/语言切换）。 */
+vi.mock('@/api/portal', () => ({
+  personalApi: {
+    me: vi.fn(),
+  },
+}))
+
 const stubs = {
   RouterView: { template: '<div class="router-view" />' },
   'a-layout': { template: '<div><slot /></div>' },
-  'a-layout-sider': { template: '<div><slot /></div>' },
+  'a-layout-sider': { props: ['collapsed', 'collapsible', 'theme', 'width'], template: '<div><slot /></div>' },
   'a-layout-header': { template: '<header><slot /></header>' },
   'a-layout-content': { template: '<div><slot /></div>' },
   'a-menu': { props: ['theme', 'mode', 'selectedKeys'], emits: ['click'], template: '<div><slot /></div>' },
-  'a-menu-item': { template: '<div><slot /></div>' },
+  'a-menu-item-group': { props: ['title'], template: '<div><div class="group-title">{{ title }}</div><slot /></div>' },
+  'a-menu-item': { template: '<div class="menu-item"><slot /></div>' },
   'a-button': { props: ['type'], emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' },
+  'a-tag': { props: ['color'], template: '<span class="tag"><slot /></span>' },
   'a-alert': { props: ['type', 'message', 'description', 'showIcon', 'closable'], emits: ['close'], template: '<div class="alert"><slot /></div>' },
   'a-select': {
     props: ['value', 'mode', 'options'],
@@ -34,55 +39,61 @@ const stubs = {
   },
 }
 
-function mountLayout(pinia: Pinia = createPinia()) {
-  return mount(
-    defineComponent({
-      components: { MainLayout },
-      template: '<MainLayout />',
-    }),
-    { global: { plugins: [pinia, i18n], stubs } },
-  )
+function mountLayout(pinia = createPinia()) {
+  return mount(MainLayout, { global: { plugins: [pinia, i18n], stubs } })
 }
 
 describe('MainLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     window.localStorage.clear()
-    setTenant(DEFAULT_TENANT)
     setLocale('zh-CN')
+    vi.mocked(personalApi.me).mockResolvedValue({
+      name: 'dev-user',
+      tenantId: 'default',
+      roles: [],
+      devMode: true,
+    })
   })
 
-  it('渲染导航与当前租户选择器', async () => {
+  it('渲染分组导航与主体身份信息', async () => {
     const wrapper = mountLayout()
     await flushPromises()
 
     expect(wrapper.text()).toContain('统一任务中心')
-    expect(wrapper.text()).toContain('租户')
-    expect(wrapper.find('select.tenant-select').exists()).toBe(true)
-    expect((wrapper.find('select.tenant-select').element as HTMLSelectElement).value).toBe(DEFAULT_TENANT)
-    expect(wrapper.text()).toContain('tenant-a（验收租户 A）')
+    expect(wrapper.text()).toContain('个人工作台')
+    expect(wrapper.text()).toContain('数据商城')
+    expect(wrapper.text()).toContain('dev-user')
+    expect(wrapper.text()).toContain('default')
+    expect(wrapper.text()).toContain('开发模式')
   })
 
-  it('切换租户更新上下文并持久化', async () => {
+  it('非 operator/admin 且 devMode=false 时隐藏门户运营菜单', async () => {
+    vi.mocked(personalApi.me).mockResolvedValue({
+      name: 'normal-user',
+      tenantId: 'tenant-a',
+      roles: ['portal-user'],
+      devMode: false,
+    })
+
     const wrapper = mountLayout()
     await flushPromises()
 
-    await wrapper.find('select.tenant-select').setValue('tenant-a')
-
-    expect(tenantState.tenantId).toBe('tenant-a')
-    expect(window.localStorage.getItem(TENANT_STORAGE_KEY)).toBe('tenant-a')
+    expect(wrapper.text()).not.toContain('门户运营')
   })
 
-  it('非法租户输入退回 default 并提示错误', async () => {
-    const pinia = createPinia()
-    const wrapper = mountLayout(pinia)
+  it('具备 operator 角色时展示门户运营菜单', async () => {
+    vi.mocked(personalApi.me).mockResolvedValue({
+      name: 'admin-user',
+      tenantId: 'tenant-a',
+      roles: ['portal-admin'],
+      devMode: false,
+    })
+
+    const wrapper = mountLayout()
     await flushPromises()
 
-    await wrapper.find('select.tenant-select').setValue('BAD TENANT!')
-
-    expect(tenantState.tenantId).toBe(DEFAULT_TENANT)
-    const store = useMessageStore(pinia)
-    expect(store.feedback?.content).toContain('租户标识只能包含小写字母、数字与连字符')
+    expect(wrapper.text()).toContain('门户运营')
   })
 
   it('切换语言即时生效并持久化（M5 国际化）', async () => {
@@ -94,8 +105,6 @@ describe('MainLayout', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Unified Task Center')
-    expect(wrapper.text()).toContain('Tenant')
-    expect(wrapper.text()).not.toContain('统一任务中心')
     expect(window.localStorage.getItem('ontodata.locale')).toBe('en-US')
   })
 })

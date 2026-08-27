@@ -56,7 +56,7 @@ class PortalTenantIntegrationTest {
                 .content(
                     """
                     {"approvalType":"DATA_GRANT","sourceSystem":"data-platform",
-                     "title":"租户 A 的审批","requester":"alice"}
+                     "title":"租户 A 的审批"}
                     """))
         .andExpect(status().isCreated());
 
@@ -134,7 +134,7 @@ class PortalTenantIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         """
-                        {"requirementType":"DATA","title":"租户隔离验收需求","requester":"alice"}
+                        {"requirementType":"DATA","title":"租户隔离验收需求"}
                         """))
             .andExpect(status().isCreated())
             .andReturn()
@@ -213,9 +213,7 @@ class PortalTenantIntegrationTest {
     // ---- 个人中心租户隔离：tenant-a 的 alice 数据对 tenant-b 不可见 ----
     mockMvc
         .perform(
-            get("/api/v1/personal/todos")
-                .param("requester", "alice")
-                .header("X-Tenant-Id", "tenant-b"))
+            get("/api/v1/personal/todos").header("X-Tenant-Id", "tenant-b"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.pendingApprovalCount").value(0))
         .andExpect(jsonPath("$.myOpenRequirementCount").value(0))
@@ -237,7 +235,7 @@ class PortalTenantIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"requirementType":"DATA","title":"租户隔离验收需求","requester":"bob"}
+                    {"requirementType":"DATA","title":"租户隔离验收需求"}
                     """))
         .andExpect(status().isCreated());
     // 同租户内同标题重复登记仍然 409 去重
@@ -248,7 +246,7 @@ class PortalTenantIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                    {"requirementType":"DATA","title":"租户隔离验收需求","requester":"carol"}
+                    {"requirementType":"DATA","title":"租户隔离验收需求"}
                     """))
         .andExpect(status().isConflict());
 

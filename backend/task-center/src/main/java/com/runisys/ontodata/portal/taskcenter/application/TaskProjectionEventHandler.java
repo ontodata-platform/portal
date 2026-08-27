@@ -3,6 +3,7 @@ package com.runisys.ontodata.portal.taskcenter.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.runisys.ontodata.portal.common.event.TaskTerminalApplicationEvent;
 import com.runisys.ontodata.portal.taskcenter.domain.PortalEventInbox;
 import com.runisys.ontodata.portal.taskcenter.domain.PortalEventInboxId;
 import com.runisys.ontodata.portal.taskcenter.domain.PortalTask;
@@ -10,8 +11,10 @@ import com.runisys.ontodata.portal.taskcenter.infrastructure.PortalEventInboxRep
 import com.runisys.ontodata.portal.taskcenter.infrastructure.PortalTaskRepository;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,20 +51,25 @@ public class TaskProjectionEventHandler {
     UNKNOWN
   }
 
+  private static final Set<String> TERMINAL_STATUSES = Set.of("SUCCESS", "FAILED", "CANCELED");
+
   private final PortalTaskRepository taskRepository;
   private final PortalEventInboxRepository inboxRepository;
   private final TaskProjectionEventMapper mapper;
   private final ObjectMapper objectMapper;
+  private final ApplicationEventPublisher applicationEventPublisher;
 
   public TaskProjectionEventHandler(
       PortalTaskRepository taskRepository,
       PortalEventInboxRepository inboxRepository,
       TaskProjectionEventMapper mapper,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      ApplicationEventPublisher applicationEventPublisher) {
     this.taskRepository = taskRepository;
     this.inboxRepository = inboxRepository;
     this.mapper = mapper;
     this.objectMapper = objectMapper;
+    this.applicationEventPublisher = applicationEventPublisher;
   }
 
   /**
@@ -112,6 +120,11 @@ public class TaskProjectionEventHandler {
     // 4) 应用投影 + 落 inbox（同事务提交）
     apply(existing, update, now);
     inboxRepository.save(new PortalEventInbox(consumerId, eventId, now));
+    if (TERMINAL_STATUSES.contains(update.status())) {
+      applicationEventPublisher.publishEvent(
+          new TaskTerminalApplicationEvent(
+              update.taskId(), update.status(), update.sourceSystem(), update.tenantId()));
+    }
     return ProcessingResult.APPLIED;
   }
 

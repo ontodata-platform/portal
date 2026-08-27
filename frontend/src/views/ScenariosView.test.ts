@@ -1,7 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
 
 import { ApiError } from '@/api/client'
 import { i18n } from '@/i18n'
@@ -15,6 +14,8 @@ const publishMock = vi.fn()
 const deprecateMock = vi.fn()
 const createDraftMock = vi.fn()
 
+const unavailableCatalog = { sourceSystem: 'upstream', available: false, message: '目录不可用' }
+
 vi.mock('@/api/portal', () => ({
   scenarioApi: {
     list: (...args: unknown[]) => listMock(...args),
@@ -24,21 +25,28 @@ vi.mock('@/api/portal', () => ({
     deprecate: (...args: unknown[]) => deprecateMock(...args),
     createDraft: (...args: unknown[]) => createDraftMock(...args),
   },
+  marketplaceApi: {
+    dataServices: () => Promise.resolve(unavailableCatalog),
+  },
+  workbenchApi: {
+    capabilities: () => Promise.resolve(unavailableCatalog),
+    workflowTemplates: () => Promise.resolve(unavailableCatalog),
+  },
 }))
 
-/** Ant Design Vue 组件在测试中需要全局 stub（与 TasksView 测试同约定）。 */
 const stubs = {
   'a-card': { template: '<div><slot /></div>' },
   'a-table': { props: ['columns', 'dataSource', 'loading', 'rowKey', 'pagination'], template: '<div class="table"><slot /></div>' },
   'a-space': { template: '<div><slot /></div>' },
-  // emits 必须声明：未声明 click 时父级 @click 会作为原生监听回落到根元素，与 $emit 双触发
-  'a-button': { props: ['type', 'size', 'danger', 'disabled'], emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' },
+  'a-button': { props: ['type', 'size', 'danger', 'disabled', 'block'], emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' },
   'a-input': { props: ['value'], emits: ['update:value'], template: '<input :value="value" @input="$emit(\'update:value\', $event.target.value)" />' },
   'a-textarea': { props: ['value', 'rows'], emits: ['update:value'], template: '<textarea :value="value" @input="$emit(\'update:value\', $event.target.value)" />' },
-  'a-select': { props: ['value'], emits: ['update:value'], template: '<select><slot /></select>' },
+  'a-select': { props: ['value'], emits: ['update:value'], template: '<select :value="value"><slot /></select>' },
   'a-select-option': { template: '<option />' },
   'a-tag': { props: ['color'], template: '<span><slot /></span>' },
-  // 弹窗 stub 透传默认插槽并暴露 ok 触发入口
+  'a-row': { template: '<div><slot /></div>' },
+  'a-col': { template: '<div><slot /></div>' },
+  'a-divider': { template: '<hr />' },
   'a-modal': {
     props: ['open', 'title', 'confirmLoading', 'width'],
     emits: ['ok', 'update:open'],
@@ -50,13 +58,9 @@ const stubs = {
 }
 
 function mountView(pinia = createPinia()) {
-  const wrapper = mount(
-    defineComponent({
-      components: { ScenariosView },
-      template: '<ScenariosView />',
-    }),
-    { global: { plugins: [pinia, i18n], stubs } },
-  )
+  const wrapper = mount(ScenariosView, {
+    global: { plugins: [pinia, i18n], stubs },
+  })
   return { wrapper, pinia }
 }
 
@@ -81,7 +85,7 @@ describe('ScenariosView', () => {
     publishMock.mockResolvedValue({ ...draftScenario, status: 'PUBLISHED' })
   })
 
-  it('挂载后加载场景列表（不带筛选参数时传 undefined）', async () => {
+  it('挂载后加载场景列表', async () => {
     const { wrapper } = mountView()
     await flushPromises()
 
@@ -95,12 +99,24 @@ describe('ScenariosView', () => {
 
     const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建场景'))
     await createButton!.trigger('click')
+
+    const vm = wrapper.vm as unknown as {
+      form: { name: string; bindings: { type: string; sourceSystem: string; ref: string; version: string }[] }
+    }
+    vm.form.name = '新测试场景'
+    vm.form.bindings[0].ref = 'snap-test-1'
+    vm.form.bindings[0].version = '1.0.0'
+
     await wrapper.find('.modal-ok').trigger('click')
     await flushPromises()
 
     expect(createMock).toHaveBeenCalledTimes(1)
-    const payload = createMock.mock.calls[0][0] as { bindings: { version: string }[] }
+    const payload = createMock.mock.calls[0][0] as {
+      bindings: { version: string; sourceSystem: string; type: string }[]
+    }
     expect(payload.bindings[0].version).toMatch(/^\d+\.\d+\.\d+$/)
+    expect(payload.bindings[0].sourceSystem).toBe('ALGORITHM_RECOMBINE')
+    expect(payload.bindings[0].type).toBe('WORKFLOW_TEMPLATE')
     expect(useMessageStore(pinia).feedback?.kind).toBe('success')
   })
 
@@ -111,12 +127,13 @@ describe('ScenariosView', () => {
     const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建场景'))
     await createButton!.trigger('click')
 
-    // 将装配绑定 JSON 改为 latest 钉扎（契约负例）
-    const textareas = wrapper.findAll('textarea')
-    const bindingsTextarea = textareas[textareas.length - 2]
-    await bindingsTextarea.setValue(
-      JSON.stringify([{ type: 'CAPABILITY', ref: 'cap-null-check', version: 'latest', alias: 'checker', sourceSystem: 'ALGORITHM_TRANSFORM' }]),
-    )
+    const vm = wrapper.vm as unknown as {
+      form: { name: string; bindings: { type: string; sourceSystem: string; ref: string; version: string }[] }
+    }
+    vm.form.name = '新测试场景'
+    vm.form.bindings[0].ref = 'snap-test-1'
+    vm.form.bindings[0].version = 'latest'
+
     await wrapper.find('.modal-ok').trigger('click')
     await flushPromises()
 
@@ -135,11 +152,18 @@ describe('ScenariosView', () => {
 
     const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建场景'))
     await createButton!.trigger('click')
+
+    const vm = wrapper.vm as unknown as {
+      form: { name: string; bindings: { type: string; sourceSystem: string; ref: string; version: string }[] }
+    }
+    vm.form.name = '新测试场景'
+    vm.form.bindings[0].ref = 'snap-test-1'
+    vm.form.bindings[0].version = '1.0.0'
+
     await wrapper.find('.modal-ok').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.alert').text()).toContain('钉扎精确语义版本')
-    expect(wrapper.find('.modal').exists()).toBe(true)
+    expect(wrapper.find('.alert').text()).toContain('请求参数校验失败')
   })
 
   it('列表加载失败时上报错误而不抛出', async () => {

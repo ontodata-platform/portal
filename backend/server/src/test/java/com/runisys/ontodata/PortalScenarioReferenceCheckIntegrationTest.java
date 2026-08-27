@@ -26,7 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
       "spring.datasource.url=jdbc:h2:mem:portal_scenario_ref_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE",
       // 严格模式：指向不可能监听的端口，等价于上游目录不可达
       "ontodata.upstream.transform.base-url=http://127.0.0.1:1",
-      "ontodata.upstream.recombine.base-url=http://127.0.0.1:1"
+      "ontodata.upstream.recombine.base-url=http://127.0.0.1:1",
+      "ontodata.upstream.data-platform.base-url=http://127.0.0.1:1"
     })
 class PortalScenarioReferenceCheckIntegrationTest {
 
@@ -37,6 +38,12 @@ class PortalScenarioReferenceCheckIntegrationTest {
       """
       {"name":"引用回查场景","bindings":[
         {"type":"CAPABILITY","ref":"cap-null-check","version":"1.4.0","alias":"checker","sourceSystem":"ALGORITHM_TRANSFORM"}]}
+      """;
+
+  private static final String SNAPSHOT_BODY =
+      """
+      {"name":"快照引用回查场景","bindings":[
+        {"type":"DATA_SNAPSHOT","ref":"snap-missing","version":"3.0.0","alias":"data","sourceSystem":"DATA_PLATFORM"}]}
       """;
 
   @Test
@@ -69,5 +76,28 @@ class PortalScenarioReferenceCheckIntegrationTest {
             post("/api/v1/scenarios/{code}/versions/1.0.0/publish", code)
                 .header("X-Tenant-Id", "tenant-a"))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void publishFailsClosedWhenDataPlatformUnreachable() throws Exception {
+    String created =
+        mockMvc
+            .perform(
+                post("/api/v1/scenarios")
+                    .header("X-Tenant-Id", "tenant-a")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(SNAPSHOT_BODY))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String code = objectMapper.readTree(created).path("code").asText();
+
+    mockMvc
+        .perform(
+            post("/api/v1/scenarios/{code}/versions/1.0.0/publish", code)
+                .header("X-Tenant-Id", "tenant-a"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("无法连接数据平台")));
   }
 }

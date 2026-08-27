@@ -42,14 +42,39 @@ export interface ApprovalRequest {
   sourceSystem: string
   sourceCode?: string
   title: string
-  detail?: Record<string, unknown>
+  detail?: {
+    deliveryStatus?: 'PENDING' | 'SUCCEEDED' | 'FAILED'
+    serviceCode?: string
+    serviceId?: string
+    grantedColumns?: string[]
+    deliveryError?: string
+    [key: string]: unknown
+  }
   requester: string
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   decisionBy?: string
   decisionNote?: string
   decisionAt?: string
+  slaDeadline?: string
+  slaStatus?: 'NONE' | 'ON_TIME' | 'OVERDUE' | 'MET' | 'MISSED'
   createdAt: string
   updatedAt: string
+}
+
+export interface BatchDecideResult {
+  decision: string
+  succeeded: ApprovalRequest[]
+  failed: { code: string; message: string }[]
+}
+
+export interface PortalNotification {
+  id: string
+  type: 'APPROVAL_DECIDED' | 'TASK_COMPLETED' | string
+  title: string
+  body?: string
+  resourceRef: string
+  readAt?: string
+  createdAt: string
 }
 
 /** 结果引用登记（result-center）：可追踪率 100%。 */
@@ -119,14 +144,62 @@ export interface CatalogEntry {
   name: string
   status: string
   currentVersion: number | string
+  description?: string
+  [key: string]: unknown
 }
 
-/** 上游聚合响应（aggregation-center）：available=false 时展示降级卡片。 */
+/** 上游分页目录体（列表接口）。 */
+export interface CatalogPageBody {
+  total?: number
+  items?: CatalogEntry[]
+}
+
+/**
+ * 上游聚合响应（aggregation-center）：available=false 时展示降级卡片。
+ * 列表 body 为 { items, total }；详情 body 即单条 CatalogEntry（与后端门面一致）。
+ */
 export interface UpstreamAggregation {
   sourceSystem: string
   available: boolean
   message?: string
-  body?: { total: number; items: CatalogEntry[] }
+  body?: CatalogPageBody & Partial<CatalogEntry>
+  item?: CatalogEntry
+}
+
+/** 当前主体身份（personal-center / personal/me）。 */
+export interface PortalIdentity {
+  name: string
+  tenantId: string
+  orgId?: string
+  projectId?: string
+  roles: string[]
+  devMode: boolean
+}
+
+/** 数据商城申请请求体。 */
+export interface ApplyDataServiceRequest {
+  grantedColumns?: string[]
+}
+
+/** 数据商城申请响应。 */
+export interface MarketplaceApplyResponse {
+  approvalCode: string
+  status: string
+}
+
+/** 算法工作台运行请求体。 */
+export interface SubmitWorkbenchRunRequest {
+  templateVersion: number
+  resourceRefs?: Record<string, unknown>
+  ontologyRuntimeContractVersion?: string
+  dataSnapshotVersion?: string
+}
+
+/** 算法工作台运行响应。 */
+export interface WorkbenchRunResponse {
+  taskId: string
+  status: string
+  started: boolean
 }
 
 /** 个人中心待办统计（personal-center，M5 接 IAM 后随认证上下文）。 */

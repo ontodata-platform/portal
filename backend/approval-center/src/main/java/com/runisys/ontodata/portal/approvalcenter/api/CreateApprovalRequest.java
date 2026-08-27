@@ -3,6 +3,7 @@ package com.runisys.ontodata.portal.approvalcenter.api;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.time.Instant;
 import java.util.Map;
 
 /** 创建审批单请求。审批单由业务软件升级产生（如 MCP 网关 R4 工具确认卡升级）， sourceSystem/sourceCode 记录来源契约，供审批完成后回查。 */
@@ -26,9 +27,11 @@ public class CreateApprovalRequest {
   /** 审批上下文明细，原样存储（可包含工具名、参数摘要、风险分级等）。 */
   private Map<String, Object> detail;
 
-  @NotBlank(message = "申请人不能为空")
   @Size(max = 64, message = "申请人不能超过 64 个字符")
   private String requester;
+
+  /** 可选 SLA 截止；超过仍 PENDING 则标记 OVERDUE。 */
+  private Instant slaDeadline;
 
   public String getApprovalType() {
     return approvalType;
@@ -76,5 +79,13 @@ public class CreateApprovalRequest {
 
   public void setRequester(String requester) {
     this.requester = requester;
+  }
+
+  public Instant getSlaDeadline() {
+    return slaDeadline;
+  }
+
+  public void setSlaDeadline(Instant slaDeadline) {
+    this.slaDeadline = slaDeadline;
   }
 }

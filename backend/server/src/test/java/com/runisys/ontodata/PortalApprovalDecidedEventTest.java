@@ -71,8 +71,7 @@ class PortalApprovalDecidedEventTest {
                           "approvalType": "R4_TOOL_CALL",
                           "sourceSystem": "mcp-gateway",
                           "sourceCode": "cfm-9f8e7d6c",
-                          "title": "高风险工具调用审批",
-                          "requester": "agent-runisys"
+                          "title": "高风险工具调用审批"
                         }
                         """))
             .andExpect(status().isCreated())
@@ -86,7 +85,7 @@ class PortalApprovalDecidedEventTest {
             post("/api/v1/approvals/{code}/decision", code)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"decision\":\"APPROVED\",\"decisionBy\":\"bob\",\"decisionNote\":\"同意\"}"))
+                    "{\"decision\":\"APPROVED\",\"decisionNote\":\"同意\"}"))
         .andExpect(status().isOk());
 
     List<OutboxEvent> events = decidedEventsOf(code);
@@ -119,8 +118,7 @@ class PortalApprovalDecidedEventTest {
     assertEquals("mcp-gateway", payload.path("sourceSystem").asText());
     assertEquals("cfm-9f8e7d6c", payload.path("sourceCode").asText());
     assertEquals("APPROVED", payload.path("decision").asText());
-    // 测试无认证上下文：decidedBy 按仓库现有约定兜底为审批请求登记的审批人
-    assertEquals("bob", payload.path("decidedBy").asText());
+    assertEquals("dev-user", payload.path("decidedBy").asText());
     assertEquals("同意", payload.path("decisionNote").asText());
 
     // 5. 终态重复决策 409，且不重复发事件
@@ -128,7 +126,7 @@ class PortalApprovalDecidedEventTest {
         .perform(
             post("/api/v1/approvals/{code}/decision", code)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"decision\":\"REJECTED\",\"decisionBy\":\"carol\"}"))
+                .content("{\"decision\":\"REJECTED\"}"))
         .andExpect(status().isConflict());
     assertEquals(1, decidedEventsOf(code).size(), "重复决策不得重复发事件");
   }

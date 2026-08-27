@@ -2,57 +2,103 @@
 import {
   AppstoreOutlined,
   AuditOutlined,
+  BellOutlined,
   CarryOutOutlined,
   DeploymentUnitOutlined,
   FileDoneOutlined,
-  HomeOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   RobotOutlined,
+  SearchOutlined,
+  SettingOutlined,
   ShopOutlined,
   SolutionOutlined,
   UserOutlined,
 } from '@ant-design/icons-vue'
 import type { MenuProps } from 'ant-design-vue'
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
-import { ApiError } from '@/api/client'
 import { authState, clearSession } from '@/auth/session'
 import { setLocale } from '@/i18n'
+import { useIdentityStore } from '@/stores/identity'
 import { useMessageStore } from '@/stores/message'
-import { useTenantStore } from '@/stores/tenant'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const messageStore = useMessageStore()
-const tenantStore = useTenantStore()
+const identityStore = useIdentityStore()
 
-/** 菜单与页面标题按界面语言解析（M5 国际化）。 */
-const menus = computed(() => [
-  { key: '/operations', label: t('menu.operations'), icon: HomeOutlined },
-  { key: '/marketplace', label: t('menu.marketplace'), icon: ShopOutlined },
-  { key: '/workbench', label: t('menu.workbench'), icon: AppstoreOutlined },
-  { key: '/tasks', label: t('menu.tasks'), icon: CarryOutOutlined },
-  { key: '/approvals', label: t('menu.approvals'), icon: AuditOutlined },
-  { key: '/results', label: t('menu.results'), icon: FileDoneOutlined },
-  { key: '/requirements', label: t('menu.requirements'), icon: SolutionOutlined },
-  { key: '/scenarios', label: t('menu.scenarios'), icon: DeploymentUnitOutlined },
-  { key: '/personal', label: t('menu.personal'), icon: UserOutlined },
-  { key: '/agent/chat', label: t('menu.agentChat'), icon: RobotOutlined },
-])
+const collapsed = ref(false)
 
-const selectedKey = computed(() => route.path)
+/**
+ * 分组导航菜单定义（M5/产品化对齐）：
+ * 1. 发现与服务：数据商城、算法工作台
+ * 2. 工作台与协作：个人工作台、智能体会话、场景编排
+ * 3. 任务与流程：统一任务中心、审批中心、结果中心、需求管理
+ * 4. 运营与运维：门户运营（仅在具备 operator/admin 角色或 devMode 时显示）
+ */
+const menuGroups = computed(() => {
+  const groups = [
+    {
+      key: 'groupWorkspace',
+      title: t('menu.groupWorkspace'),
+      items: [
+        { key: '/personal', label: t('menu.personal'), icon: UserOutlined },
+        { key: '/agent/chat', label: t('menu.agentChat'), icon: RobotOutlined },
+        { key: '/scenarios', label: t('menu.scenarios'), icon: DeploymentUnitOutlined },
+      ],
+    },
+    {
+      key: 'groupDiscover',
+      title: t('menu.groupDiscover'),
+      items: [
+        { key: '/search', label: t('menu.search'), icon: SearchOutlined },
+        { key: '/marketplace', label: t('menu.marketplace'), icon: ShopOutlined },
+        { key: '/workbench', label: t('menu.workbench'), icon: AppstoreOutlined },
+      ],
+    },
+    {
+      key: 'groupGovernance',
+      title: t('menu.groupGovernance'),
+      items: [
+        { key: '/tasks', label: t('menu.tasks'), icon: CarryOutOutlined },
+        { key: '/notifications', label: t('menu.notifications'), icon: BellOutlined },
+        { key: '/approvals', label: t('menu.approvals'), icon: AuditOutlined },
+        { key: '/results', label: t('menu.results'), icon: FileDoneOutlined },
+        { key: '/requirements', label: t('menu.requirements'), icon: SolutionOutlined },
+      ],
+    },
+  ]
+
+  if (identityStore.canAccessOperations) {
+    groups.push({
+      key: 'groupOperations',
+      title: t('menu.groupOperations'),
+      items: [{ key: '/operations', label: t('menu.operations'), icon: SettingOutlined }],
+    })
+  }
+
+  return groups
+})
+
+/** 选中的路由键：详情子路由高亮所属根菜单。 */
+const selectedKeys = computed(() => {
+  const path = route.path
+  if (path.startsWith('/marketplace')) {
+    return ['/marketplace']
+  }
+  if (path.startsWith('/workbench')) {
+    return ['/workbench']
+  }
+  return [path]
+})
+
 const pageTitle = computed(() =>
   route.meta.titleKey ? t(route.meta.titleKey as string) : t('layout.appName'),
 )
-
-/** M5 多租户验收租户清单；combobox 允许输入自定义租户标识（非法时退回 default）。 */
-const tenantOptions = computed(() => [
-  { value: 'default', label: t('layout.defaultTenant') },
-  { value: 'tenant-a', label: t('layout.tenantA') },
-  { value: 'tenant-b', label: t('layout.tenantB') },
-])
 
 /** 语言清单：切换即时生效并持久化（M5 国际化）。 */
 const localeOptions = [
@@ -64,64 +110,87 @@ const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
   router.push(key as string)
 }
 
-const handleTenantChange = (value: unknown) => {
-  const typed = String(value ?? '')
-  const effective = tenantStore.switchTenant(typed)
-  if (typed.trim() !== effective) {
-    messageStore.reportError(new ApiError(400, 'INVALID_TENANT', t('layout.invalidTenant')))
-  }
-}
-
 const handleLocaleChange = (value: unknown) => {
   setLocale(String(value ?? 'zh-CN'))
 }
 
-/** 退出登录（M5 IAM）：清除会话后回登录页（未启用 IAM 时按钮不显示）。 */
+/** 退出登录（M5 IAM）：清除会话后回登录页。 */
 const handleLogout = () => {
   clearSession()
+  identityStore.reset()
   router.push('/login')
 }
+
+onMounted(() => {
+  void identityStore.fetchIdentity()
+})
 </script>
 
 <template>
   <a-layout style="min-height: 100vh">
-    <a-layout-sider theme="dark">
-      <div class="logo">{{ t('layout.appName') }}</div>
+    <a-layout-sider
+      v-model:collapsed="collapsed"
+      collapsible
+      theme="dark"
+      width="240"
+      class="portal-sider"
+    >
+      <div class="logo">
+        <span class="logo-text">{{ t('layout.appName') }}</span>
+      </div>
       <a-menu
         theme="dark"
         mode="inline"
-        :selected-keys="[selectedKey]"
+        :selected-keys="selectedKeys"
         @click="handleMenuClick"
       >
-        <a-menu-item v-for="menu in menus" :key="menu.key">
-          <component :is="menu.icon" />
-          <span>{{ menu.label }}</span>
-        </a-menu-item>
+        <a-menu-item-group v-for="group in menuGroups" :key="group.key" :title="group.title">
+          <a-menu-item v-for="item in group.items" :key="item.key">
+            <component :is="item.icon" />
+            <span>{{ item.label }}</span>
+          </a-menu-item>
+        </a-menu-item-group>
       </a-menu>
     </a-layout-sider>
+
     <a-layout>
       <a-layout-header class="header">
-        <span class="title">{{ pageTitle }}</span>
+        <div class="header-left">
+          <component
+            :is="collapsed ? MenuUnfoldOutlined : MenuFoldOutlined"
+            class="collapse-trigger"
+            @click="collapsed = !collapsed"
+          />
+          <span class="title">{{ pageTitle }}</span>
+        </div>
+
         <div class="header-spacer"></div>
-        <span class="header-label">{{ t('layout.locale') }}</span>
-        <a-select
-          :value="$i18n.locale"
-          :options="localeOptions"
-          class="locale-select"
-          @change="handleLocaleChange"
-        />
-        <span class="header-label">{{ t('layout.tenant') }}</span>
-        <a-select
-          :value="tenantStore.tenantId"
-          mode="combobox"
-          :options="tenantOptions"
-          class="tenant-select"
-          @change="handleTenantChange"
-        />
-        <a-button v-if="authState.session" class="logout" type="link" @click="handleLogout">
-          {{ t('layout.logout') }}
-        </a-button>
+
+        <div class="header-right">
+          <a-tag v-if="identityStore.devMode" color="orange" class="badge-dev">
+            {{ t('layout.devMode') }}
+          </a-tag>
+
+          <span class="identity-info">
+            <UserOutlined style="margin-right: 4px" />
+            <span class="user-name">{{ identityStore.name }}</span>
+            <a-tag color="blue" class="tenant-badge">{{ identityStore.tenantId }}</a-tag>
+          </span>
+
+          <span class="header-label">{{ t('layout.locale') }}</span>
+          <a-select
+            :value="$i18n.locale"
+            :options="localeOptions"
+            class="locale-select"
+            @change="handleLocaleChange"
+          />
+
+          <a-button v-if="authState.session" class="logout" type="link" @click="handleLogout">
+            {{ t('layout.logout') }}
+          </a-button>
+        </div>
       </a-layout-header>
+
       <a-layout-content class="content">
         <a-alert
           v-if="messageStore.feedback"
@@ -144,11 +213,21 @@ const handleLogout = () => {
 </template>
 
 <style scoped>
+.portal-sider {
+  box-shadow: 2px 0 8px 0 rgba(29, 35, 41, 0.05);
+}
+
 .logo {
   color: #fff;
   font-weight: 600;
+  font-size: 15px;
   padding: 16px;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .header {
@@ -156,40 +235,83 @@ const handleLogout = () => {
   border-bottom: 1px solid #f0f0f0;
   display: flex;
   align-items: center;
+  padding: 0 20px;
+  height: 60px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.collapse-trigger {
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.collapse-trigger:hover {
+  color: #1890ff;
 }
 
 .header-spacer {
   flex: 1;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.identity-info {
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.user-name {
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+.tenant-badge {
+  margin-left: 2px;
+}
+
+.badge-dev {
+  font-weight: 600;
+}
+
 .header-label {
   color: rgba(0, 0, 0, 0.45);
-  margin-right: 8px;
+  margin-left: 4px;
 }
 
 .locale-select {
-  width: 110px;
-  margin-right: 16px;
-}
-
-.tenant-select {
-  width: 240px;
+  width: 100px;
 }
 
 .logout {
-  margin-left: 16px;
+  margin-left: 4px;
 }
 
 .title {
   font-size: 16px;
   font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
 }
 
 .content {
-  padding: 16px 24px;
+  padding: 20px 24px;
+  background: #f0f2f5;
+  min-height: calc(100vh - 60px);
 }
 
 .feedback {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 </style>

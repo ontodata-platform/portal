@@ -20,6 +20,8 @@ public class ApprovalRequestResponse {
   private final String decisionBy;
   private final String decisionNote;
   private final Instant decisionAt;
+  private final Instant slaDeadline;
+  private final String slaStatus;
   private final Instant createdAt;
   private final Instant updatedAt;
 
@@ -35,6 +37,8 @@ public class ApprovalRequestResponse {
       String decisionBy,
       String decisionNote,
       Instant decisionAt,
+      Instant slaDeadline,
+      String slaStatus,
       Instant createdAt,
       Instant updatedAt) {
     this.code = code;
@@ -48,6 +52,8 @@ public class ApprovalRequestResponse {
     this.decisionBy = decisionBy;
     this.decisionNote = decisionNote;
     this.decisionAt = decisionAt;
+    this.slaDeadline = slaDeadline;
+    this.slaStatus = slaStatus;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -65,6 +71,8 @@ public class ApprovalRequestResponse {
         approval.getDecisionBy(),
         approval.getDecisionNote(),
         approval.getDecisionAt(),
+        approval.getSlaDeadline(),
+        approval.slaStatus(Instant.now()),
         approval.getCreatedAt(),
         approval.getUpdatedAt());
   }
@@ -130,6 +138,14 @@ public class ApprovalRequestResponse {
 
   public Instant getDecisionAt() {
     return decisionAt;
+  }
+
+  public Instant getSlaDeadline() {
+    return slaDeadline;
+  }
+
+  public String getSlaStatus() {
+    return slaStatus;
   }
 
   public Instant getCreatedAt() {

@@ -1,19 +1,26 @@
+import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RouteLocationNormalized } from 'vue-router'
 
 import { clearSession, saveSession } from '@/auth/session'
+import { useIdentityStore } from '@/stores/identity'
 import { authGuard } from './index'
 
-/** 构造最小路由对象（守卫只读取 path/fullPath）。 */
-function toRoute(path: string, fullPath: string = path): RouteLocationNormalized {
-  return { path, fullPath } as unknown as RouteLocationNormalized
+/** 构造最小路由对象（守卫只读取 path/fullPath/meta）。 */
+function toRoute(
+  path: string,
+  fullPath: string = path,
+  meta: Record<string, unknown> = {},
+): RouteLocationNormalized {
+  return { path, fullPath, meta } as unknown as RouteLocationNormalized
 }
 
-describe('路由守卫 authGuard（WP-07 身份闭环）', () => {
+describe('路由守卫 authGuard（WP-07 身份闭环与角色鉴权）', () => {
   const fetchMock = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
+    setActivePinia(createPinia())
     window.localStorage.clear()
     window.sessionStorage.clear()
     clearSession()
@@ -73,5 +80,20 @@ describe('路由守卫 authGuard（WP-07 身份闭环）', () => {
       path: '/login',
       query: { redirect: '/tasks?tab=mine' },
     })
+  })
+
+  it('无权限角色且非 devMode 访问受限路由回退至 /personal', async () => {
+    vi.stubEnv('VITE_IAM_ENABLED', 'true')
+    saveSession({ accessToken: 'token-valid', expiresAt: Date.now() + 600_000 })
+    const store = useIdentityStore()
+    store.setIdentity({
+      name: 'normal-user',
+      tenantId: 'default',
+      roles: ['portal-user'],
+      devMode: false,
+    })
+
+    const route = toRoute('/operations', '/operations', { roles: ['operator', 'admin'] })
+    await expect(authGuard(route)).resolves.toEqual({ path: '/personal' })
   })
 })

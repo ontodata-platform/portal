@@ -62,6 +62,9 @@ public class ApprovalRequest {
   @Column(name = "decision_at")
   private Instant decisionAt;
 
+  @Column(name = "sla_deadline")
+  private Instant slaDeadline;
+
   @Column(name = "tenant_id", nullable = false, length = 64)
   private String tenantId;
 
@@ -145,6 +148,11 @@ public class ApprovalRequest {
     return detailJson;
   }
 
+  /** 回写投递状态等明细，不改变审批终态。 */
+  public void replaceDetailJson(String detailJson) {
+    this.detailJson = detailJson;
+  }
+
   public String getRequester() {
     return requester;
   }
@@ -163,6 +171,27 @@ public class ApprovalRequest {
 
   public Instant getDecisionAt() {
     return decisionAt;
+  }
+
+  public Instant getSlaDeadline() {
+    return slaDeadline;
+  }
+
+  public void assignSlaDeadline(Instant slaDeadline) {
+    this.slaDeadline = slaDeadline;
+    this.updatedAt = Instant.now();
+  }
+
+  /** NONE / ON_TIME / OVERDUE / MET / MISSED。 */
+  public String slaStatus(Instant now) {
+    if (slaDeadline == null) {
+      return "NONE";
+    }
+    if (STATUS_PENDING.equals(status)) {
+      return now.isAfter(slaDeadline) ? "OVERDUE" : "ON_TIME";
+    }
+    Instant decided = decisionAt == null ? now : decisionAt;
+    return decided.isAfter(slaDeadline) ? "MISSED" : "MET";
   }
 
   public String getTenantId() {

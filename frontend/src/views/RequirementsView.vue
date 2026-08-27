@@ -20,7 +20,6 @@ const createForm = reactive({
   requirementType: 'DATA' as 'DATA' | 'ALGORITHM' | 'COMPREHENSIVE',
   title: '',
   description: '',
-  requester: '',
 })
 
 const assignOpen = ref(false)
@@ -34,13 +33,13 @@ const closeTarget = ref<RequirementRequest | null>(null)
 const closeForm = reactive({ closedNote: '' })
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code' },
-  { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType' },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
+  { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 130 },
   { title: t('common.title'), dataIndex: 'title', key: 'title' },
-  { title: t('common.requester'), dataIndex: 'requester', key: 'requester' },
-  { title: t('common.status'), dataIndex: 'status', key: 'status' },
-  { title: t('requirements.assigneeTarget'), dataIndex: 'assigneeSystem', key: 'assigneeSystem' },
-  { title: t('common.action'), dataIndex: 'action', key: 'action' },
+  { title: t('common.requester'), dataIndex: 'requester', key: 'requester', width: 120 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
+  { title: t('requirements.assigneeTarget'), dataIndex: 'assigneeSystem', key: 'assigneeSystem', width: 150 },
+  { title: t('common.action'), dataIndex: 'action', key: 'action', width: 180 },
 ])
 
 const statusColor: Record<string, string> = {
@@ -101,11 +100,11 @@ async function create() {
       requirementType: createForm.requirementType,
       title: createForm.title,
       description: createForm.description || undefined,
-      requester: createForm.requester,
     })
     messageStore.success(t('requirements.created'))
     createOpen.value = false
     createForm.title = ''
+    createForm.description = ''
     await load()
   } catch (error) {
     messageStore.reportError(error)
@@ -199,8 +198,8 @@ onMounted(load)
 </script>
 
 <template>
-  <a-card>
-    <a-space style="margin-bottom: 12px" wrap>
+  <a-card :bordered="false" class="requirements-card">
+    <a-space style="margin-bottom: 16px" wrap>
       <a-select v-model:value="query.status" :placeholder="t('requirements.statusPlaceholder')" allow-clear style="width: 150px">
         <a-select-option value="OPEN">{{ t('requirements.open') }}</a-select-option>
         <a-select-option value="ANALYZING">{{ t('requirements.analyzing') }}</a-select-option>
@@ -214,12 +213,12 @@ onMounted(load)
         <a-select-option value="ALGORITHM">{{ t('requirements.algorithmRequirement') }}</a-select-option>
         <a-select-option value="COMPREHENSIVE">{{ t('requirements.comprehensiveRequirement') }}</a-select-option>
       </a-select>
-      <a-input v-model:value="query.keyword" :placeholder="t('requirements.keywordPlaceholder')" style="width: 180px" />
+      <a-input v-model:value="query.keyword" :placeholder="t('requirements.keywordPlaceholder')" style="width: 180px" allow-clear />
       <a-button
         type="primary"
         @click="
           query.page = 1;
-          load()
+          load();
         "
       >
         {{ t('common.query') }}
@@ -244,7 +243,7 @@ onMounted(load)
         <template v-if="column.key === 'requirementType'">
           {{ typeLabel[record.requirementType] ?? record.requirementType }}
         </template>
-        <template v-else-if="column.key === 'status'">
+        <template v-if="column.key === 'status'">
           <a-tag :color="statusColor[record.status]">{{ statusText[record.status] ?? record.status }}</a-tag>
         </template>
         <template v-else-if="column.key === 'action'">
@@ -309,9 +308,6 @@ onMounted(load)
         <a-form-item :label="t('requirements.description')">
           <a-textarea v-model:value="createForm.description" :placeholder="t('requirements.descriptionPlaceholder')" :rows="3" />
         </a-form-item>
-        <a-form-item :label="t('common.requester')" required>
-          <a-input v-model:value="createForm.requester" :placeholder="t('requirements.requesterPlaceholder')" />
-        </a-form-item>
       </a-form>
     </a-modal>
 
@@ -341,3 +337,10 @@ onMounted(load)
     </a-modal>
   </a-card>
 </template>
+
+<style scoped>
+.requirements-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+</style>

@@ -3,6 +3,9 @@ package com.runisys.ontodata.portal.approvalcenter.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.runisys.ontodata.portal.approvalcenter.api.ApprovalRequestResponse;
+import com.runisys.ontodata.portal.approvalcenter.api.BatchDecideFailure;
+import com.runisys.ontodata.portal.approvalcenter.api.BatchDecideRequest;
+import com.runisys.ontodata.portal.approvalcenter.api.BatchDecideResponse;
 import com.runisys.ontodata.portal.approvalcenter.api.CreateApprovalRequest;
 import com.runisys.ontodata.portal.approvalcenter.api.DecideApprovalRequest;
 import com.runisys.ontodata.portal.approvalcenter.domain.ApprovalRequest;
@@ -14,6 +17,7 @@ import com.runisys.ontodata.portal.common.api.PageResponse;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
 import com.runisys.ontodata.portal.common.api.ResourceStateConflictException;
 import com.runisys.ontodata.portal.common.event.OutboxEventService;
+import com.runisys.ontodata.portal.common.security.CurrentOperator;
 import com.runisys.ontodata.portal.common.security.OperatorContext;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -21,6 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -56,49 +61,90 @@ public class ApprovalService {
   private final PortalIdentityService identityService;
   private final ObjectMapper objectMapper;
   private final OutboxEventService outboxEventService;
+  private final ApplicationEventPublisher applicationEventPublisher;
 
   public ApprovalService(
       ApprovalRequestRepository approvalRepository,
       PortalIdentityService identityService,
       ObjectMapper objectMapper,
-      OutboxEventService outboxEventService) {
+      OutboxEventService outboxEventService,
+      ApplicationEventPublisher applicationEventPublisher) {
     this.approvalRepository = approvalRepository;
     this.identityService = identityService;
     this.objectMapper = objectMapper;
     this.outboxEventService = outboxEventService;
+    this.applicationEventPublisher = applicationEventPublisher;
   }
 
   @Transactional
   public ApprovalRequestResponse create(CreateApprovalRequest request) {
+    CurrentOperator.requireMatches(request.getRequester());
     ApprovalRequest created =
-        approvalRepository.saveAndFlush(
-            new ApprovalRequest(
-                identityService.nextCode("apr"),
-                request.getApprovalType().trim(),
-                request.getSourceSystem().trim(),
-                trimToNull(request.getSourceCode()),
-                request.getTitle().trim(),
-                toJson(request.getDetail()),
-                request.getRequester().trim(),
-                TenantContext.current(),
-                Instant.now()));
+        new ApprovalRequest(
+            identityService.nextCode("apr"),
+            request.getApprovalType().trim(),
+            request.getSourceSystem().trim(),
+            trimToNull(request.getSourceCode()),
+            request.getTitle().trim(),
+            toJson(request.getDetail()),
+            CurrentOperator.name(),
+            TenantContext.current(),
+            Instant.now());
+    created.assignSlaDeadline(request.getSlaDeadline());
+    created = approvalRepository.saveAndFlush(created);
     return ApprovalRequestResponse.from(created);
   }
 
   @Transactional
   public ApprovalRequestResponse decide(String code, DecideApprovalRequest request) {
+    CurrentOperator.requireMatches(request.getDecisionBy());
     ApprovalRequest approval = require(code);
     if (!ApprovalRequest.STATUS_PENDING.equals(approval.getStatus())) {
       throw new ResourceStateConflictException("审批单已处于终态：" + approval.getStatus() + "，不允许重复审批");
     }
     approval.decide(
         request.getDecision(),
-        request.getDecisionBy().trim(),
+        CurrentOperator.name(),
         trimToNull(request.getDecisionNote()),
         Instant.now());
     // WP-07：决策落定同事务发布 portal.approval.decided（Outbox）；终态防重在上方，
     // 重复决策抛 409 回滚，不会重复发事件。
     recordApprovalDecidedEvent(approval);
+    applicationEventPublisher.publishEvent(
+        new ApprovalDecidedApplicationEvent(
+            approval.getCode(),
+            approval.getApprovalType(),
+            approval.getStatus(),
+            approval.getRequester(),
+            approval.getTitle(),
+            approval.getTenantId()));
+    return ApprovalRequestResponse.from(approval);
+  }
+
+  @Transactional
+  public BatchDecideResponse batchDecide(BatchDecideRequest request) {
+    CurrentOperator.requireMatches(request.getDecisionBy());
+    java.util.ArrayList<ApprovalRequestResponse> succeeded = new java.util.ArrayList<>();
+    java.util.ArrayList<BatchDecideFailure> failed = new java.util.ArrayList<>();
+    DecideApprovalRequest single = new DecideApprovalRequest();
+    single.setDecision(request.getDecision());
+    single.setDecisionBy(request.getDecisionBy());
+    single.setDecisionNote(request.getDecisionNote());
+    for (String code : request.getCodes()) {
+      try {
+        succeeded.add(decide(code, single));
+      } catch (ResourceNotFoundException | ResourceStateConflictException ex) {
+        failed.add(new BatchDecideFailure(code, ex.getMessage()));
+      }
+    }
+    return new BatchDecideResponse(request.getDecision(), succeeded, failed);
+  }
+
+  /** 投递回写审批明细（不改变终态）。 */
+  @Transactional
+  public ApprovalRequestResponse replaceDetail(String code, Map<String, Object> detail) {
+    ApprovalRequest approval = require(code);
+    approval.replaceDetailJson(toJson(detail));
     return ApprovalRequestResponse.from(approval);
   }
 

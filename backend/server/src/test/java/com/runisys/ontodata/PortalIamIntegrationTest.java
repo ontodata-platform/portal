@@ -2,6 +2,7 @@ package com.runisys.ontodata;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -147,6 +148,40 @@ class PortalIamIntegrationTest {
         .perform(get("/api/v1/tasks").with(tenantToken("tenant-b", null)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.total").value(0));
+  }
+
+  @Test
+  void personalIdentityUsesJwtSubject() throws Exception {
+    mockMvc
+        .perform(
+            get("/api/v1/personal/me")
+                .with(
+                    jwt()
+                        .jwt(
+                            builder ->
+                                builder
+                                    .subject("tester")
+                                    .claim("tenant_id", "tenant-a")
+                                    .claim("portal_roles", java.util.List.of("portal-admin")))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("tester"))
+        .andExpect(jsonPath("$.tenantId").value("tenant-a"))
+        .andExpect(jsonPath("$.devMode").value(false))
+        .andExpect(jsonPath("$.roles[0]").value("portal-admin"));
+
+    mockMvc
+        .perform(
+            post("/api/v1/requirements")
+                .with(tenantToken("tenant-a", null))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"requirementType\":\"DATA\",\"title\":\"IAM 主体需求\"}"))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.requester").value("tester"));
+
+    mockMvc
+        .perform(get("/api/v1/personal/requirements").with(tenantToken("tenant-a", null)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1));
   }
 
   @Test

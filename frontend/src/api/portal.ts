@@ -5,20 +5,27 @@
 import { client } from './client'
 
 import type {
+  ApplyDataServiceRequest,
   ApprovalRequest,
+  BatchDecideResult,
   Feedback,
+  MarketplaceApplyResponse,
   Notice,
   OperationsStatistics,
   PageResponse,
   PersonalTodo,
+  PortalIdentity,
+  PortalNotification,
   PortalResult,
   PortalScenario,
   PortalTask,
   RequirementRequest,
-  ScenarioOntologyRef,
   ScenarioBinding,
+  ScenarioOntologyRef,
   ScenarioPresentation,
+  SubmitWorkbenchRunRequest,
   UpstreamAggregation,
+  WorkbenchRunResponse,
 } from '@/types/portal'
 
 export interface ListParams {
@@ -40,16 +47,31 @@ export const taskApi = {
 export const approvalApi = {
   list: (params: ListParams) => client.get<PageResponse<ApprovalRequest>>('/approvals', { params }).then((r) => r.data),
   find: (code: string) => client.get<ApprovalRequest>(`/approvals/${code}`).then((r) => r.data),
-  create: (body: { approvalType: string; sourceSystem: string; sourceCode?: string; title: string; detail?: Record<string, unknown>; requester: string }) =>
-    client.post<ApprovalRequest>('/approvals', body).then((r) => r.data),
-  decide: (code: string, body: { decision: 'APPROVED' | 'REJECTED'; decisionBy: string; decisionNote?: string }) =>
-    client.post<ApprovalRequest>(`/approvals/${code}/decision`, body).then((r) => r.data),
+  create: (body: {
+    approvalType: string
+    sourceSystem: string
+    sourceCode?: string
+    title: string
+    detail?: Record<string, unknown>
+    requester?: string
+    slaDeadline?: string
+  }) => client.post<ApprovalRequest>('/approvals', body).then((r) => r.data),
+  decide: (
+    code: string,
+    body: { decision: 'APPROVED' | 'REJECTED'; decisionBy?: string; decisionNote?: string },
+  ) => client.post<ApprovalRequest>(`/approvals/${code}/decision`, body).then((r) => r.data),
+  batchDecide: (body: {
+    codes: string[]
+    decision: 'APPROVED' | 'REJECTED'
+    decisionNote?: string
+  }) => client.post<BatchDecideResult>('/approvals/batch-decision', body).then((r) => r.data),
 }
 
 /** 结果中心：结果引用登记（来源系统与结果标识在路径上，可追踪率 100%）。 */
 export const resultApi = {
   list: (params: ListParams) => client.get<PageResponse<PortalResult>>('/results', { params }).then((r) => r.data),
-  find: (sourceSystem: string, resultId: string) => client.get<PortalResult>(`/results/${sourceSystem}/${resultId}`).then((r) => r.data),
+  find: (sourceSystem: string, resultId: string) =>
+    client.get<PortalResult>(`/results/${sourceSystem}/${resultId}`).then((r) => r.data),
   register: (
     sourceSystem: string,
     resultId: string,
@@ -61,8 +83,12 @@ export const resultApi = {
 export const requirementApi = {
   list: (params: ListParams) => client.get<PageResponse<RequirementRequest>>('/requirements', { params }).then((r) => r.data),
   find: (code: string) => client.get<RequirementRequest>(`/requirements/${code}`).then((r) => r.data),
-  create: (body: { requirementType: 'DATA' | 'ALGORITHM' | 'COMPREHENSIVE'; title: string; description?: string; requester: string }) =>
-    client.post<RequirementRequest>('/requirements', body).then((r) => r.data),
+  create: (body: {
+    requirementType: 'DATA' | 'ALGORITHM' | 'COMPREHENSIVE'
+    title: string
+    description?: string
+    requester?: string
+  }) => client.post<RequirementRequest>('/requirements', body).then((r) => r.data),
   analyze: (code: string) => client.post<RequirementRequest>(`/requirements/${code}/analyze`).then((r) => r.data),
   assign: (code: string, body: { assigneeSystem: string; assigneeRef?: string; plan?: Record<string, unknown> }) =>
     client.post<RequirementRequest>(`/requirements/${code}/assign`, body).then((r) => r.data),
@@ -75,12 +101,12 @@ export const requirementApi = {
 
 /** 门户运营：公告（ntc-* 单向流转）、反馈（fb-*）、运营统计。 */
 export const operationsApi = {
-  notices: (params: ListParams) => client.get<PageResponse<Notice>>('/operations/notices', { params }).then((r) => r.data),
+  notices: (params: Partial<ListParams>) => client.get<PageResponse<Notice>>('/operations/notices', { params }).then((r) => r.data),
   createNotice: (body: { title: string; content: string; section: string }) =>
     client.post<Notice>('/operations/notices', body).then((r) => r.data),
   publishNotice: (code: string) => client.post<Notice>(`/operations/notices/${code}/publish`).then((r) => r.data),
   archiveNotice: (code: string) => client.post<Notice>(`/operations/notices/${code}/archive`).then((r) => r.data),
-  feedbacks: (params: ListParams) => client.get<PageResponse<Feedback>>('/operations/feedbacks', { params }).then((r) => r.data),
+  feedbacks: (params: Partial<ListParams>) => client.get<PageResponse<Feedback>>('/operations/feedbacks', { params }).then((r) => r.data),
   createFeedback: (body: { title: string; content: string; contact?: string }) =>
     client.post<Feedback>('/operations/feedbacks', body).then((r) => r.data),
   handleFeedback: (code: string, body: { handleNote: string }) =>
@@ -88,18 +114,30 @@ export const operationsApi = {
   statistics: () => client.get<OperationsStatistics>('/operations/statistics').then((r) => r.data),
 }
 
-/** 数据商城：经管理平台正式 REST 契约聚合数据服务目录（降级展示契约）。 */
+/** 数据商城：经管理平台正式 REST 契约聚合数据服务目录与申请。 */
 export const marketplaceApi = {
   dataServices: (params: ListParams) =>
     client.get<UpstreamAggregation>('/marketplace/data-services', { params }).then((r) => r.data),
+  find: (code: string) =>
+    client.get<UpstreamAggregation>(`/marketplace/data-services/${code}`).then((r) => r.data),
+  apply: (code: string, body?: ApplyDataServiceRequest) =>
+    client.post<MarketplaceApplyResponse>(`/marketplace/data-services/${code}/apply`, body).then((r) => r.data),
+  retryDelivery: (approvalCode: string) =>
+    client.post<ApprovalRequest>(`/marketplace/applications/${approvalCode}/retry-delivery`).then((r) => r.data),
 }
 
-/** 算法工作台：能力目录（算法转换工具）与工作流模板（算法重组平台）聚合。 */
+/** 算法工作台：能力目录（算法转换工具）与工作流模板（算法重组平台）聚合及运行。 */
 export const workbenchApi = {
   capabilities: (params: ListParams) =>
     client.get<UpstreamAggregation>('/workbench/capabilities', { params }).then((r) => r.data),
+  capability: (code: string) =>
+    client.get<UpstreamAggregation>(`/workbench/capabilities/${code}`).then((r) => r.data),
   workflowTemplates: (params: ListParams) =>
     client.get<UpstreamAggregation>('/workbench/workflow-templates', { params }).then((r) => r.data),
+  template: (code: string) =>
+    client.get<UpstreamAggregation>(`/workbench/workflow-templates/${code}`).then((r) => r.data),
+  run: (code: string, body: SubmitWorkbenchRunRequest) =>
+    client.post<WorkbenchRunResponse>(`/workbench/workflow-templates/${code}/runs`, body).then((r) => r.data),
 }
 
 /** 场景编排器（scenario-center）：scn-* 场景，全量钉扎 + 发布/下线状态机 + 不可变版本。 */
@@ -127,16 +165,18 @@ export interface ScenarioUpsertBody {
   createdBy?: string
 }
 
-/** 个人中心：我的需求/我的申请/待办统计（M5 接 IAM 后 requester 改认证上下文）。 */
+/** 个人中心：身份/我的需求/我的申请/待办统计（M5 身份取认证上下文）。 */
 export const personalApi = {
-  requirements: (requester: string, params: ListParams) =>
-    client
-      .get<PageResponse<RequirementRequest>>('/personal/requirements', { params: { ...params, requester } })
-      .then((r) => r.data),
-  approvals: (requester: string, params: ListParams) =>
-    client
-      .get<PageResponse<ApprovalRequest>>('/personal/approvals', { params: { ...params, requester } })
-      .then((r) => r.data),
-  todos: (requester: string) =>
-    client.get<PersonalTodo>('/personal/todos', { params: { requester } }).then((r) => r.data),
+  me: () => client.get<PortalIdentity>('/personal/me').then((r) => r.data),
+  requirements: (params: Partial<ListParams> = {}) =>
+    client.get<PageResponse<RequirementRequest>>('/personal/requirements', { params }).then((r) => r.data),
+  approvals: (params: Partial<ListParams> = {}) =>
+    client.get<PageResponse<ApprovalRequest>>('/personal/approvals', { params }).then((r) => r.data),
+  todos: () => client.get<PersonalTodo>('/personal/todos').then((r) => r.data),
+  notifications: (params: Partial<ListParams> = {}) =>
+    client.get<PageResponse<PortalNotification>>('/personal/notifications', { params }).then((r) => r.data),
+  unreadCount: () => client.get<{ unread: number }>('/personal/notifications/unread-count').then((r) => r.data),
+  markRead: (id: string) =>
+    client.post<PortalNotification>(`/personal/notifications/${id}/read`).then((r) => r.data),
+  markAllRead: () => client.post<{ unread: number }>('/personal/notifications/read-all').then((r) => r.data),
 }

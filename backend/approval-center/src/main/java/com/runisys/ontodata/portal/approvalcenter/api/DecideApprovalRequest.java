@@ -11,7 +11,6 @@ public class DecideApprovalRequest {
   @Pattern(regexp = "APPROVED|REJECTED", message = "审批结论只能是 APPROVED 或 REJECTED")
   private String decision;
 
-  @NotBlank(message = "审批人不能为空")
   @Size(max = 64, message = "审批人不能超过 64 个字符")
   private String decisionBy;
 

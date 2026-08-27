@@ -7,7 +7,7 @@ import { defineStore } from 'pinia'
 import { ApiError } from '@/api/client'
 
 export interface FeedbackMessage {
-  kind: 'success' | 'error'
+  kind: 'success' | 'error' | 'info' | 'warning'
   content: string
   traceId?: string
 }
@@ -20,6 +20,12 @@ export const useMessageStore = defineStore('message', {
   actions: {
     success(content: string) {
       this.feedback = { kind: 'success', content }
+    },
+    info(content: string) {
+      this.feedback = { kind: 'info', content }
+    },
+    warning(content: string) {
+      this.feedback = { kind: 'warning', content }
     },
     reportError(error: unknown) {
       const apiError = error instanceof ApiError ? error : ApiError.from(error)

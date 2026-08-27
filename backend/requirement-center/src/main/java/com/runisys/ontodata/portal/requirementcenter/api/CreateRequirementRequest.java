@@ -20,7 +20,6 @@ public class CreateRequirementRequest {
   @Size(max = 5000, message = "需求描述不能超过 5000 个字符")
   private String description;
 
-  @NotBlank(message = "提出人不能为空")
   @Size(max = 64, message = "提出人不能超过 64 个字符")
   private String requester;
 

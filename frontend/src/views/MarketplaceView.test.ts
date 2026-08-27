@@ -7,6 +7,11 @@ import { i18n } from '@/i18n'
 import MarketplaceView from './MarketplaceView.vue'
 
 const dataServicesMock = vi.fn()
+const pushMock = vi.fn()
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: pushMock }),
+}))
 
 vi.mock('@/api/portal', () => ({
   marketplaceApi: {
@@ -16,8 +21,10 @@ vi.mock('@/api/portal', () => ({
 
 const stubs = {
   'a-card': { template: '<div><slot /></div>' },
-  'a-table': { props: ['columns', 'dataSource', 'loading', 'rowKey', 'pagination'], template: '<div class="table"><slot /></div>' },
+  'a-table': { props: ['columns', 'dataSource', 'loading', 'rowKey', 'pagination', 'customRow'], template: '<div class="table"><slot /></div>' },
   'a-space': { template: '<div><slot /></div>' },
+  'a-button': { props: ['type', 'size', 'ghost'], emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' },
+  'a-tag': { props: ['color'], template: '<span><slot /></span>' },
   'a-alert': { props: ['type', 'showIcon', 'message', 'description'], template: '<div class="alert"><slot />{{ message }}</div>' },
   'a-input-search': { props: ['value'], emits: ['update:value', 'search'], template: '<input :value="value" @input="$emit(\'update:value\', $event.target.value)" />' },
 }

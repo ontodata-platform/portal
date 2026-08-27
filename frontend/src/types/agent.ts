@@ -81,3 +81,19 @@ export interface ConfirmResult {
   tool: string
   result?: Record<string, unknown>
 }
+
+/** GET /agent/catalog/search 命中（F3a-1，与 agent-runtime catalog 契约对齐）。 */
+export type CatalogSearchKind = 'data_asset' | 'capability' | 'workflow'
+
+export interface CatalogSearchHit {
+  kind: CatalogSearchKind
+  id: string
+  title: string
+  snippet: string
+  classification: string
+  source: 'data-platform' | 'transform' | 'recombine'
+}
+
+export interface CatalogSearchResponse {
+  hits: CatalogSearchHit[]
+}

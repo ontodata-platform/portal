@@ -152,8 +152,7 @@ class PortalIntegrationTest {
           "sourceSystem": "mcp-gateway",
           "sourceCode": "cfm-12345678",
           "title": "发布本体版本 r1 需要审批",
-          "detail": {"tool": "ontology.publish_release", "riskLevel": "R4"},
-          "requester": "alice"
+          "detail": {"tool": "ontology.publish_release", "riskLevel": "R4"}
         }
         """;
 
@@ -178,17 +177,17 @@ class PortalIntegrationTest {
             post("/api/v1/approvals/{code}/decision", code)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"decision\":\"APPROVED\",\"decisionBy\":\"bob\",\"decisionNote\":\"同意\"}"))
+                    "{\"decision\":\"APPROVED\",\"decisionNote\":\"同意\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("APPROVED"))
-        .andExpect(jsonPath("$.decisionBy").value("bob"));
+        .andExpect(jsonPath("$.decisionBy").value("dev-user"));
 
     // 终态防重：重复审批 409
     mockMvc
         .perform(
             post("/api/v1/approvals/{code}/decision", code)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"decision\":\"REJECTED\",\"decisionBy\":\"bob\"}"))
+                .content("{\"decision\":\"REJECTED\"}"))
         .andExpect(status().isConflict());
 
     // 第二张审批单走拒绝分支
@@ -203,8 +202,7 @@ class PortalIntegrationTest {
                           "approvalType": "DATA_GRANT",
                           "sourceSystem": "data-platform",
                           "sourceCode": "ds-12345678",
-                          "title": "数据订阅授权",
-                          "requester": "alice"
+                          "title": "数据订阅授权"
                         }
                         """))
             .andExpect(status().isCreated())
@@ -216,7 +214,7 @@ class PortalIntegrationTest {
         .perform(
             post("/api/v1/approvals/{code}/decision", secondCode)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"decision\":\"REJECTED\",\"decisionBy\":\"bob\"}"))
+                .content("{\"decision\":\"REJECTED\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("REJECTED"));
 
@@ -330,8 +328,7 @@ class PortalIntegrationTest {
                         {
                           "requirementType": "DATA",
                           "title": "客户主数据补全",
-                          "description": "补全缺失字段并回填历史数据",
-                          "requester": "alice"
+                          "description": "补全缺失字段并回填历史数据"
                         }
                         """))
             .andExpect(status().isCreated())
@@ -351,8 +348,7 @@ class PortalIntegrationTest {
                     """
                     {
                       "requirementType": "DATA",
-                      "title": "  客户主数据补全  ",
-                      "requester": "bob"
+                      "title": "  客户主数据补全  "
                     }
                     """))
         .andExpect(status().isConflict());
@@ -442,8 +438,7 @@ class PortalIntegrationTest {
                         """
                         {
                           "requirementType": "ALGORITHM",
-                          "title": "实时风控指标加工",
-                          "requester": "alice"
+                          "title": "实时风控指标加工"
                         }
                         """))
             .andExpect(status().isCreated())
@@ -623,14 +618,19 @@ class PortalIntegrationTest {
     // 基线（跨测试共享内存库，其他测试也产生 alice 的需求/审批）
     String baselineJson =
         mockMvc
-            .perform(get("/api/v1/personal/todos").param("requester", "carol"))
+            .perform(get("/api/v1/personal/todos"))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
             .getContentAsString();
     com.fasterxml.jackson.databind.JsonNode baseline = objectMapper.readTree(baselineJson);
 
-    // carol 提一条需求、一条审批申请
+    mockMvc
+        .perform(get("/api/v1/personal/me"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("dev-user"))
+        .andExpect(jsonPath("$.devMode").value(true));
+
     mockMvc
         .perform(
             post("/api/v1/requirements")
@@ -639,8 +639,7 @@ class PortalIntegrationTest {
                     """
                     {
                       "requirementType": "DATA",
-                      "title": "carol 的数据补全需求",
-                      "requester": "carol"
+                      "title": "dev-user 的数据补全需求"
                     }
                     """))
         .andExpect(status().isCreated());
@@ -653,15 +652,13 @@ class PortalIntegrationTest {
                     {
                       "approvalType": "DATA_GRANT",
                       "sourceSystem": "data-platform",
-                      "title": "carol 的数据授权申请",
-                      "requester": "carol"
+                      "title": "dev-user 的数据授权申请"
                     }
                     """))
         .andExpect(status().isCreated());
 
-    // 待办统计：carol 新增 1 条 PENDING 审批、1 条 OPEN 需求、需求/申请总数各 +1
     mockMvc
-        .perform(get("/api/v1/personal/todos").param("requester", "carol"))
+        .perform(get("/api/v1/personal/todos"))
         .andExpect(status().isOk())
         .andExpect(
             jsonPath("$.pendingApprovalCount")
@@ -675,10 +672,9 @@ class PortalIntegrationTest {
         .andExpect(
             jsonPath("$.myApprovalCount").value(baseline.path("myApprovalCount").asLong() + 1));
 
-    // 我的需求：按提出人过滤，carol 恰好 +1（标题包含 carol 标记，防同标题去重误伤）
     String myRequirementsJson =
         mockMvc
-            .perform(get("/api/v1/personal/requirements").param("requester", "carol"))
+            .perform(get("/api/v1/personal/requirements"))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
@@ -686,12 +682,11 @@ class PortalIntegrationTest {
     Assertions.assertEquals(
         baseline.path("myRequirementCount").asLong() + 1,
         objectMapper.readTree(myRequirementsJson).path("total").asLong(),
-        "我的需求只统计 carol 提出的需求");
+        "我的需求只统计当前主体提出的需求");
 
-    // 我的申请：按申请人过滤
     String myApprovalsJson =
         mockMvc
-            .perform(get("/api/v1/personal/approvals").param("requester", "carol"))
+            .perform(get("/api/v1/personal/approvals"))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
@@ -699,18 +694,26 @@ class PortalIntegrationTest {
     Assertions.assertEquals(
         baseline.path("myApprovalCount").asLong() + 1,
         objectMapper.readTree(myApprovalsJson).path("total").asLong(),
-        "我的申请只统计 carol 提交的审批单");
+        "我的申请只统计当前主体提交的审批单");
 
-    // 状态过滤：carol 的 PENDING 需求 1 条（新增的那条）
     mockMvc
-        .perform(
-            get("/api/v1/personal/requirements")
-                .param("requester", "carol")
-                .param("status", "OPEN"))
+        .perform(get("/api/v1/personal/requirements").param("status", "OPEN"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.total").value(baseline.path("myOpenRequirementCount").asLong() + 1));
 
-    // 用户缺失 → 400
-    mockMvc.perform(get("/api/v1/personal/todos")).andExpect(status().isBadRequest());
+    mockMvc
+        .perform(
+            post("/api/v1/requirements")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "requirementType": "DATA",
+                      "title": "冒充他人的需求",
+                      "requester": "alice"
+                    }
+                    """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
   }
 }

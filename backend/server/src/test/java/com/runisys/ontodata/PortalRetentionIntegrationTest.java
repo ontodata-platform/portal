@@ -56,7 +56,7 @@ class PortalRetentionIntegrationTest {
                     .content(
                         """
                         {"approvalType":"DATA_GRANT","sourceSystem":"data-platform",
-                         "title":"保留验收审批","requester":"retention"}
+                         "title":"保留验收审批"}
                         """))
             .andExpect(status().isCreated())
             .andReturn()
@@ -67,7 +67,7 @@ class PortalRetentionIntegrationTest {
         .perform(
             post("/api/v1/approvals/{code}/decision", approvalCode)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"decision\":\"APPROVED\",\"decisionBy\":\"retention\"}"))
+                .content("{\"decision\":\"APPROVED\"}"))
         .andExpect(status().isOk());
 
     String requirementJson =
@@ -77,7 +77,7 @@ class PortalRetentionIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         """
-                        {"requirementType":"DATA","title":"保留验收需求","requester":"retention"}
+                        {"requirementType":"DATA","title":"保留验收需求"}
                         """))
             .andExpect(status().isCreated())
             .andReturn()
@@ -150,7 +150,7 @@ class PortalRetentionIntegrationTest {
                 .content(
                     """
                     {"approvalType":"DATA_GRANT","sourceSystem":"data-platform",
-                     "title":"保留验收进行中审批","requester":"retention"}
+                     "title":"保留验收进行中审批"}
                     """))
         .andExpect(status().isCreated());
     mockMvc

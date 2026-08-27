@@ -15,6 +15,8 @@ import type {
   AgentDetail,
   AgentMessage,
   AgentSession,
+  CatalogSearchKind,
+  CatalogSearchResponse,
   ConfirmRequiredEvent,
   ConfirmResolvedEvent,
   ConfirmResult,
@@ -36,6 +38,8 @@ export const agentApi = {
       .then((r) => r.data),
   confirm: (sessionId: string, body: { confirmToken: string; decision: 'approve' | 'reject' }) =>
     agentClient.post<ConfirmResult>(`/sessions/${sessionId}/confirm`, body).then((r) => r.data),
+  catalogSearch: (params: { q: string; kind?: CatalogSearchKind; limit?: number }) =>
+    agentClient.get<CatalogSearchResponse>('/catalog/search', { params }).then((r) => r.data),
 }
 
 /** 一条解析完成的 SSE 事件（event 缺省为 message；data 为多行 data: 拼接）。 */

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.runisys.ontodata.portal.common.PortalIdentityService;
 import com.runisys.ontodata.portal.common.TenantContext;
+import com.runisys.ontodata.portal.common.security.CurrentOperator;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
@@ -101,6 +102,7 @@ public class RequirementService {
       throw new ResourceStateConflictException(
           "存在同类型进行中的需求 " + duplicate.getCode() + "，请合并到已有需求或待其关闭后再登记");
     }
+    CurrentOperator.requireMatches(request.getRequester());
     RequirementRequest created =
         requirementRepository.saveAndFlush(
             new RequirementRequest(
@@ -109,7 +111,7 @@ public class RequirementService {
                 request.getTitle().trim(),
                 normalizedTitle,
                 trimToNull(request.getDescription()),
-                request.getRequester().trim(),
+                CurrentOperator.name(),
                 tenantId,
                 Instant.now()));
     return RequirementRequestResponse.from(created);

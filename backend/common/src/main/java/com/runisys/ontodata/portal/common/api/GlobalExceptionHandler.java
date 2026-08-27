@@ -113,6 +113,14 @@ public class GlobalExceptionHandler {
         HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", exception.getMessage(), request, null);
   }
 
+  /** 上游写门面失败：502，调用方可重试；不得降级为 200。 */
+  @ExceptionHandler(UpstreamWriteException.class)
+  public ResponseEntity<ApiErrorResponse> handleUpstreamWrite(
+      UpstreamWriteException exception, HttpServletRequest request) {
+    return response(
+        HttpStatus.BAD_GATEWAY, "UPSTREAM_FAILED", exception.getMessage(), request, null);
+  }
+
   /** 唯一约束冲突统一映射 409：并发创建或重复编码都以稳定冲突语义返回。 */
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ApiErrorResponse> handleDataIntegrity(

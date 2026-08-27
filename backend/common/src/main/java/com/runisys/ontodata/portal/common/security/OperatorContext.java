@@ -7,8 +7,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 /**
  * 操作主体上下文（WP-07）：事件载荷审计字段（decidedBy 等）的取值来源， 与 algorithm-transform 的 OperatorContext 同构。
  *
- * <p>安全模式（OIDC Bearer JWT）取认证主体名（JWT subject）；开发模式或无请求上下文的场景 （未认证调用、单元测试）返回 null，由调用方按既有约定兜底——
- * 审计字段只记录"谁在系统里做了这件事"，不承载授权语义。
+ * <p>安全模式（OIDC Bearer JWT）取认证主体名（JWT subject）；开发模式或无请求上下文的场景 （未认证调用、单元测试）返回 null。业务写入请用 {@link CurrentOperator#name()}（开发模式回退
+ * {@code dev-user}），不要再让调用方传入 requester。
  */
 public final class OperatorContext {
 

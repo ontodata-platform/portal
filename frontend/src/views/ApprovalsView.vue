@@ -16,21 +16,30 @@ const query = reactive({ page: 1, size: 20, status: '', type: '' })
 
 const createOpen = ref(false)
 const creating = ref(false)
-const createForm = reactive({ approvalType: 'R4_TOOL_CALL', sourceSystem: 'mcp-gateway', sourceCode: '', title: '', requester: '' })
+const createForm = reactive({
+  approvalType: 'R4_TOOL_CALL',
+  sourceSystem: 'mcp-gateway',
+  sourceCode: '',
+  title: '',
+  slaDeadline: '',
+})
+const selectedCodes = ref<string[]>([])
+const batching = ref(false)
 
 const decideOpen = ref(false)
 const deciding = ref(false)
 const decideTarget = ref<ApprovalRequest | null>(null)
-const decideForm = reactive({ decision: 'APPROVED' as 'APPROVED' | 'REJECTED', decisionBy: '', decisionNote: '' })
+const decideForm = reactive({ decision: 'APPROVED' as 'APPROVED' | 'REJECTED', decisionNote: '' })
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code' },
-  { title: t('common.type'), dataIndex: 'approvalType', key: 'approvalType' },
-  { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem' },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
+  { title: t('common.type'), dataIndex: 'approvalType', key: 'approvalType', width: 130 },
+  { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 140 },
   { title: t('common.title'), dataIndex: 'title', key: 'title' },
-  { title: t('common.applicant'), dataIndex: 'requester', key: 'requester' },
-  { title: t('common.status'), dataIndex: 'status', key: 'status' },
-  { title: t('common.action'), dataIndex: 'action', key: 'action' },
+  { title: t('common.applicant'), dataIndex: 'requester', key: 'requester', width: 120 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
+  { title: t('approvals.slaStatus'), dataIndex: 'slaStatus', key: 'slaStatus', width: 90 },
+  { title: t('common.action'), dataIndex: 'action', key: 'action', width: 110 },
 ])
 
 const statusColor: Record<string, string> = {
@@ -75,11 +84,13 @@ async function create() {
       sourceSystem: createForm.sourceSystem,
       sourceCode: createForm.sourceCode || undefined,
       title: createForm.title,
-      requester: createForm.requester,
+      slaDeadline: createForm.slaDeadline ? new Date(createForm.slaDeadline).toISOString() : undefined,
     })
     messageStore.success(t('approvals.created'))
     createOpen.value = false
     createForm.title = ''
+    createForm.sourceCode = ''
+    createForm.slaDeadline = ''
     await load()
   } catch (error) {
     messageStore.reportError(error)
@@ -91,7 +102,6 @@ async function create() {
 function openDecide(record: ApprovalRequest) {
   decideTarget.value = record
   decideForm.decision = 'APPROVED'
-  decideForm.decisionBy = ''
   decideForm.decisionNote = ''
   decideOpen.value = true
 }
@@ -104,7 +114,6 @@ async function decide() {
   try {
     await approvalApi.decide(decideTarget.value.code, {
       decision: decideForm.decision,
-      decisionBy: decideForm.decisionBy,
       decisionNote: decideForm.decisionNote || undefined,
     })
     messageStore.success(
@@ -121,28 +130,65 @@ async function decide() {
   }
 }
 
+async function batchDecide(decision: 'APPROVED' | 'REJECTED') {
+  if (selectedCodes.value.length === 0) {
+    return
+  }
+  batching.value = true
+  try {
+    const result = await approvalApi.batchDecide({ codes: [...selectedCodes.value], decision })
+    messageStore.success(
+      t('approvals.batchDecided', { succeeded: result.succeeded.length, failed: result.failed.length }),
+    )
+    selectedCodes.value = []
+    await load()
+  } catch (error) {
+    messageStore.reportError(error)
+  } finally {
+    batching.value = false
+  }
+}
+
+function slaText(status?: string) {
+  if (status === 'OVERDUE') return t('approvals.slaOverdue')
+  if (status === 'ON_TIME') return t('approvals.slaOnTime')
+  if (status === 'MET') return t('approvals.slaMet')
+  if (status === 'MISSED') return t('approvals.slaMissed')
+  return t('approvals.slaNone')
+}
+
+function onSelectChange(keys: (string | number)[]) {
+  selectedCodes.value = keys.map(String)
+}
+
 onMounted(load)
 </script>
 
 <template>
-  <a-card>
-    <a-space style="margin-bottom: 12px" wrap>
+  <a-card :bordered="false" class="approvals-card">
+    <a-space style="margin-bottom: 16px" wrap>
       <a-select v-model:value="query.status" :placeholder="t('common.status')" allow-clear style="width: 140px">
         <a-select-option value="PENDING">{{ t('approvals.pendingApproval') }}</a-select-option>
         <a-select-option value="APPROVED">{{ t('approvals.approved') }}</a-select-option>
         <a-select-option value="REJECTED">{{ t('approvals.rejected') }}</a-select-option>
       </a-select>
-      <a-input v-model:value="query.type" :placeholder="t('approvals.typePlaceholder')" style="width: 220px" />
+      <a-input v-model:value="query.type" :placeholder="t('approvals.typePlaceholder')" style="width: 220px" allow-clear />
       <a-button
         type="primary"
         @click="
           query.page = 1;
-          load()
+          load();
         "
       >
         {{ t('common.query') }}
       </a-button>
       <a-button @click="createOpen = true">{{ t('approvals.createButton') }}</a-button>
+      <a-button :disabled="selectedCodes.length === 0" :loading="batching" @click="batchDecide('APPROVED')">
+        {{ t('approvals.batchApprove') }}
+      </a-button>
+      <a-button :disabled="selectedCodes.length === 0" :loading="batching" danger @click="batchDecide('REJECTED')">
+        {{ t('approvals.batchReject') }}
+      </a-button>
     </a-space>
 
     <a-table
@@ -150,6 +196,7 @@ onMounted(load)
       :data-source="rows"
       :loading="loading"
       row-key="code"
+      :row-selection="{ selectedRowKeys: selectedCodes, onChange: onSelectChange }"
       :pagination="{ current: query.page, pageSize: query.size, total }"
       @change="
         (pagination: { current?: number }) => {
@@ -161,6 +208,11 @@ onMounted(load)
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
           <a-tag :color="statusColor[record.status]">{{ statusText[record.status] ?? record.status }}</a-tag>
+        </template>
+        <template v-else-if="column.key === 'slaStatus'">
+          <a-tag :color="record.slaStatus === 'OVERDUE' || record.slaStatus === 'MISSED' ? 'error' : 'default'">
+            {{ slaText(record.slaStatus) }}
+          </a-tag>
         </template>
         <template v-else-if="column.key === 'action'">
           <a-button
@@ -198,8 +250,8 @@ onMounted(load)
         <a-form-item :label="t('common.title')" required>
           <a-input v-model:value="createForm.title" :placeholder="t('approvals.titlePlaceholder')" />
         </a-form-item>
-        <a-form-item :label="t('common.applicant')" required>
-          <a-input v-model:value="createForm.requester" :placeholder="t('approvals.requesterPlaceholder')" />
+        <a-form-item :label="t('approvals.slaDeadline')" :extra="t('approvals.slaDeadlinePlaceholder')">
+          <a-input v-model:value="createForm.slaDeadline" type="datetime-local" style="max-width: 280px" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -212,9 +264,6 @@ onMounted(load)
             <a-radio value="REJECTED">{{ t('approvals.reject') }}</a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item :label="t('approvals.decisionBy')" required>
-          <a-input v-model:value="decideForm.decisionBy" :placeholder="t('approvals.decisionBy')" />
-        </a-form-item>
         <a-form-item :label="t('approvals.decisionNote')">
           <a-textarea v-model:value="decideForm.decisionNote" :placeholder="t('approvals.decisionNotePlaceholder')" :rows="3" />
         </a-form-item>
@@ -222,3 +271,10 @@ onMounted(load)
     </a-modal>
   </a-card>
 </template>
+
+<style scoped>
+.approvals-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+</style>

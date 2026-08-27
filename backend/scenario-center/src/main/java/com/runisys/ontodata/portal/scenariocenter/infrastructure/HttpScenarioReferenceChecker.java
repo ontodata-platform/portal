@@ -28,7 +28,8 @@ import org.springframework.stereotype.Component;
  *   <li>ALGORITHM_RECOMBINE → GET /api/v1/workflow-templates?keyword= 找到同 code 且 PUBLISHED 的模板， 再
  *       GET /{id}/versions 校验存在 versionNumber 等于钉扎版本 major 位的编排版本 （重组平台版本号为服务端递增整数，场景契约钉扎 x.y.z，约定
  *       major 位对应该整数版本）；
- *   <li>DATA_PLATFORM（DATA_SNAPSHOT）→ 数据平台快照钉扎校验端点尚未冻结（批次 D3 快照生命周期落地后接入）， 当前跳过，由钉扎版本本身保证可复现引用。
+ *   <li>DATA_PLATFORM（DATA_SNAPSHOT）→ GET /api/v1/metadata-snapshots/{snapshotId}/status（D3 已冻结），
+ *       仅 status=READY 放行；404/REVOKED/EXPIRED/不可达一律 fail-closed。
  * </ul>
  *
  * <p>fail-closed：不可达/超时/非 2xx/响应结构非法/引用不存在一律抛 IllegalArgumentException 阻断发布。
@@ -44,6 +45,7 @@ public class HttpScenarioReferenceChecker implements ScenarioReferenceChecker {
   private final boolean enabled;
   private final String transformBaseUrl;
   private final String recombineBaseUrl;
+  private final String dataPlatformBaseUrl;
 
   public HttpScenarioReferenceChecker(
       ObjectMapper objectMapper,
@@ -51,12 +53,15 @@ public class HttpScenarioReferenceChecker implements ScenarioReferenceChecker {
       @Value("${ontodata.upstream.transform.base-url:http://127.0.0.1:18082}")
           String transformBaseUrl,
       @Value("${ontodata.upstream.recombine.base-url:http://127.0.0.1:18083}")
-          String recombineBaseUrl) {
+          String recombineBaseUrl,
+      @Value("${ontodata.upstream.data-platform.base-url:http://127.0.0.1:18081}")
+          String dataPlatformBaseUrl) {
     this.objectMapper = objectMapper;
     this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     this.enabled = enabled;
     this.transformBaseUrl = transformBaseUrl;
     this.recombineBaseUrl = recombineBaseUrl;
+    this.dataPlatformBaseUrl = dataPlatformBaseUrl;
   }
 
   @Override
@@ -68,9 +73,8 @@ public class HttpScenarioReferenceChecker implements ScenarioReferenceChecker {
       switch (binding.getType()) {
         case "CAPABILITY" -> checkCapability(binding.getRef(), binding.getVersion());
         case "WORKFLOW_TEMPLATE" -> checkWorkflowTemplate(binding.getRef(), binding.getVersion());
-        default -> {
-          // DATA_SNAPSHOT：数据平台快照校验端点未冻结，跳过（见类注释）
-        }
+        case "DATA_SNAPSHOT" -> checkDataSnapshot(binding.getRef());
+        default -> throw new IllegalArgumentException("不支持的场景绑定类型：" + binding.getType());
       }
     }
   }
@@ -152,6 +156,31 @@ public class HttpScenarioReferenceChecker implements ScenarioReferenceChecker {
     }
     throw new IllegalArgumentException(
         "工作流模板版本不存在：" + code + "@" + version + "（重组平台整数版本号 " + expectedVersionNumber + "）");
+  }
+
+  /**
+   * 数据快照回查：权威端点 GET /api/v1/metadata-snapshots/{snapshotId}/status；仅 READY 放行。
+   * 快照 id 含 "/" 视为非法引用（防路径穿越）。
+   */
+  private void checkDataSnapshot(String snapshotId) {
+    if (snapshotId == null || snapshotId.isBlank() || snapshotId.contains("/")) {
+      throw new IllegalArgumentException("数据快照引用非法（应为快照 id）：" + snapshotId);
+    }
+    JsonNode body =
+        get(
+            dataPlatformBaseUrl,
+            "/api/v1/metadata-snapshots/" + encode(snapshotId) + "/status",
+            "数据平台");
+    if (body == null) {
+      throw new IllegalArgumentException("数据快照不存在：" + snapshotId);
+    }
+    JsonNode status = body.get("status");
+    if (status == null || !status.isTextual()) {
+      throw new IllegalArgumentException("数据平台响应缺少 status 字段，快照引用校验失败");
+    }
+    if (!"READY".equals(status.asText())) {
+      throw new IllegalArgumentException("数据快照状态未就绪（" + status.asText() + "）：" + snapshotId);
+    }
   }
 
   /** 钉扎版本 x.y.z 的 major 位：对应重组平台服务端递增的整数编排版本号。 */

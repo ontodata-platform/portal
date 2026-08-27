@@ -41,6 +41,11 @@ public class ApprovalController {
     return approvalService.decide(code, request);
   }
 
+  @PostMapping("/batch-decision")
+  public BatchDecideResponse batchDecide(@Valid @RequestBody BatchDecideRequest request) {
+    return approvalService.batchDecide(request);
+  }
+
   /**
    * 按编码查询审批单（mcp-gateway 轮询回查审批结果的兼容路径）。WP-07 起审批决定走 portal.approval.decided
    * 事件推送，本端点保留不动，待事件链路稳定后下线。
