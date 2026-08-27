@@ -138,6 +138,15 @@ public class TaskProjectionEventMapper {
       String taskId,
       Long eventVersion,
       JsonNode payload) {
+    // transform.capability-version.* 是目录/缓存刷新类事件（契约描述：订阅方按已发布版本刷新
+    // 可读目录），不是任务生命周期事件。若按生命周期动词投影，会与同一能力 code 的准入事件
+    // （CapabilityVersionAdmitted → CAPABILITY_ADMISSION 任务）撞同一 taskId（幂等键），把
+    // 任务类型钉成 TRANSFORM_CAPABILITY_VERSION——显式跳过（不入 inbox，契约如需任务投影
+    // 可经重放补投）。
+    if (eventType.startsWith("transform.capability-version.")) {
+      log.info("目录刷新类事件，不投影任务，跳过：eventType={}, eventId={}", eventType, eventId);
+      return Optional.empty();
+    }
     String[] segments = eventType.split("\\.");
     if (segments.length < 3) {
       log.info("未知事件类型，跳过（向前兼容，不入 inbox 以便契约冻结后重放补投）：eventType={}, eventId={}", eventType, eventId);

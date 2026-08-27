@@ -356,6 +356,47 @@ class PortalTaskProjectionTest {
   }
 
   @Test
+  void capabilityCatalogRefreshEventDoesNotHijackAdmissionTaskType() {
+    // 批次 F1 回归：契约创建时 transform 发 transform.capability-version.published
+    // （目录/缓存刷新类事件，aggregateId=能力 code），若被生命周期兜底映射投影，会先建
+    // TRANSFORM_CAPABILITY_VERSION 任务行；随后准入事件 CapabilityVersionAdmitted 命中同一
+    // 幂等键（taskId=能力 code），而 taskType 创建后不可变——按 CAPABILITY_ADMISSION 过滤
+    // 永远查不到准入任务。修复后目录刷新事件跳过，准入事件正常创建 CAPABILITY_ADMISSION 投影。
+    assertEquals(
+        ProcessingResult.UNKNOWN,
+        handler.handle(
+            GROUP,
+            envelope(
+                "evt-cap-pub",
+                "transform.capability-version.published",
+                "algorithm-transform",
+                "tenant-evt",
+                "cap-1a2b3c4d",
+                "1",
+                null,
+                "{\"capabilityCode\":\"cap-1a2b3c4d\",\"version\":\"1.0.0\"}")));
+    assertEquals(0, taskRepository.count());
+
+    assertEquals(
+        ProcessingResult.APPLIED,
+        handler.handle(
+            GROUP,
+            envelope(
+                "evt-cap-adm",
+                "CapabilityVersionAdmitted",
+                "algorithm-transform",
+                "tenant-evt",
+                "cap-1a2b3c4d",
+                "2",
+                null,
+                "{\"capabilityCode\":\"cap-1a2b3c4d\",\"version\":\"1.0.0\",\"admittedBy\":\"carol\"}")));
+    PortalTask task = requireTask("cap-1a2b3c4d", "tenant-evt");
+    assertEquals("CAPABILITY_ADMISSION", task.getTaskType());
+    assertEquals("SUCCESS", task.getStatus());
+    assertEquals("ADMITTED", task.getStage());
+  }
+
+  @Test
   void projectionCanBeRebuiltByReplayingEventStream() {
     // 正常消费积累投影（含一次乱序丢弃，验证重建路径裁决一致）
     List<String> events =
