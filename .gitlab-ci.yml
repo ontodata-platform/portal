@@ -1,0 +1,22 @@
+include:
+  - project: wpp/ontodata/deploy
+    ref: main
+    file: /ci/templates/java.yml
+  - project: wpp/ontodata/deploy
+    ref: main
+    file: /ci/templates/frontend.yml
+
+variables:
+  PLATFORM_GROUP_PATH: wpp/ontodata
+  MAVEN_PROJECT_DIR: backend
+  MAVEN_EXECUTABLE: ./mvnw
+  FRONTEND_PROJECT_DIR: frontend
+
+backend:test:
+  extends: .java_test_with_platform_dependencies
+
+backend:package:
+  extends: .java_package_with_sdk
+
+frontend:check:
+  extends: .frontend_check
