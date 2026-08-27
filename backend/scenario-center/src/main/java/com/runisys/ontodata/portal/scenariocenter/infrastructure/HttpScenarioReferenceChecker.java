@@ -15,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 /**
@@ -34,6 +37,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>fail-closed：不可达/超时/非 2xx/响应结构非法/引用不存在一律抛 IllegalArgumentException 阻断发布。
  * 宽松模式（ontodata.scenario.reference-check.enabled=false）整体跳过，仅供离线开发，严禁生产。
+ * 上游开 IAM 时转发当前用户 JWT（发布由用户发起，回查带着同一身份）；无 JWT 时仅带 X-Tenant-Id。
  */
 @Component
 public class HttpScenarioReferenceChecker implements ScenarioReferenceChecker {
@@ -190,13 +194,17 @@ public class HttpScenarioReferenceChecker implements ScenarioReferenceChecker {
 
   /** GET 上游并解析 JSON；404 返回 null（引用不存在），其余非 2xx/不可达 fail-closed 抛错。 */
   private JsonNode get(String baseUrl, String path, String label) {
-    HttpRequest request =
+    HttpRequest.Builder builder =
         HttpRequest.newBuilder()
             .uri(URI.create(baseUrl + path))
             .header(TenantContext.HEADER, TenantContext.current())
             .timeout(TIMEOUT)
-            .GET()
-            .build();
+            .GET();
+    String bearer = currentAccessToken();
+    if (bearer != null) {
+      builder.header("Authorization", "Bearer " + bearer);
+    }
+    HttpRequest request = builder.build();
     final HttpResponse<String> response;
     try {
       response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -217,6 +225,22 @@ public class HttpScenarioReferenceChecker implements ScenarioReferenceChecker {
     } catch (com.fasterxml.jackson.core.JsonProcessingException malformed) {
       throw new IllegalArgumentException(label + "响应不是合法 JSON，引用校验失败");
     }
+  }
+
+  /**
+   * 转发当前用户 JWT。发布由用户发起，回查应带着同一身份访问租户隔离的上游； 开发模式无 JWT 时保持仅 X-Tenant-Id。
+   */
+  private static String currentAccessToken() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !authentication.isAuthenticated()) {
+      return null;
+    }
+    Object principal = authentication.getPrincipal();
+    if (principal instanceof Jwt jwt) {
+      String token = jwt.getTokenValue();
+      return token == null || token.isBlank() ? null : token;
+    }
+    return null;
   }
 
   private String encode(String value) {

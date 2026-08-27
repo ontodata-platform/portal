@@ -1,6 +1,7 @@
 package com.runisys.ontodata.portal.scenariocenter.infrastructure;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -10,9 +11,15 @@ import com.runisys.ontodata.portal.scenariocenter.api.UpsertScenarioRequest.Bind
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
  * 引用存在性回查测试：宽松模式（enabled=false）整体跳过；严格模式 fail-closed—— 上游不可达（本测试指向不可能监听的端口）即抛中文错误阻断发布；DATA_SNAPSHOT
@@ -113,6 +120,35 @@ class HttpScenarioReferenceCheckerTest {
   }
 
   @Test
+  void forwardsCurrentUserBearerToUpstream() throws Exception {
+    AtomicReference<String> authorization = new AtomicReference<>();
+    HttpServer stub = startSnapshotStub(200, "{\"status\":\"READY\"}", authorization);
+    Jwt jwt =
+        new Jwt(
+            "alice-token",
+            Instant.now(),
+            Instant.now().plusSeconds(60),
+            Map.of("alg", "none"),
+            Map.of("sub", "alice", "tenant_id", "tenant-a"));
+    SecurityContextHolder.getContext()
+        .setAuthentication(new UsernamePasswordAuthenticationToken(jwt, "n/a", List.of()));
+    try {
+      HttpScenarioReferenceChecker checker =
+          new HttpScenarioReferenceChecker(
+              new ObjectMapper(),
+              true,
+              UNREACHABLE,
+              UNREACHABLE,
+              "http://127.0.0.1:" + stub.getAddress().getPort());
+      checker.checkAll(List.of(binding("DATA_SNAPSHOT")));
+      assertEquals("Bearer alice-token", authorization.get());
+    } finally {
+      SecurityContextHolder.clearContext();
+      stub.stop(0);
+    }
+  }
+
+  @Test
   void dataSnapshotMissingIsRejected() throws Exception {
     HttpServer stub = startSnapshotStub(404, "");
     try {
@@ -134,10 +170,18 @@ class HttpScenarioReferenceCheckerTest {
   }
 
   private static HttpServer startSnapshotStub(int status, String json) throws Exception {
+    return startSnapshotStub(status, json, null);
+  }
+
+  private static HttpServer startSnapshotStub(
+      int status, String json, AtomicReference<String> authorization) throws Exception {
     HttpServer stub = HttpServer.create(new InetSocketAddress(0), 0);
     stub.createContext(
         "/",
         exchange -> {
+          if (authorization != null) {
+            authorization.set(exchange.getRequestHeaders().getFirst("Authorization"));
+          }
           byte[] body = json.getBytes(StandardCharsets.UTF_8);
           exchange.getResponseHeaders().add("Content-Type", "application/json");
           exchange.sendResponseHeaders(status, body.length);
