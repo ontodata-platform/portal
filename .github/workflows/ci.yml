@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend verify (cross-repository)
+    runs-on: ubuntu-latest
+    env:
+      APP_ID: ${{ secrets.ONTODATA_CI_APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.ONTODATA_CI_APP_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check cross-repository identity
+        id: access
+        shell: bash
+        run: |
+          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Backend verification is waiting for the ontoData CI App organization secrets."
+          fi
+      - name: Create read-only dependency token
+        if: steps.access.outputs.ready == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.ONTODATA_CI_APP_ID }}
+          private-key: ${{ secrets.ONTODATA_CI_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: platform-sdk,contracts
+      - name: Checkout platform SDK
+        if: steps.access.outputs.ready == 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: ontodata-platform/platform-sdk
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+          path: .ci/platform-sdk
+      - name: Checkout contracts
+        if: steps.access.outputs.ready == 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: ontodata-platform/contracts
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+          path: .ci/contracts
+      - uses: actions/setup-java@v5
+        if: steps.access.outputs.ready == 'true'
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Install platform SDK
+        if: steps.access.outputs.ready == 'true'
+        run: mvn -B -ntp -f .ci/platform-sdk/pom.xml install
+      - name: Test backend
+        if: steps.access.outputs.ready == 'true'
+        run: ./mvnw -B -ntp -f backend/pom.xml test
+      - name: Package backend
+        if: steps.access.outputs.ready == 'true'
+        run: ./mvnw -B -ntp -f backend/pom.xml -DskipTests package
+
+  frontend:
+    name: Frontend verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm --dir frontend install --frozen-lockfile
+      - name: Lint
+        run: pnpm --dir frontend lint
+      - name: Test
+        run: pnpm --dir frontend test -- --run
+      - name: Build
+        run: pnpm --dir frontend build
