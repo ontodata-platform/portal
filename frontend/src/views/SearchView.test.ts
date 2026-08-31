@@ -83,7 +83,7 @@ describe('SearchView', () => {
   it('提交关键词后调用 catalog/search 并展示命中', async () => {
     const wrapper = mountView()
     const view = wrapper.findComponent(SearchView)
-    view.vm.query.q = '客户'
+    ;(view.vm as unknown as { query: { q: string } }).query.q = '客户'
     await (view.vm as unknown as { search: () => Promise<void> }).search()
     await flushPromises()
 
@@ -105,7 +105,7 @@ describe('SearchView', () => {
   it('点击数据资产命中进入商城详情', async () => {
     const wrapper = mountView()
     const view = wrapper.findComponent(SearchView)
-    view.vm.query.q = '客户'
+    ;(view.vm as unknown as { query: { q: string } }).query.q = '客户'
     await (view.vm as unknown as { search: () => Promise<void> }).search()
     await flushPromises()
 

@@ -22,6 +22,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { authState, clearSession } from '@/auth/session'
 import { setLocale } from '@/i18n'
+import { useLocalMock } from '@/mocks/localMode'
 import { useIdentityStore } from '@/stores/identity'
 import { useMessageStore } from '@/stores/message'
 
@@ -167,6 +168,9 @@ onMounted(() => {
         <div class="header-spacer"></div>
 
         <div class="header-right">
+          <a-tag v-if="useLocalMock" color="cyan" class="badge-dev">
+            {{ t('layout.localMock') }}
+          </a-tag>
           <a-tag v-if="identityStore.devMode" color="orange" class="badge-dev">
             {{ t('layout.devMode') }}
           </a-tag>

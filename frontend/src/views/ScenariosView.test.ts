@@ -113,6 +113,7 @@ describe('ScenariosView', () => {
     expect(createMock).toHaveBeenCalledTimes(1)
     const payload = createMock.mock.calls[0][0] as {
       bindings: { version: string; sourceSystem: string; type: string }[]
+      presentation?: unknown
     }
     expect(payload.bindings[0].version).toMatch(/^\d+\.\d+\.\d+$/)
     expect(payload.bindings[0].sourceSystem).toBe('ALGORITHM_RECOMBINE')

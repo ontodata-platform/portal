@@ -4,10 +4,12 @@
  * 后端（common 模块 GlobalExceptionHandler）错误结构：{ status, code, message, path, traceId, fieldErrors }；
  * 网络层失败（超时/断连）归一为中文 ApiError，traceId 用于后端日志对账。
  */
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
+import axios, { type AxiosAdapter, type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
 import { iamEnabled } from '@/auth/oidc'
 import { ensureAccessToken } from '@/auth/session'
+import { useLocalMock } from '@/mocks/localMode'
+import { createPortalMockApi } from '@/mocks/portalMockApi'
 import type { ApiErrorBody } from '@/types/portal'
 import { tenantState } from '@/tenant'
 
@@ -87,6 +89,35 @@ export const client = axios.create({
   baseURL: '/api/v1',
   timeout: 15000,
 })
+
+const portalMockApi = createPortalMockApi()
+
+function parseMockBody(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+  try {
+    return JSON.parse(value)
+  } catch {
+    return value
+  }
+}
+
+const portalMockAdapter: AxiosAdapter = async (config) => ({
+  data: await portalMockApi.request(
+    config.method ?? 'get',
+    config.url ?? '/',
+    (config.params ?? {}) as Record<string, unknown>,
+    parseMockBody(config.data),
+  ),
+  status: 200,
+  statusText: 'OK',
+  headers: {},
+  config,
+  request: undefined,
+})
+
+if (useLocalMock) {
+  client.defaults.adapter = portalMockAdapter
+}
 
 client.interceptors.request.use(attachAuth)
 client.interceptors.response.use((response) => response, rejectApiError)
