@@ -9,6 +9,8 @@ import { agentClient, ApiError } from './client'
 
 import { iamEnabled } from '@/auth/oidc'
 import { ensureAccessToken } from '@/auth/session'
+import { localAgentMockApi } from '@/mocks/agentMockApi'
+import { useLocalMock } from '@/mocks/localMode'
 import { tenantState } from '@/tenant'
 import type {
   AgentDef,
@@ -25,21 +27,21 @@ import type {
 
 /** 会话/智能体 REST（全部走 IAM，租户由令牌 claim 决定；开发模式同既有 X-Tenant-Id 约定）。 */
 export const agentApi = {
-  listDefs: () => agentClient.get<AgentDef[]>('/defs').then((r) => r.data),
-  findDef: (agentId: string) => agentClient.get<AgentDetail>(`/defs/${agentId}`).then((r) => r.data),
+  listDefs: () => useLocalMock ? localAgentMockApi.listDefs() : agentClient.get<AgentDef[]>('/defs').then((r) => r.data),
+  findDef: (agentId: string) => useLocalMock ? localAgentMockApi.findDef(agentId) : agentClient.get<AgentDetail>(`/defs/${agentId}`).then((r) => r.data),
   createSession: (body: { agentId: string; agentVersion: number }) =>
-    agentClient.post<AgentSession>('/sessions', body).then((r) => r.data),
-  findSession: (sessionId: string) => agentClient.get<AgentSession>(`/sessions/${sessionId}`).then((r) => r.data),
+    useLocalMock ? localAgentMockApi.createSession(body) : agentClient.post<AgentSession>('/sessions', body).then((r) => r.data),
+  findSession: (sessionId: string) => useLocalMock ? localAgentMockApi.findSession(sessionId) : agentClient.get<AgentSession>(`/sessions/${sessionId}`).then((r) => r.data),
   listMessages: (sessionId: string) =>
-    agentClient.get<AgentMessage[]>(`/sessions/${sessionId}/messages`).then((r) => r.data),
+    useLocalMock ? localAgentMockApi.listMessages(sessionId) : agentClient.get<AgentMessage[]>(`/sessions/${sessionId}/messages`).then((r) => r.data),
   postMessage: (sessionId: string, content: string) =>
-    agentClient
+    useLocalMock ? localAgentMockApi.postMessage(sessionId, content) : agentClient
       .post<{ sessionId: string; turnNo: number; status: string }>(`/sessions/${sessionId}/messages`, { content })
       .then((r) => r.data),
   confirm: (sessionId: string, body: { confirmToken: string; decision: 'approve' | 'reject' }) =>
-    agentClient.post<ConfirmResult>(`/sessions/${sessionId}/confirm`, body).then((r) => r.data),
+    useLocalMock ? localAgentMockApi.confirm(sessionId, body) : agentClient.post<ConfirmResult>(`/sessions/${sessionId}/confirm`, body).then((r) => r.data),
   catalogSearch: (params: { q: string; kind?: CatalogSearchKind; limit?: number }) =>
-    agentClient.get<CatalogSearchResponse>('/catalog/search', { params }).then((r) => r.data),
+    useLocalMock ? localAgentMockApi.catalogSearch(params) : agentClient.get<CatalogSearchResponse>('/catalog/search', { params }).then((r) => r.data),
 }
 
 /** 一条解析完成的 SSE 事件（event 缺省为 message；data 为多行 data: 拼接）。 */
@@ -133,6 +135,9 @@ export async function streamSession(
   handlers: AgentStreamHandlers,
   signal: AbortSignal,
 ): Promise<void> {
+  if (useLocalMock) {
+    return localAgentMockApi.stream(sessionId, handlers, signal)
+  }
   const headers: Record<string, string> = { Accept: 'text/event-stream' }
   if (!iamEnabled()) {
     headers['X-Tenant-Id'] = tenantState.tenantId
