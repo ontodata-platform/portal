@@ -76,8 +76,10 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
-      - name: Enable Corepack
-        run: corepack enable
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack install --global pnpm@11.9.0
       - name: Install dependencies
         run: pnpm --dir frontend install --frozen-lockfile
       - name: Lint
