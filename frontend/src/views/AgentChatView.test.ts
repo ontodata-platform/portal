@@ -10,17 +10,27 @@ import AgentChatView from './AgentChatView.vue'
 const listDefsMock = vi.fn()
 const findDefMock = vi.fn()
 const createSessionMock = vi.fn()
+const findSessionMock = vi.fn()
 const listMessagesMock = vi.fn()
 const postMessageMock = vi.fn()
+const createRunMock = vi.fn()
 const streamSessionMock = vi.fn()
+const routerPush = vi.fn()
+
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: {} }),
+  useRouter: () => ({ push: routerPush }),
+}))
 
 vi.mock('@/api/agent', () => ({
   agentApi: {
     listDefs: () => listDefsMock(),
     findDef: (...args: unknown[]) => findDefMock(...args),
     createSession: (...args: unknown[]) => createSessionMock(...args),
+    findSession: (...args: unknown[]) => findSessionMock(...args),
     listMessages: (...args: unknown[]) => listMessagesMock(...args),
     postMessage: (...args: unknown[]) => postMessageMock(...args),
+    createRun: (...args: unknown[]) => createRunMock(...args),
     confirm: vi.fn(),
   },
   streamSession: (...args: unknown[]) => streamSessionMock(...args),
@@ -49,6 +59,11 @@ const stubs = {
     template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
   },
   AgentConfirmCard: { props: ['sessionId', 'payload'], template: '<div class="confirm-card-stub">{{ payload.tool }}</div>' },
+  'a-alert': {
+    props: ['type', 'message', 'description'],
+    template: '<div class="alert-stub"><span>{{ message }}</span><span>{{ description }}</span><slot name="action" /></div>',
+  },
+  'a-tag': { props: ['color'], template: '<span class="tag-stub"><slot /></span>' },
 }
 
 /** 捕获最近一次 streamSession 的事件回调，驱动流式场景。 */
@@ -73,6 +88,7 @@ async function selectAgent(wrapper: ReturnType<typeof mountView>, agentId: strin
 describe('AgentChatView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    sessionStorage.clear()
     listDefsMock.mockResolvedValue([
       { id: 'agent-1', tenantId: 'default', name: '检索助手', description: '', owner: 'ops', createdAt: '2026-08-26T00:00:00Z' },
     ])
@@ -168,6 +184,53 @@ describe('AgentChatView', () => {
 
     expect(wrapper.find('.confirm-card-stub').exists()).toBe(true)
     expect(wrapper.text()).toContain('data.update_dataset')
+  })
+
+  it('interrupted 事件展示 R4 审批条', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+    await selectAgent(wrapper, 'agent-1')
+
+    streamHandlers.onInterrupted!({
+      runId: 'run-1',
+      sessionId: 's-1',
+      status: 'awaiting_approval',
+      kind: 'approval',
+      ref: 'apr-r4-sample',
+      tool: 'workflow.submit_execution',
+      riskLevel: 'R4',
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('apr-r4-sample')
+    expect(wrapper.text()).toContain('workflow.submit_execution')
+  })
+
+  it('R4 质量助手发送消息走 /runs', async () => {
+    findDefMock.mockResolvedValue({
+      id: 'agent-q',
+      tenantId: 'default',
+      name: '质量分析助手',
+      description: '',
+      owner: 'ops',
+      createdAt: '2026-08-26T00:00:00Z',
+      versions: [{ agentId: 'agent-q', version: 1, riskLevel: 'R4', status: 'published', createdAt: '2026-08-26T00:00:00Z' }],
+    })
+    createRunMock.mockResolvedValue({ runId: 'run-1', threadId: 'run-1', status: 'running' })
+    const wrapper = mountView()
+    await flushPromises()
+    await selectAgent(wrapper, 'agent-1')
+
+    await wrapper.find('textarea').setValue('分析客户表质量并提交工作流')
+    const send = wrapper.findAll('button').find((button) => button.text().includes('发送'))!
+    await send.trigger('click')
+    await flushPromises()
+
+    expect(createRunMock).toHaveBeenCalledWith('s-1', {
+      graph: 'quality',
+      input: { question: '分析客户表质量并提交工作流' },
+    })
+    expect(postMessageMock).not.toHaveBeenCalled()
   })
 
   it('发送消息：POST 202 受理后本地追加用户气泡并清空输入框', async () => {

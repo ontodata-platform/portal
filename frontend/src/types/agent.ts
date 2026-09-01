@@ -65,14 +65,44 @@ export interface ConfirmResolvedEvent {
   tool: string
 }
 
-/** SSE done 事件载荷（轮次结束）。 */
+/** SSE done 事件载荷（轮次或 run 终态）。 */
 export interface StreamDoneEvent {
   sessionId: string
-  turnNo: number
+  turnNo?: number
   answer: string
-  status: 'completed' | 'awaiting_confirmation'
-  classification: string
+  status: 'completed' | 'awaiting_confirmation' | 'succeeded' | 'failed' | 'cancelled'
+  classification?: string
   messageId?: string
+  runId?: string
+}
+
+/** SSE interrupted 事件载荷（R4 审批 / 工作流等待，非终态）。 */
+export interface InterruptedEvent {
+  runId: string
+  sessionId: string
+  status: string
+  kind: string
+  ref: string
+  tool?: string
+  riskLevel?: string
+}
+
+/** POST /agent/sessions/{id}/runs 受理响应。 */
+export interface AgentRunAccepted {
+  runId: string
+  threadId: string
+  status: string
+}
+
+/** GET /agent/runs/{runId}。 */
+export interface AgentRun {
+  id: string
+  sessionId: string
+  graphName: string
+  status: string
+  waitKind?: string | null
+  waitRef?: string | null
+  error?: string | null
 }
 
 /** POST /agent/sessions/{id}/confirm 响应。 */

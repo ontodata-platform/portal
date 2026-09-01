@@ -113,6 +113,31 @@ describe('streamSession', () => {
     expect(cards).toEqual([payload])
   })
 
+  it('interrupted 事件触发 R4 审批中断回调', async () => {
+    const payload = {
+      runId: 'run-1',
+      sessionId: 's-1',
+      status: 'awaiting_approval',
+      kind: 'approval',
+      ref: 'apr-r4-sample',
+      tool: 'workflow.submit_execution',
+      riskLevel: 'R4',
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        body: sseStream(`event: interrupted\ndata: ${JSON.stringify(payload)}\n\n`),
+      }),
+    )
+
+    const interrupts: unknown[] = []
+    await streamSession('s-1', { onInterrupted: (item) => interrupts.push(item) }, new AbortController().signal)
+
+    expect(interrupts).toEqual([payload])
+  })
+
   it('非 2xx 响应抛出中文 ApiError', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 403, body: null }))
 

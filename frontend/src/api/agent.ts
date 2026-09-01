@@ -19,9 +19,12 @@ import type {
   AgentSession,
   CatalogSearchKind,
   CatalogSearchResponse,
+  AgentRun,
+  AgentRunAccepted,
   ConfirmRequiredEvent,
   ConfirmResolvedEvent,
   ConfirmResult,
+  InterruptedEvent,
   StreamDoneEvent,
 } from '@/types/agent'
 
@@ -40,6 +43,12 @@ export const agentApi = {
       .then((r) => r.data),
   confirm: (sessionId: string, body: { confirmToken: string; decision: 'approve' | 'reject' }) =>
     useLocalMock ? localAgentMockApi.confirm(sessionId, body) : agentClient.post<ConfirmResult>(`/sessions/${sessionId}/confirm`, body).then((r) => r.data),
+  createRun: (sessionId: string, body: { graph?: string; input: { question: string } }) =>
+    useLocalMock
+      ? localAgentMockApi.createRun(sessionId, body)
+      : agentClient.post<AgentRunAccepted>(`/sessions/${sessionId}/runs`, body).then((r) => r.data),
+  getRun: (runId: string) =>
+    useLocalMock ? localAgentMockApi.getRun(runId) : agentClient.get<AgentRun>(`/runs/${runId}`).then((r) => r.data),
   catalogSearch: (params: { q: string; kind?: CatalogSearchKind; limit?: number }) =>
     useLocalMock ? localAgentMockApi.catalogSearch(params) : agentClient.get<CatalogSearchResponse>('/catalog/search', { params }).then((r) => r.data),
 }
@@ -93,6 +102,7 @@ export interface AgentStreamHandlers {
   onNode?: (node: string, status: string) => void
   onConfirmRequired?: (payload: ConfirmRequiredEvent) => void
   onConfirmResolved?: (payload: ConfirmResolvedEvent) => void
+  onInterrupted?: (payload: InterruptedEvent) => void
   onDone?: (payload: StreamDoneEvent) => void
   onError?: (message: string) => void
 }
@@ -116,6 +126,9 @@ function dispatchEvent(event: SseEvent, handlers: AgentStreamHandlers): void {
       break
     case 'confirm_resolved':
       handlers.onConfirmResolved?.(payload as unknown as ConfirmResolvedEvent)
+      break
+    case 'interrupted':
+      handlers.onInterrupted?.(payload as unknown as InterruptedEvent)
       break
     case 'done':
       handlers.onDone?.(payload as unknown as StreamDoneEvent)

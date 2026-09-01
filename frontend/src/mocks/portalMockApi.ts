@@ -72,6 +72,11 @@ export function createPortalMockApi(): PortalMockApi {
       detail: { serviceCode: 'svc-risk-score', grantedColumns: ['score', 'level'] }, createdAt: timestamp, updatedAt: timestamp,
     },
     {
+      code: 'apr-r4-sample', approvalType: 'R4_TOOL_CALL', sourceSystem: 'mcp-gateway', sourceCode: 'cfm-sample',
+      title: '调用工具 workflow.submit_execution 需要审批', requester: '当前用户', status: 'PENDING', slaStatus: 'ON_TIME',
+      detail: { tool: 'workflow.submit_execution', riskLevel: 'R4' }, createdAt: timestamp, updatedAt: timestamp,
+    },
+    {
       code: 'apr-delivery-002', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'svc-order-insight',
       title: '订单洞察服务订阅', requester: '当前用户', status: 'APPROVED', slaStatus: 'MET',
       detail: { serviceCode: 'svc-order-insight', deliveryStatus: 'FAILED', deliveryError: '本地模拟：等待管理平台重新投递' },

@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 
 import { approvalApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { ApprovalRequest } from '@/types/portal'
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const messageStore = useMessageStore()
+const focusCode = ref('')
 
 const loading = ref(false)
 const rows = ref<ApprovalRequest[]>([])
@@ -123,6 +127,9 @@ async function decide() {
     )
     decideOpen.value = false
     await load()
+    if (route.query.from === 'agent' && decideTarget.value) {
+      await router.push({ path: '/agent/chat', query: { resume: decideTarget.value.code } })
+    }
   } catch (error) {
     messageStore.reportError(error)
   } finally {
@@ -161,11 +168,39 @@ function onSelectChange(keys: (string | number)[]) {
   selectedCodes.value = keys.map(String)
 }
 
-onMounted(load)
+onMounted(async () => {
+  const code = typeof route.query.code === 'string' ? route.query.code : ''
+  focusCode.value = code
+  await load()
+  if (!code) {
+    return
+  }
+  try {
+    const item = await approvalApi.find(code)
+    if (item.status === 'PENDING') {
+      openDecide(item)
+    }
+  } catch (error) {
+    messageStore.reportError(error)
+  }
+})
 </script>
 
 <template>
   <a-card :bordered="false" class="approvals-card">
+    <a-alert
+      v-if="focusCode"
+      type="info"
+      show-icon
+      class="focus-alert"
+      :message="t('approvals.focusHint', { code: focusCode })"
+    >
+      <template #action>
+        <a-button v-if="route.query.from === 'agent'" size="small" @click="router.push('/agent/chat')">
+          {{ t('approvals.backToChat') }}
+        </a-button>
+      </template>
+    </a-alert>
     <a-space style="margin-bottom: 16px" wrap>
       <a-select v-model:value="query.status" :placeholder="t('common.status')" allow-clear style="width: 140px">
         <a-select-option value="PENDING">{{ t('approvals.pendingApproval') }}</a-select-option>
@@ -276,5 +311,9 @@ onMounted(load)
 .approvals-card {
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.focus-alert {
+  margin-bottom: 12px;
 }
 </style>
