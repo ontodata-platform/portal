@@ -43,10 +43,10 @@ export const zhCn = {
     roles: '角色',
   },
   menu: {
-    groupDiscover: '发现与服务',
-    groupWorkspace: '工作台与协作',
-    groupGovernance: '任务与流程',
-    groupOperations: '运营与运维',
+    groupPortal: '服务门户',
+    groupCollab: '协同与智能',
+    groupOperations: '运营管理',
+    
     operations: '门户运营',
     search: '统一搜索',
     notifications: '通知中心',
@@ -425,10 +425,10 @@ export const enUs: MessageSchema = {
     roles: 'Roles',
   },
   menu: {
-    groupDiscover: 'Discover & Services',
-    groupWorkspace: 'Workspace & Collaboration',
-    groupGovernance: 'Tasks & Governance',
-    groupOperations: 'Operations & Maintenance',
+    groupPortal: 'Services',
+    groupCollab: 'Collaboration & Intelligence',
+    groupOperations: 'Operations',
+    
     operations: 'Operations',
     search: 'Unified Search',
     notifications: 'Notifications',

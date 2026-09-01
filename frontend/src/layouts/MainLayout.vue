@@ -35,41 +35,35 @@ const identityStore = useIdentityStore()
 const collapsed = ref(false)
 
 /**
- * 分组导航菜单定义（M5/产品化对齐）：
- * 1. 发现与服务：数据商城、算法工作台
- * 2. 工作台与协作：个人工作台、智能体会话、场景编排
- * 3. 任务与流程：统一任务中心、审批中心、结果中心、需求管理
- * 4. 运营与运维：门户运营（仅在具备 operator/admin 角色或 devMode 时显示）
+ * 分组导航菜单定义（三层信息架构，2026-09-01 收敛）：
+ * 1. 服务门户（用户闭环主干）：个人工作台、数据商城、算法工作台、任务中心、
+ *    审批中心、结果中心、通知中心——用户完成"发现→运行→交付"的主链路
+ * 2. 协同与智能（第二层）：统一搜索、需求管理、场景编排、智能体会话——跨系统协同与智能辅助
+ * 3. 运营管理（第三层）：门户运营（仅在具备 operator/admin 角色或 devMode 时显示）——平台运维功能不与用户主干混排
  */
 const menuGroups = computed(() => {
   const groups = [
     {
-      key: 'groupWorkspace',
-      title: t('menu.groupWorkspace'),
+      key: 'groupPortal',
+      title: t('menu.groupPortal'),
       items: [
         { key: '/personal', label: t('menu.personal'), icon: UserOutlined },
-        { key: '/agent/chat', label: t('menu.agentChat'), icon: RobotOutlined },
-        { key: '/scenarios', label: t('menu.scenarios'), icon: DeploymentUnitOutlined },
-      ],
-    },
-    {
-      key: 'groupDiscover',
-      title: t('menu.groupDiscover'),
-      items: [
-        { key: '/search', label: t('menu.search'), icon: SearchOutlined },
         { key: '/marketplace', label: t('menu.marketplace'), icon: ShopOutlined },
         { key: '/workbench', label: t('menu.workbench'), icon: AppstoreOutlined },
+        { key: '/tasks', label: t('menu.tasks'), icon: CarryOutOutlined },
+        { key: '/approvals', label: t('menu.approvals'), icon: AuditOutlined },
+        { key: '/results', label: t('menu.results'), icon: FileDoneOutlined },
+        { key: '/notifications', label: t('menu.notifications'), icon: BellOutlined },
       ],
     },
     {
-      key: 'groupGovernance',
-      title: t('menu.groupGovernance'),
+      key: 'groupCollab',
+      title: t('menu.groupCollab'),
       items: [
-        { key: '/tasks', label: t('menu.tasks'), icon: CarryOutOutlined },
-        { key: '/notifications', label: t('menu.notifications'), icon: BellOutlined },
-        { key: '/approvals', label: t('menu.approvals'), icon: AuditOutlined },
-        { key: '/results', label: t('menu.results'), icon: FileDoneOutlined },
+        { key: '/search', label: t('menu.search'), icon: SearchOutlined },
         { key: '/requirements', label: t('menu.requirements'), icon: SolutionOutlined },
+        { key: '/scenarios', label: t('menu.scenarios'), icon: DeploymentUnitOutlined },
+        { key: '/agent/chat', label: t('menu.agentChat'), icon: RobotOutlined },
       ],
     },
   ]
