@@ -1,0 +1,102 @@
+# 管理门户前端实施设计
+
+日期：2026-08-27
+
+状态：实施设计（本轮不改前端代码，供后续单独落地）
+
+对照：`docs/superpowers/specs/2026-08-27-portal-productization-design.md`  
+后端契约以 `2026-08-27-portal-backend-implementation.md` 为准。
+
+## 1. 本轮范围
+
+只改 `portal/frontend`。不换 Ant Design Vue，不重做皮肤，不做 S5。
+
+交付：
+
+- 身份来自令牌或 `GET /api/v1/personal/me`，去掉 alice / 租户 combobox
+- 分组导航，默认首页 `/personal`
+- 商城详情+申请、工作台模板运行
+- 场景选择器（可与页面改造同一迭代，不阻塞身份）
+
+## 2. 相对总规格的补充（前端必须遵守）
+
+1. **申请是异步的。** `POST .../apply` 只返回 `approvalCode` + `PENDING`。订阅发生在审批通过之后。页面应跳转审批详情或个人「我的申请」，展示 `detail.deliveryStatus`（`PENDING` / `SUCCEEDED` / `FAILED`）。失败提供「重试投递」调 `POST /api/v1/marketplace/applications/{approvalCode}/retry-delivery`。
+2. **路径参数是稳定编码 `code`**（`dsv-*` / `wf-*` / `cap-*`），不是上游 UUID。前端继续用目录里的 `code` 拼路由。
+3. **目录读失败仍是 200 + `available=false`。** 申请/运行按钮禁用。写失败是 4xx/5xx，不能当降级成功。
+4. **IAM 关闭：** `/personal/me` 返回 `devMode=true`、`name=dev-user`。前端显示「开发模式」角标，不出现手填用户框，不出现租户切换。
+5. **无 `portal-user` 等角色时**按普通用户：隐藏编排与治理。`devMode=true` 时显示全部分组（方便本地联调）。
+
+## 3. 路由与菜单
+
+| 路由 | 文件 | 备注 |
+| --- | --- | --- |
+| `/` | 重定向 | → `/personal` |
+| `/personal` | `PersonalCenterView.vue` | 工作台首页 |
+| `/marketplace` | `MarketplaceView.vue` | 点行进详情 |
+| `/marketplace/:code` | **新建** `MarketplaceDetailView.vue` | 详情+申请 |
+| `/workbench` | `WorkbenchView.vue` | 模板行可运行 |
+| `/workbench/templates/:code` | **新建** `WorkbenchRunView.vue` | 参数+提交 |
+| `/approvals` `/requirements` | 现有 | 去掉手填身份 |
+| `/scenarios` | 现有 | JSON → 选择器 |
+| `/operations` | 现有 | `meta.roles = operator\|admin`，无权限回 `/personal` |
+| `/agent/chat` | 现有 | 顶栏常驻 |
+
+`router/index.ts` 的 `meta`：`group`、`titleKey`、可选 `roles`。
+
+菜单分组文案加在 `i18n/messages.ts`：`menu.groupDiscover` 等。
+
+## 4. 身份
+
+新建 `src/auth/identity.ts` + `src/stores/identity.ts`。
+
+启动与会话刷新后调用 `personalApi.me()`：
+
+```ts
+interface PortalIdentity {
+  name: string
+  tenantId: string
+  orgId?: string
+  projectId?: string
+  roles: string[]
+  devMode: boolean
+}
+```
+
+- `personalApi` 三个查询不再传 `requester`
+- 审批/需求创建不再传 `requester` / `decisionBy`
+- IAM 开启且 401：走现有登录守卫
+- `MainLayout`：`devMode` 或无 IAM 时隐藏租户 `a-select`；展示只读姓名与租户
+
+## 5. 页面行为
+
+**个人工作台：** `/personal/me` 身份条；`/personal/todos` 四张统计；待办/我的申请/我的需求三张表；`operationsApi.notices({ status: 'PUBLISHED' })` 只读公告；按钮进 `/agent/chat`。空态写清「暂无待办」。
+
+**商城详情：** `GET /marketplace/data-services/{code}`。`available=false` 展示降级说明。申请表：可选字段多选（无字段列表则整服务申请）。成功提示审批编码。
+
+**工作台运行：** `GET /workbench/workflow-templates/{code}`。表单：`templateVersion`（默认 `currentVersion`）、可选快照/运行契约/resourceRefs。`POST .../runs` 成功后 `router.push` 任务详情或 `/tasks`。`started===false` 时提示「已提交但未启动，请在任务中心查看」。
+
+**场景：** bindings 用「类型 + 目录下拉 + 版本 + 别名」动态行。本体包若无目录，两个输入（`pkg-*` + `x.y.z`）。禁止 textarea 贴 JSON。`latest` 预检保留。
+
+## 6. API 增量（`src/api/portal.ts`）
+
+- `personalApi.me()`
+- `personalApi.todos/requirements/approvals` 去掉 requester 参数
+- `marketplaceApi.find(code)` / `apply(code, body)` / `retryDelivery(approvalCode)`
+- `workbenchApi.capability(code)` / `template(code)` / `run(code, body)`
+- 审批/需求 create、decide 去掉身份字段
+
+## 7. 测试
+
+改：`MainLayout.test.ts`、`PersonalCenterView.test.ts`、`router/index.test.ts`、各视图里 requester 的用例。
+
+新建：`MarketplaceDetailView.test.ts`、`WorkbenchRunView.test.ts`、`identity.test.ts`。
+
+命令：`pnpm test && pnpm lint && pnpm build`。
+
+## 8. 验收
+
+1. 打开应用落到个人工作台，无 alice、无租户 combobox（IAM 开或关皆如此）。
+2. 非 admin/operator 且非 devMode 看不见门户运营。
+3. 商城申请得到 `apr-*`；投递失败可重试。
+4. 工作台提交得到 `taskId`。
+5. 场景页无 JSON 文本域。
