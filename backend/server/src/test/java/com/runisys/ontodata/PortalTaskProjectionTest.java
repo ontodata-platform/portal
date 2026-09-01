@@ -397,6 +397,45 @@ class PortalTaskProjectionTest {
   }
 
   @Test
+  void dottedCapabilityVersionAdmittedProjectsAdmissionTask() {
+    // transform 现只发规范名 transform.capability-version.admitted，不再双写 PascalCase。
+    // published 仍跳过；admitted 必须投影为 CAPABILITY_ADMISSION，否则 e2e S4 永远等不到任务。
+    assertEquals(
+        ProcessingResult.UNKNOWN,
+        handler.handle(
+            GROUP,
+            envelope(
+                "evt-cap-pub-2",
+                "transform.capability-version.published",
+                "algorithm-transform",
+                "tenant-evt",
+                "cap-e2e-code",
+                "1.0.0",
+                null,
+                "{\"capabilityCode\":\"cap-e2e-code\",\"version\":\"1.0.0\"}")));
+    assertEquals(0, taskRepository.count());
+
+    assertEquals(
+        ProcessingResult.APPLIED,
+        handler.handle(
+            GROUP,
+            envelope(
+                "evt-cap-adm-2",
+                "transform.capability-version.admitted",
+                "algorithm-transform",
+                "tenant-evt",
+                "cap-e2e-code",
+                "1.0.0",
+                null,
+                "{\"capabilityCode\":\"cap-e2e-code\",\"version\":\"1.0.0\",\"admittedBy\":\"alice\"}")));
+    PortalTask task = requireTask("cap-e2e-code", "tenant-evt");
+    assertEquals("CAPABILITY_ADMISSION", task.getTaskType());
+    assertEquals("SUCCESS", task.getStatus());
+    assertEquals("ADMITTED", task.getStage());
+    assertEquals(100, task.getProgress());
+  }
+
+  @Test
   void projectionCanBeRebuiltByReplayingEventStream() {
     // 正常消费积累投影（含一次乱序丢弃，验证重建路径裁决一致）
     List<String> events =

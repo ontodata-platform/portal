@@ -80,7 +80,8 @@ public class TaskProjectionEventMapper {
 
     return switch (eventType) {
       // —— 契约已冻结的 PascalCase 类型（contracts/integration/event-types/） ——
-      case "CapabilityVersionAdmitted" ->
+      // 规范名 transform.capability-version.admitted：transform 不再双写 PascalCase。
+      case "CapabilityVersionAdmitted", "transform.capability-version.admitted" ->
           Optional.of(
               new TaskProjectionUpdate(
                   eventId,
@@ -138,11 +139,9 @@ public class TaskProjectionEventMapper {
       String taskId,
       Long eventVersion,
       JsonNode payload) {
-    // transform.capability-version.* 是目录/缓存刷新类事件（契约描述：订阅方按已发布版本刷新
-    // 可读目录），不是任务生命周期事件。若按生命周期动词投影，会与同一能力 code 的准入事件
-    // （CapabilityVersionAdmitted → CAPABILITY_ADMISSION 任务）撞同一 taskId（幂等键），把
-    // 任务类型钉成 TRANSFORM_CAPABILITY_VERSION——显式跳过（不入 inbox，契约如需任务投影
-    // 可经重放补投）。
+    // transform.capability-version.published / revoked / deprecated 是目录刷新，不是任务
+    // 生命周期。admitted 已在 switch 中投影为 CAPABILITY_ADMISSION；其余点分名继续跳过，
+    // 避免与准入任务撞同一 taskId（幂等键）把类型钉成 TRANSFORM_CAPABILITY_VERSION。
     if (eventType.startsWith("transform.capability-version.")) {
       log.info("目录刷新类事件，不投影任务，跳过：eventType={}, eventId={}", eventType, eventId);
       return Optional.empty();
