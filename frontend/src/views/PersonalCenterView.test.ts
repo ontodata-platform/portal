@@ -52,6 +52,9 @@ const stubs = {
   'a-modal': { props: ['open'], template: '<div><slot /></div>' },
   'a-divider': { template: '<hr />' },
   'a-empty': { props: ['description'], template: '<div>{{ description }}</div>' },
+  PageHeader: { props: ['title', 'description'], template: '<header>{{ title }}</header>' },
+  EmptyState: { props: ['title'], template: '<div>{{ title }}</div>' },
+  AsyncTaskPanel: { props: ['taskId', 'phase'], template: '<section>{{ phase }}{{ taskId }}</section>' },
 }
 
 function mountView() {

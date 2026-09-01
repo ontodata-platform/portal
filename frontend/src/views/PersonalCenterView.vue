@@ -20,6 +20,9 @@ import { approvalApi, marketplaceApi, operationsApi, personalApi } from '@/api/p
 import { useIdentityStore } from '@/stores/identity'
 import { useMessageStore } from '@/stores/message'
 import type { ApprovalRequest, Notice, PersonalTodo, RequirementRequest } from '@/types/portal'
+import AsyncTaskPanel from '@/ui-kit/AsyncTaskPanel.vue'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -51,6 +54,10 @@ const selectedNotice = ref<Notice | null>(null)
 const noticeModalOpen = ref(false)
 
 const retryingCode = ref<string | null>(null)
+
+const pendingDelivery = computed(() =>
+  approvals.value.find((item) => item.detail?.deliveryStatus === 'PENDING'),
+)
 
 const requirementColumns = computed(() => [
   { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
@@ -185,11 +192,38 @@ onMounted(loadAll)
 
 <template>
   <div class="personal-workbench">
+    <PageHeader
+      eyebrow="服务门户"
+      :title="t('menu.personal')"
+      description="先看待办和投递，再决定去审批、商城还是智能助手。"
+    >
+      <template #extra>
+        <a-space>
+          <a-button type="primary" ghost @click="router.push('/agent/chat')">
+            <template #icon><RobotOutlined /></template>
+            {{ t('personal.quickAgent') }}
+          </a-button>
+          <a-button @click="loadAll">
+            <template #icon><ReloadOutlined /></template>
+            {{ t('personal.refresh') }}
+          </a-button>
+        </a-space>
+      </template>
+    </PageHeader>
+
+    <AsyncTaskPanel
+      v-if="pendingDelivery"
+      :task-id="pendingDelivery.code"
+      phase="订阅投递"
+      status="running"
+      message="审批已通过，结果正在投递。完成后可在结果中心查看。"
+    />
+
     <!-- 顶部欢迎横幅 -->
     <a-card class="welcome-card" :bordered="false">
       <div class="welcome-header">
         <div class="welcome-user">
-          <a-avatar size="large" style="background-color: #1890ff">
+          <a-avatar size="large" class="user-avatar">
             <template #icon><UserOutlined /></template>
           </a-avatar>
           <div class="user-meta">
@@ -209,16 +243,7 @@ onMounted(loadAll)
         </div>
 
         <div class="welcome-actions">
-          <a-space>
-            <a-button type="primary" ghost @click="router.push('/agent/chat')">
-              <template #icon><RobotOutlined /></template>
-              {{ t('personal.quickAgent') }}
-            </a-button>
-            <a-button @click="loadAll">
-              <template #icon><ReloadOutlined /></template>
-              {{ t('personal.refresh') }}
-            </a-button>
-          </a-space>
+          <span class="user-sub">{{ t('layout.tenant') }} · {{ identityStore.tenantId }}</span>
         </div>
       </div>
     </a-card>
@@ -230,7 +255,9 @@ onMounted(loadAll)
           <a-statistic
             :title="t('personal.pendingForMe')"
             :value="todos.pendingApprovalCount"
-            :value-style="{ color: todos.pendingApprovalCount > 0 ? '#cf1322' : '#3f8600' }"
+            :value-style="{
+              color: todos.pendingApprovalCount > 0 ? 'var(--od-color-blocked)' : 'var(--od-color-success)',
+            }"
           >
             <template #prefix><AuditOutlined /></template>
           </a-statistic>
@@ -241,7 +268,7 @@ onMounted(loadAll)
           <a-statistic
             :title="t('personal.myOpenRequirements')"
             :value="todos.myOpenRequirementCount"
-            :value-style="{ color: '#1890ff' }"
+            :value-style="{ color: 'var(--od-color-running)' }"
           >
             <template #prefix><ClockCircleOutlined /></template>
           </a-statistic>
@@ -288,7 +315,12 @@ onMounted(loadAll)
             :pagination="false"
           >
             <template #emptyText>
-              <a-empty :description="t('personal.noTodos')" />
+              <EmptyState
+                :title="t('personal.noTodos')"
+                description="没有待你处理的审批。有新申请时会出现在这里。"
+                :action-label="t('personal.viewAllApprovals')"
+                @action="router.push('/approvals')"
+              />
             </template>
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'status'">
@@ -355,11 +387,11 @@ onMounted(loadAll)
         <!-- 平台公告 -->
         <a-card :title="t('personal.notices')" size="small" class="section-card" style="margin-bottom: 16px">
           <template #extra>
-            <NotificationOutlined style="color: #1890ff" />
+            <NotificationOutlined class="notice-icon" />
           </template>
           <a-spin :spinning="noticeLoading">
             <div v-if="notices.length === 0" style="padding: 16px 0">
-              <a-empty :description="t('personal.noNotices')" />
+              <EmptyState :title="t('personal.noNotices')" description="暂无公告，稍后刷新即可。" />
             </div>
             <a-list v-else size="small" :data-source="notices">
               <template #renderItem="{ item }">
@@ -439,6 +471,14 @@ onMounted(loadAll)
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.user-avatar {
+  background-color: var(--od-color-accent);
+}
+
+.notice-icon {
+  color: var(--od-color-accent);
 }
 
 .welcome-user {

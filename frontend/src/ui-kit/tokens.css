@@ -1,0 +1,62 @@
+:root {
+  color-scheme: light;
+
+  --od-color-ink: #102a43;
+  --od-color-ink-soft: #334e68;
+  --od-color-muted: #52677a;
+  --od-color-paper: #f4f7fb;
+  --od-color-panel: #ffffff;
+  --od-color-primary: #1f4e79;
+  --od-color-accent: #2b6cb0;
+  --od-color-teal: #1f7a8c;
+  --od-color-violet: #6558b1;
+  --od-color-line: #d5e0e9;
+  --od-color-line-soft: #e8eef3;
+
+  --od-color-success: #168a62;
+  --od-color-running: #2b6cb0;
+  --od-color-warning: #d68a1f;
+  --od-color-blocked: #c53030;
+  --od-color-archived: #718096;
+
+  --od-font-ui: Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --od-font-mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --od-space-1: 8px;
+  --od-space-2: 16px;
+  --od-space-3: 24px;
+  --od-space-4: 32px;
+
+  --od-title-page: 28px;
+  --od-title-section: 18px;
+  --od-title-card: 16px;
+
+  --od-sidebar-width: 224px;
+  --od-topbar-height: 64px;
+  --od-focus-ring: 0 0 0 3px rgb(43 108 176 / 24%);
+
+  /* 本体旧变量别名，避免既有页面一次性改完 */
+  --color-ink: var(--od-color-ink);
+  --color-ink-soft: var(--od-color-ink-soft);
+  --color-paper: var(--od-color-paper);
+  --color-panel: var(--od-color-panel);
+  --color-teal: var(--od-color-teal);
+  --color-amber: var(--od-color-warning);
+  --color-violet: var(--od-color-violet);
+  --color-line: var(--od-color-line);
+  --color-line-soft: var(--od-color-line-soft);
+  --color-muted: var(--od-color-muted);
+  --font-ui: var(--od-font-ui);
+  --font-mono: var(--od-font-mono);
+  --sidebar-width: var(--od-sidebar-width);
+  --topbar-height: var(--od-topbar-height);
+  --focus-ring: var(--od-focus-ring);
+}
+
+@media (max-width: 900px) {
+  :root {
+    --od-topbar-height: 58px;
+    --od-title-page: 24px;
+    --topbar-height: 58px;
+  }
+}
