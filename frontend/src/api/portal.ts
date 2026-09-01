@@ -140,7 +140,7 @@ export const workbenchApi = {
     client.post<WorkbenchRunResponse>(`/workbench/workflow-templates/${code}/runs`, body).then((r) => r.data),
 }
 
-/** 场景编排器（scenario-center）：scn-* 场景，全量钉扎 + 发布/下线状态机 + 不可变版本。 */
+/** 应用编排器（scenario-center）：scn-* 应用装配，全量钉扎 + 发布/下线状态机 + 不可变版本。不等于本体 executionScenarios。 */
 export const scenarioApi = {
   list: (params: ListParams) => client.get<PageResponse<PortalScenario>>('/scenarios', { params }).then((r) => r.data),
   find: (code: string) => client.get<PortalScenario>(`/scenarios/${code}`).then((r) => r.data),

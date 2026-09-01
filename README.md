@@ -11,7 +11,7 @@
 
 - **职责**：六个基础模块（Identity/Organization、Navigation、Task Center、Approval Center、AI Assistant、Result Center）+ 业务模块（需求管理、数据商城、算法工作台、个人中心、审批管理、门户运营、集成运维）。
 - **不负责**：任何确定性执行与业务规则；任务权威归产生它的软件（§12.3），门户只聚合展示；模型只做规划与解释，降级路径（普通搜索/页面操作/人工办理）始终可用。
-- **对外契约**：消费各软件 REST/事件契约（任务模型 §12.3、事件信封）；不产生新契约。
+- **对外契约**：消费各软件 REST/事件契约（任务模型 §12.3、事件信封）；另权威拥有 **应用装配**（`scenario-center`，`scn-*`，契约 `contracts/scenario/v1`）。展示名「应用编排」，**不是**本体 `executionScenarios`（对照见 `contracts/governance/场景概念对照.md`）。
 
 ## 技术栈（ADR-001）
 

@@ -97,7 +97,7 @@ describe('ScenariosView', () => {
     const { wrapper, pinia } = mountView()
     await flushPromises()
 
-    const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建场景'))
+    const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建装配'))
     await createButton!.trigger('click')
 
     const vm = wrapper.vm as unknown as {
@@ -126,7 +126,7 @@ describe('ScenariosView', () => {
     const { wrapper } = mountView()
     await flushPromises()
 
-    const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建场景'))
+    const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建装配'))
     await createButton!.trigger('click')
 
     const vm = wrapper.vm as unknown as {
@@ -171,7 +171,7 @@ describe('ScenariosView', () => {
     const { wrapper } = mountView()
     await flushPromises()
 
-    const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建场景'))
+    const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建装配'))
     await createButton!.trigger('click')
 
     const vm = wrapper.vm as unknown as {
@@ -197,7 +197,7 @@ describe('ScenariosView', () => {
     const { wrapper } = mountView()
     await flushPromises()
 
-    const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建场景'))
+    const createButton = wrapper.findAll('button').find((button) => button.text().includes('创建装配'))
     await createButton!.trigger('click')
 
     const vm = wrapper.vm as unknown as {

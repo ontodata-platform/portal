@@ -16,8 +16,9 @@ import {
 } from './scenarioPresentation'
 
 /**
- * 场景编排页（批次 D 后段，scenario/v1）：场景列表 + 创建/编辑 +
+ * 应用编排页（批次 D 后段，scenario/v1）：应用装配列表 + 创建/编辑 +
  * 发布/下线 + 新草稿版本。装配全部采用结构化动态行配置，严格预检语义版本钉扎（x.y.z）。
+ * 本页是门户应用装配（scn-*），不是本体执行场景；对照见 contracts/governance/场景概念对照.md。
  */
 const { t } = useI18n()
 const messageStore = useMessageStore()

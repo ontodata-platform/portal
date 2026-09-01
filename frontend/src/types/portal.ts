@@ -210,7 +210,7 @@ export interface PersonalTodo {
   myApprovalCount: number
 }
 
-/** 场景装配绑定（scenario-center，scenario/v1 契约）：版本一律精确钉扎 x.y.z。 */
+/** 应用装配绑定（scenario-center，scenario/v1 契约）：版本一律精确钉扎 x.y.z。 */
 export interface ScenarioBinding {
   type: 'DATA_SNAPSHOT' | 'CAPABILITY' | 'WORKFLOW_TEMPLATE'
   ref: string
@@ -231,7 +231,7 @@ export interface ScenarioPresentation {
   widgets?: { kind: 'TABLE' | 'CHART' | 'METRIC' | 'REPORT_LINK'; bindingAlias: string; config?: Record<string, unknown> }[]
 }
 
-/** 场景（scenario-center）：scn-* 编码 + 不可变语义版本，DRAFT→PUBLISHED→DEPRECATED。 */
+/** 应用装配（scenario-center）：scn-* 编码 + 不可变语义版本，DRAFT→PUBLISHED→DEPRECATED。 */
 export interface PortalScenario {
   code: string
   version: string
