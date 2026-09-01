@@ -31,7 +31,7 @@ portal/
 └─ frontend/          # Vue 3 管理门户界面（端口 5175；默认首页 /personal）
 ```
 
-设计详见 `docs/design/2026-08-14-portal-design.md`。
+设计详见 `docs/design/2026-08-14-门户设计.md`。
 
 ## 容器化（WP-09）
 
