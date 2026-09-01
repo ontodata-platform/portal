@@ -1,6 +1,6 @@
 package com.runisys.ontodata.portal.operationscenter.application;
 
-import com.runisys.ontodata.portal.common.PortalIdentityService;
+import com.runisys.ontodata.portal.common.PortalCodeGenerator;
 import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
@@ -45,15 +45,15 @@ public class OperationsService {
 
   private final NoticeRepository noticeRepository;
   private final FeedbackRepository feedbackRepository;
-  private final PortalIdentityService identityService;
+  private final PortalCodeGenerator codeGenerator;
 
   public OperationsService(
       NoticeRepository noticeRepository,
       FeedbackRepository feedbackRepository,
-      PortalIdentityService identityService) {
+      PortalCodeGenerator codeGenerator) {
     this.noticeRepository = noticeRepository;
     this.feedbackRepository = feedbackRepository;
-    this.identityService = identityService;
+    this.codeGenerator = codeGenerator;
   }
 
   // ---- 公告 ----
@@ -63,7 +63,7 @@ public class OperationsService {
     Notice created =
         noticeRepository.saveAndFlush(
             new Notice(
-                identityService.nextCode("ntc"),
+                codeGenerator.nextCode("ntc"),
                 request.getTitle().trim(),
                 request.getContent().trim(),
                 request.getSection().trim(),
@@ -129,7 +129,7 @@ public class OperationsService {
     Feedback created =
         feedbackRepository.saveAndFlush(
             new Feedback(
-                identityService.nextCode("fb"),
+                codeGenerator.nextCode("fb"),
                 request.getTitle().trim(),
                 request.getContent().trim(),
                 trimToNull(request.getContact()),

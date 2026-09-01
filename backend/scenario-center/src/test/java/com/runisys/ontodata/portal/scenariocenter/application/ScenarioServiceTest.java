@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.runisys.ontodata.portal.common.PortalIdentityService;
+import com.runisys.ontodata.portal.common.PortalCodeGenerator;
 import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
 import com.runisys.ontodata.portal.common.api.ResourceStateConflictException;
@@ -47,7 +47,7 @@ class ScenarioServiceTest {
   void setUp() {
     service =
         new ScenarioService(
-            scenarioRepository, new PortalIdentityService(), referenceChecker, objectMapper);
+            scenarioRepository, new PortalCodeGenerator(), referenceChecker, objectMapper);
     TenantContext.set("tenant-a");
   }
 

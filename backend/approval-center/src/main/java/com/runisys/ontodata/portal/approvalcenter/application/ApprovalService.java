@@ -10,7 +10,7 @@ import com.runisys.ontodata.portal.approvalcenter.api.CreateApprovalRequest;
 import com.runisys.ontodata.portal.approvalcenter.api.DecideApprovalRequest;
 import com.runisys.ontodata.portal.approvalcenter.domain.ApprovalRequest;
 import com.runisys.ontodata.portal.approvalcenter.infrastructure.ApprovalRequestRepository;
-import com.runisys.ontodata.portal.common.PortalIdentityService;
+import com.runisys.ontodata.portal.common.PortalCodeGenerator;
 import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
@@ -58,19 +58,19 @@ public class ApprovalService {
   }
 
   private final ApprovalRequestRepository approvalRepository;
-  private final PortalIdentityService identityService;
+  private final PortalCodeGenerator codeGenerator;
   private final ObjectMapper objectMapper;
   private final OutboxEventService outboxEventService;
   private final ApplicationEventPublisher applicationEventPublisher;
 
   public ApprovalService(
       ApprovalRequestRepository approvalRepository,
-      PortalIdentityService identityService,
+      PortalCodeGenerator codeGenerator,
       ObjectMapper objectMapper,
       OutboxEventService outboxEventService,
       ApplicationEventPublisher applicationEventPublisher) {
     this.approvalRepository = approvalRepository;
-    this.identityService = identityService;
+    this.codeGenerator = codeGenerator;
     this.objectMapper = objectMapper;
     this.outboxEventService = outboxEventService;
     this.applicationEventPublisher = applicationEventPublisher;
@@ -81,7 +81,7 @@ public class ApprovalService {
     CurrentOperator.requireMatches(request.getRequester());
     ApprovalRequest created =
         new ApprovalRequest(
-            identityService.nextCode("apr"),
+            codeGenerator.nextCode("apr"),
             request.getApprovalType().trim(),
             request.getSourceSystem().trim(),
             trimToNull(request.getSourceCode()),

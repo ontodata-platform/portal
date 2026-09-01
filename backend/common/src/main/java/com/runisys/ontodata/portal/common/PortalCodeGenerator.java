@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  * 确认卡升级为审批单时按编码回查；需求分派后目标软件按编码回链）， 生成后永不变更；唯一约束兜底随机碰撞。
  */
 @Component
-public class PortalIdentityService {
+public class PortalCodeGenerator {
 
   private static final char[] HEX = "0123456789abcdef".toCharArray();
 

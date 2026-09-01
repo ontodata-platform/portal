@@ -2,7 +2,7 @@ package com.runisys.ontodata.portal.requirementcenter.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.runisys.ontodata.portal.common.PortalIdentityService;
+import com.runisys.ontodata.portal.common.PortalCodeGenerator;
 import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.security.CurrentOperator;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
@@ -76,15 +76,15 @@ public class RequirementService {
   }
 
   private final RequirementRequestRepository requirementRepository;
-  private final PortalIdentityService identityService;
+  private final PortalCodeGenerator codeGenerator;
   private final ObjectMapper objectMapper;
 
   public RequirementService(
       RequirementRequestRepository requirementRepository,
-      PortalIdentityService identityService,
+      PortalCodeGenerator codeGenerator,
       ObjectMapper objectMapper) {
     this.requirementRepository = requirementRepository;
-    this.identityService = identityService;
+    this.codeGenerator = codeGenerator;
     this.objectMapper = objectMapper;
   }
 
@@ -106,7 +106,7 @@ public class RequirementService {
     RequirementRequest created =
         requirementRepository.saveAndFlush(
             new RequirementRequest(
-                identityService.nextCode("req"),
+                codeGenerator.nextCode("req"),
                 requirementType,
                 request.getTitle().trim(),
                 normalizedTitle,

@@ -3,7 +3,7 @@ package com.runisys.ontodata.portal.scenariocenter.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.runisys.ontodata.portal.common.PortalIdentityService;
+import com.runisys.ontodata.portal.common.PortalCodeGenerator;
 import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
 import com.runisys.ontodata.portal.common.api.PageResponse;
@@ -53,17 +53,17 @@ public class ScenarioService {
       Map.of("updatedAt", "updatedAt", "code", "code", "version", "version");
 
   private final PortalScenarioRepository scenarioRepository;
-  private final PortalIdentityService identityService;
+  private final PortalCodeGenerator codeGenerator;
   private final ScenarioReferenceChecker referenceChecker;
   private final ObjectMapper objectMapper;
 
   public ScenarioService(
       PortalScenarioRepository scenarioRepository,
-      PortalIdentityService identityService,
+      PortalCodeGenerator codeGenerator,
       ScenarioReferenceChecker referenceChecker,
       ObjectMapper objectMapper) {
     this.scenarioRepository = scenarioRepository;
-    this.identityService = identityService;
+    this.codeGenerator = codeGenerator;
     this.referenceChecker = referenceChecker;
     this.objectMapper = objectMapper;
   }
@@ -75,7 +75,7 @@ public class ScenarioService {
     PortalScenario created =
         scenarioRepository.saveAndFlush(
             new PortalScenario(
-                identityService.nextCode("scn"),
+                codeGenerator.nextCode("scn"),
                 "1.0.0",
                 request.getName().trim(),
                 trimToNull(request.getDescription()),
