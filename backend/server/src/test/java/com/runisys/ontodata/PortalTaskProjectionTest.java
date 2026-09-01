@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.runisys.ontodata.portal.common.api.ResourceStateConflictException;
+import com.runisys.ontodata.sdk.web.ResourceStateConflictException;
 import com.runisys.ontodata.portal.taskcenter.application.ProjectionRebuildService;
 import com.runisys.ontodata.portal.taskcenter.application.TaskProjectionEventHandler;
 import com.runisys.ontodata.portal.taskcenter.application.TaskProjectionEventHandler.ProcessingResult;

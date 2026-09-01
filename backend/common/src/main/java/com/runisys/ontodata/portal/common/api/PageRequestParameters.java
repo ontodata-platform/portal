@@ -1,5 +1,6 @@
 package com.runisys.ontodata.portal.common.api;
 
+import com.runisys.ontodata.sdk.web.InvalidPageRequestException;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;

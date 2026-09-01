@@ -27,10 +27,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-        <!-- S2 收敛：Outbox 基础组件迁移至 platform-sdk；须先本地 install platform-sdk -->
+        <!-- S2 收敛：Outbox / Web 协议迁移至 platform-sdk；须先本地 install platform-sdk -->
         <dependency>
             <groupId>com.runisys.ontodata</groupId>
             <artifactId>sdk-events</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.runisys.ontodata</groupId>
+            <artifactId>sdk-web</artifactId>
         </dependency>
         <!-- WP-07 Outbox 发布器：KafkaTemplate 由 Boot 自动装配（server 模块 spring.kafka.*） -->
         <dependency>

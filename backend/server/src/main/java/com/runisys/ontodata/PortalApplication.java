@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /** 统一管理门户启动入口：聚合展示与引导，不做业务权威（端口 18085）。 */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.runisys.ontodata.portal", "com.runisys.ontodata.security"})
 public class PortalApplication {
 
   public static void main(String[] args) {

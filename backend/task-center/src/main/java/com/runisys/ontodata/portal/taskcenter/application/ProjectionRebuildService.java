@@ -1,6 +1,6 @@
 package com.runisys.ontodata.portal.taskcenter.application;
 
-import com.runisys.ontodata.portal.common.api.ResourceStateConflictException;
+import com.runisys.ontodata.sdk.web.ResourceStateConflictException;
 import com.runisys.ontodata.portal.taskcenter.application.TaskProjectionEventHandler.ProcessingResult;
 import com.runisys.ontodata.portal.taskcenter.infrastructure.PortalEventInboxRepository;
 import com.runisys.ontodata.portal.taskcenter.infrastructure.PortalTaskRepository;

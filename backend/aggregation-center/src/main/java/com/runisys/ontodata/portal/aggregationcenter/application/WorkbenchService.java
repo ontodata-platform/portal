@@ -6,7 +6,7 @@ import com.runisys.ontodata.portal.aggregationcenter.api.UpstreamAggregationResp
 import com.runisys.ontodata.portal.aggregationcenter.api.WorkbenchRunResponse;
 import com.runisys.ontodata.portal.aggregationcenter.infrastructure.UpstreamHttpClient;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
-import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
+import com.runisys.ontodata.sdk.web.ResourceNotFoundException;
 import com.runisys.ontodata.portal.common.api.UpstreamWriteException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;

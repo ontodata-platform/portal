@@ -2,7 +2,7 @@ package com.runisys.ontodata.portal.personalcenter.api;
 
 import com.runisys.ontodata.portal.approvalcenter.api.ApprovalRequestResponse;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
-import com.runisys.ontodata.portal.common.api.PageResponse;
+import com.runisys.ontodata.sdk.web.PageResponse;
 import com.runisys.ontodata.portal.personalcenter.application.NotificationService;
 import com.runisys.ontodata.portal.personalcenter.application.PersonalCenterService;
 import com.runisys.ontodata.portal.requirementcenter.api.RequirementRequestResponse;

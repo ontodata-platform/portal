@@ -6,7 +6,7 @@ import com.runisys.ontodata.portal.approvalcenter.infrastructure.ApprovalRequest
 import com.runisys.ontodata.portal.common.PermissionContext;
 import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
-import com.runisys.ontodata.portal.common.api.PageResponse;
+import com.runisys.ontodata.sdk.web.PageResponse;
 import com.runisys.ontodata.portal.common.security.CurrentOperator;
 import com.runisys.ontodata.portal.personalcenter.api.PersonalTodoResponse;
 import com.runisys.ontodata.portal.personalcenter.api.PortalIdentityResponse;

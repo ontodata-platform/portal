@@ -13,9 +13,9 @@ import com.runisys.ontodata.portal.approvalcenter.infrastructure.ApprovalRequest
 import com.runisys.ontodata.portal.common.PortalCodeGenerator;
 import com.runisys.ontodata.portal.common.TenantContext;
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
-import com.runisys.ontodata.portal.common.api.PageResponse;
-import com.runisys.ontodata.portal.common.api.ResourceNotFoundException;
-import com.runisys.ontodata.portal.common.api.ResourceStateConflictException;
+import com.runisys.ontodata.sdk.web.PageResponse;
+import com.runisys.ontodata.sdk.web.ResourceNotFoundException;
+import com.runisys.ontodata.sdk.web.ResourceStateConflictException;
 import com.runisys.ontodata.portal.common.event.OutboxEventService;
 import com.runisys.ontodata.portal.common.security.CurrentOperator;
 import com.runisys.ontodata.portal.common.security.OperatorContext;

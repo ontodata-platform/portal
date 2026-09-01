@@ -1,7 +1,7 @@
 package com.runisys.ontodata.portal.resultcenter.api;
 
 import com.runisys.ontodata.portal.common.api.PageRequestParameters;
-import com.runisys.ontodata.portal.common.api.PageResponse;
+import com.runisys.ontodata.sdk.web.PageResponse;
 import com.runisys.ontodata.portal.resultcenter.application.ResultService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
