@@ -84,6 +84,13 @@ export const routes: RouteRecordRaw[] = [
       }),
     },
     { path: '/search', redirect: passQuery('/assistant') },
+    { path: '/workbench', redirect: '/algorithm-workbench' },
+    {
+      path: '/workbench/templates/:code',
+      redirect: (to: { params: RouteLocationNormalized['params'] }) => ({
+        path: `/algorithm-workbench/${String(to.params.code ?? '')}/run`,
+      }),
+    },
     {
       path: '/agent/chat',
       redirect: (to: { query: RouteLocationNormalized['query'] }) => ({
@@ -158,14 +165,19 @@ export const routes: RouteRecordRaw[] = [
           meta: { titleKey: 'menu.marketplaceDetail', group: 'groupPortal' },
         },
         {
-          path: 'workbench',
-          component: () => import('@/views/WorkbenchView.vue'),
-          meta: { titleKey: 'menu.workbench', group: 'groupPortal' },
+          path: 'algorithm-workbench',
+          component: () => import('@/views/algorithm-workbench/AlgorithmWorkbenchView.vue'),
+          meta: { titleKey: 'menu.algorithmWorkbench', group: 'groupPortal' },
         },
         {
-          path: 'workbench/templates/:code',
-          component: () => import('@/views/WorkbenchRunView.vue'),
-          meta: { titleKey: 'menu.workbenchRun', group: 'groupPortal' },
+          path: 'algorithm-workbench/:code',
+          component: () => import('@/views/algorithm-workbench/AlgorithmServiceDetailView.vue'),
+          meta: { titleKey: 'menu.algorithmWorkbench', group: 'groupPortal' },
+        },
+        {
+          path: 'algorithm-workbench/:code/run',
+          component: () => import('@/views/algorithm-workbench/RunWizardView.vue'),
+          meta: { titleKey: 'menu.algorithmWorkbench', group: 'groupPortal' },
         },
         {
           path: 'admin',
