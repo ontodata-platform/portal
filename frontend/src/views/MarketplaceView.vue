@@ -8,12 +8,16 @@ import { marketplaceApi } from '@/api/portal'
 import { catalogItems, catalogTotal } from '@/catalog'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import ErrorState from '@/ui-kit/ErrorState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const messageStore = useMessageStore()
 
 const loading = ref(false)
+const loadError = ref('')
 const aggregation = ref<UpstreamAggregation | null>(null)
 const rows = ref<CatalogEntry[]>([])
 const total = ref(0)
@@ -27,8 +31,16 @@ const columns = computed(() => [
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 160 },
 ])
 
+function describeLoadError(error: unknown): string {
+  const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+  if (message) return message
+  if (error instanceof Error && error.message) return error.message
+  return String(error)
+}
+
 async function load() {
   loading.value = true
+  loadError.value = ''
   try {
     aggregation.value = await marketplaceApi.dataServices({
       page: query.page,
@@ -38,6 +50,7 @@ async function load() {
     rows.value = catalogItems(aggregation.value)
     total.value = catalogTotal(aggregation.value)
   } catch (error) {
+    loadError.value = describeLoadError(error)
     messageStore.reportError(error)
   } finally {
     loading.value = false
@@ -52,7 +65,22 @@ onMounted(load)
 </script>
 
 <template>
-  <a-card :bordered="false" class="marketplace-card">
+  <div>
+    <PageHeader
+      :eyebrow="t('menu.groupPortal')"
+      :title="t('menu.marketplace')"
+      :description="t('marketplace.description')"
+    />
+
+    <ErrorState
+      v-if="loadError"
+      :reason="loadError"
+      :next-step="t('common.loadNextStep')"
+      :action-label="t('common.reload')"
+      @retry="load"
+    />
+
+    <a-card v-else :bordered="false" class="marketplace-card">
     <a-alert
       v-if="aggregation && !aggregation.available"
       type="warning"
@@ -75,7 +103,13 @@ onMounted(load)
       />
     </a-space>
 
+    <EmptyState
+      v-if="!loading && rows.length === 0"
+      :title="t('marketplace.emptyTitle')"
+      :description="t('marketplace.emptyDesc')"
+    />
     <a-table
+      v-else
       :columns="columns"
       :data-source="rows"
       :loading="loading"
@@ -111,7 +145,8 @@ onMounted(load)
         </template>
       </template>
     </a-table>
-  </a-card>
+    </a-card>
+  </div>
 </template>
 
 <style scoped>

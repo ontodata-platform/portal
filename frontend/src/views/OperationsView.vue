@@ -5,11 +5,15 @@ import { useI18n } from 'vue-i18n'
 import { operationsApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { Feedback, Notice, OperationsStatistics } from '@/types/portal'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import ErrorState from '@/ui-kit/ErrorState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const messageStore = useMessageStore()
 
 const statistics = ref<OperationsStatistics>({ noticeTotal: 0, publishedNotices: 0, pendingFeedbacks: 0 })
+const loadError = ref('')
 
 const noticeLoading = ref(false)
 const notices = ref<Notice[]>([])
@@ -65,16 +69,25 @@ const feedbackStatusText: Record<string, string> = {
   HANDLED: t('operations.handled'),
 }
 
+function describeLoadError(error: unknown): string {
+  const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+  if (message) return message
+  if (error instanceof Error && error.message) return error.message
+  return String(error)
+}
+
 async function loadStatistics() {
   try {
     statistics.value = await operationsApi.statistics()
   } catch (error) {
+    loadError.value = describeLoadError(error)
     messageStore.reportError(error)
   }
 }
 
 async function loadNotices() {
   noticeLoading.value = true
+  loadError.value = ''
   try {
     const page = await operationsApi.notices({
       page: noticeQuery.page,
@@ -85,6 +98,7 @@ async function loadNotices() {
     notices.value = page.items
     noticeTotal.value = page.total
   } catch (error) {
+    loadError.value = describeLoadError(error)
     messageStore.reportError(error)
   } finally {
     noticeLoading.value = false
@@ -102,10 +116,18 @@ async function loadFeedbacks() {
     feedbacks.value = page.items
     feedbackTotal.value = page.total
   } catch (error) {
+    loadError.value = describeLoadError(error)
     messageStore.reportError(error)
   } finally {
     feedbackLoading.value = false
   }
+}
+
+function reloadAll() {
+  loadError.value = ''
+  loadStatistics()
+  loadNotices()
+  loadFeedbacks()
 }
 
 async function createNotice() {
@@ -199,7 +221,22 @@ onMounted(() => {
 </script>
 
 <template>
-  <a-card>
+  <div>
+    <PageHeader
+      :eyebrow="t('menu.groupOperations')"
+      :title="t('menu.operations')"
+      :description="t('operations.pageDesc')"
+    />
+
+    <ErrorState
+      v-if="loadError"
+      :reason="loadError"
+      :next-step="t('common.loadNextStep')"
+      :action-label="t('common.reload')"
+      @retry="reloadAll"
+    />
+
+    <a-card v-else>
     <a-row :gutter="16" style="margin-bottom: 16px">
       <a-col :span="8">
         <a-statistic :title="t('operations.noticeTotal')" :value="statistics.noticeTotal" />
@@ -231,7 +268,15 @@ onMounted(() => {
       <a-button @click="noticeOpen = true">{{ t('operations.publishNotice') }}</a-button>
     </a-space>
 
+    <EmptyState
+      v-if="!noticeLoading && notices.length === 0"
+      :title="t('operations.emptyNotices')"
+      :description="t('operations.emptyNoticesDesc')"
+      :action-label="t('operations.publishNotice')"
+      @action="noticeOpen = true"
+    />
     <a-table
+      v-else
       :columns="noticeColumns"
       :data-source="notices"
       :loading="noticeLoading"
@@ -280,7 +325,15 @@ onMounted(() => {
       <a-button @click="feedbackOpen = true">{{ t('operations.submitFeedback') }}</a-button>
     </a-space>
 
+    <EmptyState
+      v-if="!feedbackLoading && feedbacks.length === 0"
+      :title="t('operations.emptyFeedbacks')"
+      :description="t('operations.emptyFeedbacksDesc')"
+      :action-label="t('operations.submitFeedback')"
+      @action="feedbackOpen = true"
+    />
     <a-table
+      v-else
       :columns="feedbackColumns"
       :data-source="feedbacks"
       :loading="feedbackLoading"
@@ -340,5 +393,6 @@ onMounted(() => {
         </a-form-item>
       </a-form>
     </a-modal>
-  </a-card>
+    </a-card>
+  </div>
 </template>

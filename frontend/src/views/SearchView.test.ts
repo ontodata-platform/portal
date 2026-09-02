@@ -43,6 +43,9 @@ const stubs = {
   'a-tag': { props: ['color'], template: '<span class="tag"><slot /></span>' },
   'a-empty': { props: ['description'], template: '<div class="empty">{{ description }}</div>' },
   'a-alert': { props: ['type', 'showIcon', 'message'], template: '<div class="alert">{{ message }}</div>' },
+  PageHeader: { props: ['title', 'description'], template: '<header>{{ title }}</header>' },
+  EmptyState: { props: ['title'], template: '<div class="empty">{{ title }}</div>' },
+  ErrorState: { props: ['reason'], template: '<div class="error">{{ reason }}</div>' },
 }
 
 function mountView() {

@@ -5,11 +5,15 @@ import { useI18n } from 'vue-i18n'
 import { requirementApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { RequirementRequest } from '@/types/portal'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import ErrorState from '@/ui-kit/ErrorState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const messageStore = useMessageStore()
 
 const loading = ref(false)
+const loadError = ref('')
 const rows = ref<RequirementRequest[]>([])
 const total = ref(0)
 const query = reactive({ page: 1, size: 20, status: '', type: '', keyword: '' })
@@ -74,8 +78,16 @@ const statusText = computed(
     }) as Record<string, string>,
 )
 
+function describeLoadError(error: unknown): string {
+  const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+  if (message) return message
+  if (error instanceof Error && error.message) return error.message
+  return String(error)
+}
+
 async function load() {
   loading.value = true
+  loadError.value = ''
   try {
     const page = await requirementApi.list({
       page: query.page,
@@ -87,6 +99,7 @@ async function load() {
     rows.value = page.items
     total.value = page.total
   } catch (error) {
+    loadError.value = describeLoadError(error)
     messageStore.reportError(error)
   } finally {
     loading.value = false
@@ -198,7 +211,22 @@ onMounted(load)
 </script>
 
 <template>
-  <a-card :bordered="false" class="requirements-card">
+  <div>
+    <PageHeader
+      :eyebrow="t('menu.groupCollab')"
+      :title="t('menu.requirements')"
+      :description="t('requirements.pageDesc')"
+    />
+
+    <ErrorState
+      v-if="loadError"
+      :reason="loadError"
+      :next-step="t('common.loadNextStep')"
+      :action-label="t('common.reload')"
+      @retry="load"
+    />
+
+    <a-card v-else :bordered="false" class="requirements-card">
     <a-space style="margin-bottom: 16px" wrap>
       <a-select v-model:value="query.status" :placeholder="t('requirements.statusPlaceholder')" allow-clear style="width: 150px">
         <a-select-option value="OPEN">{{ t('requirements.open') }}</a-select-option>
@@ -226,7 +254,15 @@ onMounted(load)
       <a-button @click="createOpen = true">{{ t('requirements.createButton') }}</a-button>
     </a-space>
 
+    <EmptyState
+      v-if="!loading && rows.length === 0"
+      :title="t('requirements.emptyTitle')"
+      :description="t('requirements.emptyDesc')"
+      :action-label="t('requirements.createButton')"
+      @action="createOpen = true"
+    />
     <a-table
+      v-else
       :columns="columns"
       :data-source="rows"
       :loading="loading"
@@ -335,7 +371,8 @@ onMounted(load)
         </a-form-item>
       </a-form>
     </a-modal>
-  </a-card>
+    </a-card>
+  </div>
 </template>
 
 <style scoped>

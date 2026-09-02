@@ -7,12 +7,16 @@ import { useRouter } from 'vue-router'
 import { agentApi } from '@/api/agent'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogSearchHit, CatalogSearchKind } from '@/types/agent'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import ErrorState from '@/ui-kit/ErrorState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const messageStore = useMessageStore()
 
 const loading = ref(false)
+const loadError = ref('')
 const searched = ref(false)
 const hits = ref<CatalogSearchHit[]>([])
 const query = reactive<{ q: string; kind?: CatalogSearchKind }>({ q: '', kind: undefined })
@@ -29,14 +33,23 @@ const kindColor: Record<string, string> = {
   workflow: 'cyan',
 }
 
+function describeLoadError(error: unknown): string {
+  const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+  if (message) return message
+  if (error instanceof Error && error.message) return error.message
+  return String(error)
+}
+
 async function search() {
   const q = query.q.trim()
   if (!q) {
     searched.value = false
     hits.value = []
+    loadError.value = ''
     return
   }
   loading.value = true
+  loadError.value = ''
   try {
     const res = await agentApi.catalogSearch({
       q,
@@ -46,6 +59,7 @@ async function search() {
     hits.value = res.hits
     searched.value = true
   } catch (error) {
+    loadError.value = describeLoadError(error)
     messageStore.reportError(error)
   } finally {
     loading.value = false
@@ -66,8 +80,14 @@ function openHit(hit: Pick<CatalogSearchHit, 'kind' | 'id'>) {
 </script>
 
 <template>
-  <a-card :bordered="false">
-    <p class="lead">{{ t('search.description') }}</p>
+  <div>
+    <PageHeader
+      :eyebrow="t('menu.groupCollab')"
+      :title="t('menu.search')"
+      :description="t('search.description')"
+    />
+
+    <a-card :bordered="false">
     <a-space wrap style="margin-bottom: 16px">
       <a-input-search
         v-model:value="query.q"
@@ -89,8 +109,21 @@ function openHit(hit: Pick<CatalogSearchHit, 'kind' | 'id'>) {
       />
     </a-space>
 
-    <a-empty v-if="!searched && !loading" :description="t('search.emptyHint')" />
-    <a-empty v-else-if="searched && hits.length === 0 && !loading" :description="t('search.noHits')" />
+    <ErrorState
+      v-if="loadError"
+      :reason="loadError"
+      :next-step="t('common.loadNextStep')"
+      :action-label="t('common.reload')"
+      @retry="search"
+    />
+    <EmptyState
+      v-else-if="!searched && !loading"
+      :title="t('search.emptyHint')"
+    />
+    <EmptyState
+      v-else-if="searched && hits.length === 0 && !loading"
+      :title="t('search.noHits')"
+    />
     <a-list v-else :data-source="hits" :loading="loading">
       <template #renderItem="{ item }: { item: CatalogSearchHit }">
         <a-list-item class="hit-row" @click="openHit(item)">
@@ -108,15 +141,11 @@ function openHit(hit: Pick<CatalogSearchHit, 'kind' | 'id'>) {
         </a-list-item>
       </template>
     </a-list>
-  </a-card>
+    </a-card>
+  </div>
 </template>
 
 <style scoped>
-.lead {
-  color: rgba(0, 0, 0, 0.65);
-  margin-bottom: 16px;
-}
-
 .hit-row {
   cursor: pointer;
 }

@@ -121,6 +121,9 @@ export const zhCn = {
     packageCode: '本体包编码 (pkg-*)',
     delete: '删除',
     actions: '操作',
+    pageDesc: '门户应用装配（scn-*）在这里创建、发布与下线，不是本体执行场景。',
+    emptyTitle: '还没有应用装配',
+    emptyDesc: '先创建一条装配并钉扎工作流/能力/数据绑定，再发布给协同使用。',
   },
   agentChat: {
     selectAgent: '选择智能体',
@@ -176,6 +179,8 @@ export const zhCn = {
     details: '服务详情',
     backToList: '返回商城',
     viewDetail: '查看详情与申请',
+    emptyTitle: '还没有数据服务',
+    emptyDesc: '管理平台发布数据服务后会出现在这里。可先确认上游目录是否可用。',
   },
   workbench: {
     capabilityUnavailable: '算法转换工具能力目录不可用',
@@ -243,6 +248,11 @@ export const zhCn = {
     contactPlaceholder: '联系方式（可空）',
     handleNoteLabel: '处理说明（必填，办理证据）',
     handleNotePlaceholder: '例如：已排期下个版本增加搜索',
+    pageDesc: '公告与用户反馈在这里办理。发布公告对外可见；反馈须写办理说明。',
+    emptyNotices: '还没有公告',
+    emptyNoticesDesc: '可先创建草稿，发布后对外可见。',
+    emptyFeedbacks: '还没有反馈',
+    emptyFeedbacksDesc: '用户提交反馈后会出现在这里待处理。',
   },
   tasks: {
     taskId: '任务标识',
@@ -382,6 +392,9 @@ export const zhCn = {
     description: '描述',
     descriptionPlaceholder: '需求描述（可空）',
     requesterPlaceholder: '提出人',
+    pageDesc: '登记跨软件需求，并按分析→分派→进行中→完成闭环办理。',
+    emptyTitle: '还没有需求',
+    emptyDesc: '登记一条数据/算法/综合需求后会在这里跟进。',
   },
   personal: {
     currentUser: '当前用户：',
@@ -526,6 +539,9 @@ export const enUs: MessageSchema = {
     packageCode: 'Package Code (pkg-*)',
     delete: 'Delete',
     actions: 'Actions',
+    pageDesc: 'Portal application assemblies (scn-*) are created, published, and deprecated here — not ontology runtime scenarios.',
+    emptyTitle: 'No assemblies yet',
+    emptyDesc: 'Create an assembly with pinned workflow/capability/data bindings, then publish for collaboration.',
   },
   agentChat: {
     selectAgent: 'Select an agent',
@@ -582,6 +598,8 @@ export const enUs: MessageSchema = {
     details: 'Service Details',
     backToList: 'Back to Marketplace',
     viewDetail: 'View Detail & Apply',
+    emptyTitle: 'No data services yet',
+    emptyDesc: 'Published data services from the management platform appear here. First check that the upstream catalog is available.',
   },
   workbench: {
     capabilityUnavailable: 'Capability catalog of the algorithm transform tool is unavailable',
@@ -651,6 +669,11 @@ export const enUs: MessageSchema = {
     contactPlaceholder: 'Contact (optional)',
     handleNoteLabel: 'Handling note (required, evidence of handling)',
     handleNotePlaceholder: 'e.g. scheduled for next release',
+    pageDesc: 'Publish notices and handle user feedback here. Notices are public after publish; feedback needs a handling note.',
+    emptyNotices: 'No notices yet',
+    emptyNoticesDesc: 'Create a draft first; it becomes visible after publish.',
+    emptyFeedbacks: 'No feedback yet',
+    emptyFeedbacksDesc: 'Submitted feedback appears here for handling.',
   },
   tasks: {
     taskId: 'Task ID',
@@ -790,6 +813,9 @@ export const enUs: MessageSchema = {
     description: 'Description',
     descriptionPlaceholder: 'Requirement description (optional)',
     requesterPlaceholder: 'Requester',
+    pageDesc: 'Register cross-software requirements and drive them through analyze → assign → in progress → complete.',
+    emptyTitle: 'No requirements yet',
+    emptyDesc: 'Register a data, algorithm, or comprehensive requirement to track it here.',
   },
   personal: {
     currentUser: 'Current User:',
