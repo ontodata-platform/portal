@@ -231,6 +231,39 @@ export interface ScenarioPresentation {
   widgets?: { kind: 'TABLE' | 'CHART' | 'METRIC' | 'REPORT_LINK'; bindingAlias: string; config?: Record<string, unknown> }[]
 }
 
+/** 投影重建结果（task-center POST /projections/rebuild）。 */
+export interface ProjectionRebuildSummary {
+  consumerGroup: string
+  polled: number
+  applied: number
+  duplicate: number
+  stale: number
+  unknown: number
+  tasks: number
+  elapsedMillis: number
+}
+
+/** 数据保留状态（GET /retention/status）。 */
+export interface RetentionStatus {
+  retentionDays: number
+  cutoffAt: string
+  tasks: number
+  approvals: number
+  requirements: number
+  feedbacks: number
+  notices: number
+}
+
+/** 数据保留清理结果（POST /retention/cleanup）。 */
+export interface RetentionCleanupResult {
+  dryRun: boolean
+  tasks: number
+  approvals: number
+  requirements: number
+  feedbacks: number
+  notices: number
+}
+
 /** 应用装配（scenario-center）：scn-* 编码 + 不可变语义版本，DRAFT→PUBLISHED→DEPRECATED。 */
 export interface PortalScenario {
   code: string

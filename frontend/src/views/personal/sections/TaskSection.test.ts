@@ -5,7 +5,7 @@ import { defineComponent } from 'vue'
 
 import { i18n } from '@/i18n'
 import { useMessageStore } from '@/stores/message'
-import TasksView from './TasksView.vue'
+import TaskSection from './TaskSection.vue'
 
 const listMock = vi.fn()
 const findMock = vi.fn()
@@ -41,14 +41,14 @@ const stubs = {
 function mountView() {
   return mount(
     defineComponent({
-      components: { TasksView },
-      template: '<TasksView />',
+      components: { TaskSection },
+      template: '<TaskSection />',
     }),
     { global: { plugins: [createPinia(), i18n], stubs } },
   )
 }
 
-describe('TasksView', () => {
+describe('TaskSection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     listMock.mockResolvedValue({
@@ -112,8 +112,8 @@ describe('TasksView', () => {
     listMock.mockRejectedValue({ response: { data: { status: 500, code: 'INTERNAL_SERVER_ERROR', message: '服务处理失败', path: '/x' } } })
     const wrapper = mount(
       defineComponent({
-        components: { TasksView },
-        template: '<TasksView />',
+        components: { TaskSection },
+        template: '<TaskSection />',
       }),
       { global: { plugins: [pinia, i18n], stubs } },
     )

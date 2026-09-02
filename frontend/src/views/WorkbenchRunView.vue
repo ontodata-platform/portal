@@ -90,7 +90,7 @@ async function submitRun() {
     } else {
       messageStore.info(t('workbench.submitNotStarted', { taskId: res.taskId }))
     }
-    router.push('/tasks')
+    router.push('/personal/tasks')
   } catch (error) {
     formError.value = error instanceof ApiError ? error.detail : String(error)
     messageStore.reportError(error)

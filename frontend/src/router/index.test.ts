@@ -1,10 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { RouteLocationNormalized } from 'vue-router'
+import { createMemoryHistory, createRouter, type RouteLocationNormalized } from 'vue-router'
 
 import { clearSession, saveSession } from '@/auth/session'
 import { useIdentityStore } from '@/stores/identity'
-import { authGuard } from './index'
+import { authGuard, routes } from './index'
 
 /** 构造最小路由对象（守卫只读取 path/fullPath/meta）。 */
 function toRoute(
@@ -54,7 +54,7 @@ describe('路由守卫 authGuard（WP-07 身份闭环与角色鉴权）', () => 
   it('IAM 启用且会话有效：放行业务路由', async () => {
     vi.stubEnv('VITE_IAM_ENABLED', 'true')
     saveSession({ accessToken: 'token-1', refreshToken: 'refresh-1', expiresAt: Date.now() + 600_000 })
-    await expect(authGuard(toRoute('/tasks'))).resolves.toBe(true)
+    await expect(authGuard(toRoute('/personal/tasks'))).resolves.toBe(true)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
@@ -69,7 +69,7 @@ describe('路由守卫 authGuard（WP-07 身份闭环与角色鉴权）', () => 
     })
     saveSession({ accessToken: 'token-old', refreshToken: 'refresh-1', expiresAt: Date.now() + 30_000 })
 
-    await expect(authGuard(toRoute('/tasks'))).resolves.toBe(true)
+    await expect(authGuard(toRoute('/personal/tasks'))).resolves.toBe(true)
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
@@ -93,7 +93,72 @@ describe('路由守卫 authGuard（WP-07 身份闭环与角色鉴权）', () => 
       devMode: false,
     })
 
-    const route = toRoute('/operations', '/operations', { roles: ['operator', 'admin'] })
+    const route = toRoute('/admin/operations', '/admin/operations', { roles: ['operator', 'admin'] })
     await expect(authGuard(route)).resolves.toEqual({ path: '/personal' })
+  })
+})
+
+describe('IA v2 路由与旧路径重定向', () => {
+  let router: ReturnType<typeof createRouter>
+
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    vi.stubEnv('VITE_IAM_ENABLED', 'false')
+    const store = useIdentityStore()
+    store.setIdentity({
+      name: 'dev-user',
+      tenantId: 'default',
+      roles: ['portal-admin'],
+      devMode: true,
+    })
+    router = createRouter({ history: createMemoryHistory(), routes })
+    router.beforeEach(authGuard)
+    await router.push('/assistant')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('默认落地 /assistant', async () => {
+    await router.push('/')
+    expect(router.currentRoute.value.path).toBe('/assistant')
+  })
+
+  it.each([
+    ['/tasks', '/personal/tasks'],
+    ['/approvals', '/personal/approvals'],
+    ['/results', '/personal/results'],
+    ['/requirements', '/personal/requirements'],
+    ['/notifications', '/personal/notifications'],
+    ['/scenarios', '/admin/assemblies'],
+    ['/operations', '/admin/operations'],
+    ['/search', '/assistant'],
+  ])('重定向 %s → %s', async (from, to) => {
+    await router.push(from)
+    expect(router.currentRoute.value.path).toBe(to)
+  })
+
+  it('审批深链 query 透传到 /personal/approvals', async () => {
+    await router.push('/approvals?code=apr-1&from=agent')
+    expect(router.currentRoute.value.path).toBe('/personal/approvals')
+    expect(router.currentRoute.value.query).toMatchObject({ code: 'apr-1', from: 'agent' })
+  })
+
+  it('统一搜索 query 透传到 /assistant', async () => {
+    await router.push('/search?q=客户')
+    expect(router.currentRoute.value.path).toBe('/assistant')
+    expect(router.currentRoute.value.query.q).toBe('客户')
+  })
+
+  it('/agent/chat?session= 续接到 /assistant?resume=', async () => {
+    await router.push('/agent/chat?session=sess-9')
+    expect(router.currentRoute.value.path).toBe('/assistant')
+    expect(router.currentRoute.value.query.resume).toBe('sess-9')
+  })
+
+  it('/admin 落到运营页', async () => {
+    await router.push('/admin')
+    expect(router.currentRoute.value.path).toBe('/admin/operations')
   })
 })

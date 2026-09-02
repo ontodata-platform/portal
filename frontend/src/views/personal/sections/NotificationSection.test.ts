@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 
 import { i18n } from '@/i18n'
-import NotificationsView from './NotificationsView.vue'
+import NotificationSection from './NotificationSection.vue'
 
 const listMock = vi.fn()
 const markReadMock = vi.fn()
@@ -32,14 +32,14 @@ const stubs = {
 function mountView() {
   return mount(
     defineComponent({
-      components: { NotificationsView },
-      template: '<NotificationsView />',
+      components: { NotificationSection },
+      template: '<NotificationSection />',
     }),
     { global: { plugins: [createPinia(), i18n], stubs } },
   )
 }
 
-describe('NotificationsView', () => {
+describe('NotificationSection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     listMock.mockResolvedValue({
@@ -69,7 +69,7 @@ describe('NotificationsView', () => {
   it('可将单条标为已读并刷新', async () => {
     const wrapper = mountView()
     await flushPromises()
-    const view = wrapper.findComponent(NotificationsView)
+    const view = wrapper.findComponent(NotificationSection)
     await (view.vm as unknown as { markRead: (id: string) => Promise<void> }).markRead('n-1')
     await flushPromises()
     expect(markReadMock).toHaveBeenCalledWith('n-1')

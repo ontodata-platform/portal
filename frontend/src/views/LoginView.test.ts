@@ -28,9 +28,12 @@ function mountView() {
 }
 
 describe('LoginView（M5 IAM 浏览器登录）', () => {
+  const assign = vi.fn()
+
   beforeEach(() => {
     vi.clearAllMocks()
     window.sessionStorage.clear()
+    vi.stubGlobal('location', { assign, origin: 'http://localhost:5175', href: 'http://localhost:5175/login' })
   })
 
   afterEach(() => {
@@ -51,10 +54,6 @@ describe('LoginView（M5 IAM 浏览器登录）', () => {
     vi.stubEnv('VITE_OIDC_AUTHORIZE_ENDPOINT', 'https://idp.example/auth')
     vi.stubEnv('VITE_OIDC_TOKEN_ENDPOINT', 'https://idp.example/token')
     vi.stubEnv('VITE_OIDC_REDIRECT_URI', 'http://localhost:5175/auth/callback')
-    // jsdom 的 location.assign 不可重定义：整体替换 location 以捕获跳转
-    const assign = vi.fn()
-    vi.stubGlobal('location', { assign, origin: 'http://localhost:5175' })
-
     mountView()
     await flushPromises()
 
@@ -78,8 +77,6 @@ describe('LoginView（M5 IAM 浏览器登录）', () => {
     vi.stubEnv('VITE_OIDC_AUTHORIZE_ENDPOINT', 'https://idp.example/auth')
     vi.stubEnv('VITE_OIDC_TOKEN_ENDPOINT', 'https://idp.example/token')
     routeQuery.mockReturnValue({ redirect: '/tasks?tab=mine' })
-    const assign = vi.fn()
-    vi.stubGlobal('location', { assign, origin: 'http://localhost:5175' })
 
     mountView()
     await flushPromises()

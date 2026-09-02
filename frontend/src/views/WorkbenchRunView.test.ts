@@ -76,7 +76,7 @@ describe('WorkbenchRunView', () => {
       dataSnapshotVersion: undefined,
       resourceRefs: undefined,
     })
-    expect(pushMock).toHaveBeenCalledWith('/tasks')
+    expect(pushMock).toHaveBeenCalledWith('/personal/tasks')
   })
 
   it('契约版本格式不合法时拦截提交', async () => {

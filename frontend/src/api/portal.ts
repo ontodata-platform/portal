@@ -19,6 +19,9 @@ import type {
   PortalResult,
   PortalScenario,
   PortalTask,
+  ProjectionRebuildSummary,
+  RetentionCleanupResult,
+  RetentionStatus,
   RequirementRequest,
   ScenarioBinding,
   ScenarioOntologyRef,
@@ -179,4 +182,12 @@ export const personalApi = {
   markRead: (id: string) =>
     client.post<PortalNotification>(`/personal/notifications/${id}/read`).then((r) => r.data),
   markAllRead: () => client.post<{ unread: number }>('/personal/notifications/read-all').then((r) => r.data),
+}
+
+/** 平台管理：投影重建与数据保留（原运维接口迁入 /admin/platform）。 */
+export const platformApi = {
+  rebuildProjections: () => client.post<ProjectionRebuildSummary>('/projections/rebuild').then((r) => r.data),
+  retentionStatus: () => client.get<RetentionStatus>('/retention/status').then((r) => r.data),
+  retentionCleanup: (dryRun = true) =>
+    client.post<RetentionCleanupResult>('/retention/cleanup', undefined, { params: { dryRun } }).then((r) => r.data),
 }

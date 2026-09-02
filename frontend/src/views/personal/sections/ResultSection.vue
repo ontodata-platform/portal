@@ -142,7 +142,7 @@ onMounted(load)
       :title="t('results.emptyTitle')"
       :description="t('results.emptyDesc')"
       :action-label="t('menu.tasks')"
-      @action="router.push('/tasks')"
+      @action="router.push('/personal/tasks')"
     />
     <a-table
       v-else

@@ -313,6 +313,16 @@ export function createPortalMockApi(): PortalMockApi {
       return { unread: 0 }
     }
 
+    if (normalizedMethod === 'post' && path === '/projections/rebuild') {
+      return { consumerGroup: 'portal.task-projection-rebuild-mock', polled: 0, applied: 0, duplicate: 0, stale: 0, unknown: 0, tasks: tasks.length, elapsedMillis: 12 }
+    }
+    if (normalizedMethod === 'get' && path === '/retention/status') {
+      return { retentionDays: 180, cutoffAt: new Date(Date.now() - 180 * 86400e3).toISOString(), tasks: 0, approvals: 0, requirements: 0, feedbacks: 0, notices: 0 }
+    }
+    if (normalizedMethod === 'post' && path === '/retention/cleanup') {
+      return { dryRun: params.dryRun !== 'false' && params.dryRun !== false, tasks: 0, approvals: 0, requirements: 0, feedbacks: 0, notices: 0 }
+    }
+
     throw error(404, 'MOCK_ROUTE_NOT_FOUND', `本地模拟尚未覆盖 ${normalizedMethod.toUpperCase()} ${path}`, path)
   }
 

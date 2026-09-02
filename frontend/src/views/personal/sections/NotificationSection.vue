@@ -72,11 +72,11 @@ async function markAllRead() {
 
 function openResource(item: PortalNotification) {
   if (item.type === 'APPROVAL_DECIDED') {
-    router.push('/approvals')
+    router.push('/personal/approvals')
     return
   }
   if (item.type === 'TASK_COMPLETED') {
-    router.push('/tasks')
+    router.push('/personal/tasks')
   }
 }
 

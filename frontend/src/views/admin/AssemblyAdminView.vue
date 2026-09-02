@@ -16,7 +16,7 @@ import {
   bindingAliasSet,
   buildPresentation,
   type FormWidgetItem,
-} from './scenarioPresentation'
+} from '@/views/scenarioPresentation'
 
 /**
  * 应用编排页（批次 D 后段，scenario/v1）：应用装配列表 + 创建/编辑 +

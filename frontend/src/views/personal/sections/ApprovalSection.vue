@@ -141,7 +141,7 @@ async function decide() {
     decideOpen.value = false
     await load()
     if (route.query.from === 'agent' && decideTarget.value) {
-      await router.push({ path: '/agent/chat', query: { resume: decideTarget.value.code } })
+      await router.push({ path: '/assistant', query: { resume: decideTarget.value.code } })
     }
   } catch (error) {
     messageStore.reportError(error)
@@ -224,7 +224,7 @@ onMounted(async () => {
       :message="t('approvals.focusHint', { code: focusCode })"
     >
       <template #action>
-        <a-button v-if="route.query.from === 'agent'" size="small" @click="router.push('/agent/chat')">
+        <a-button v-if="route.query.from === 'agent'" size="small" @click="router.push('/assistant')">
           {{ t('approvals.backToChat') }}
         </a-button>
       </template>

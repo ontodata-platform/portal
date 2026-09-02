@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/api/client'
 import { i18n } from '@/i18n'
 import { useMessageStore } from '@/stores/message'
-import ScenariosView from './ScenariosView.vue'
+import AssemblyAdminView from './AssemblyAdminView.vue'
 
 const listMock = vi.fn()
 const createMock = vi.fn()
@@ -58,7 +58,7 @@ const stubs = {
 }
 
 function mountView(pinia = createPinia()) {
-  const wrapper = mount(ScenariosView, {
+  const wrapper = mount(AssemblyAdminView, {
     global: { plugins: [pinia, i18n], stubs },
   })
   return { wrapper, pinia }
@@ -77,7 +77,7 @@ const draftScenario = {
   updatedAt: '2026-08-26T08:00:00Z',
 }
 
-describe('ScenariosView', () => {
+describe('AssemblyAdminView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     listMock.mockResolvedValue({ total: 1, items: [draftScenario] })
