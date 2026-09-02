@@ -6,6 +6,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { approvalApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { ApprovalRequest } from '@/types/portal'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import ErrorState from '@/ui-kit/ErrorState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -14,6 +17,7 @@ const messageStore = useMessageStore()
 const focusCode = ref('')
 
 const loading = ref(false)
+const loadError = ref('')
 const rows = ref<ApprovalRequest[]>([])
 const total = ref(0)
 const query = reactive({ page: 1, size: 20, status: '', type: '' })
@@ -62,8 +66,16 @@ const statusText = computed(
     }) as Record<string, string>,
 )
 
+function describeLoadError(error: unknown): string {
+  const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+  if (message) return message
+  if (error instanceof Error && error.message) return error.message
+  return String(error)
+}
+
 async function load() {
   loading.value = true
+  loadError.value = ''
   try {
     const page = await approvalApi.list({
       page: query.page,
@@ -74,6 +86,7 @@ async function load() {
     rows.value = page.items
     total.value = page.total
   } catch (error) {
+    loadError.value = describeLoadError(error)
     messageStore.reportError(error)
   } finally {
     loading.value = false
@@ -187,7 +200,22 @@ onMounted(async () => {
 </script>
 
 <template>
-  <a-card :bordered="false" class="approvals-card">
+  <div>
+    <PageHeader
+      :eyebrow="t('menu.groupPortal')"
+      :title="t('menu.approvals')"
+      :description="t('approvals.pageDesc')"
+    />
+
+    <ErrorState
+      v-if="loadError"
+      :reason="loadError"
+      :next-step="t('common.loadNextStep')"
+      :action-label="t('common.reload')"
+      @retry="load"
+    />
+
+    <a-card v-else :bordered="false" class="approvals-card">
     <a-alert
       v-if="focusCode"
       type="info"
@@ -226,7 +254,15 @@ onMounted(async () => {
       </a-button>
     </a-space>
 
+    <EmptyState
+      v-if="!loading && rows.length === 0"
+      :title="t('approvals.emptyTitle')"
+      :description="t('approvals.emptyDesc')"
+      :action-label="t('menu.personal')"
+      @action="router.push('/personal')"
+    />
     <a-table
+      v-else
       :columns="columns"
       :data-source="rows"
       :loading="loading"
@@ -304,7 +340,8 @@ onMounted(async () => {
         </a-form-item>
       </a-form>
     </a-modal>
-  </a-card>
+    </a-card>
+  </div>
 </template>
 
 <style scoped>

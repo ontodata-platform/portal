@@ -10,6 +10,10 @@ import TasksView from './TasksView.vue'
 const listMock = vi.fn()
 const findMock = vi.fn()
 
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}))
+
 vi.mock('@/api/portal', () => ({
   taskApi: {
     list: (...args: unknown[]) => listMock(...args),
@@ -89,6 +93,7 @@ describe('TasksView', () => {
       type: undefined,
     })
     expect(wrapper.text()).toContain('查询')
+    expect(wrapper.text()).toContain('统一任务中心')
   })
 
   it('查询按钮按筛选条件重新加载并重置页码', async () => {
@@ -105,7 +110,7 @@ describe('TasksView', () => {
   it('列表加载失败时上报错误而不抛出', async () => {
     const pinia = createPinia()
     listMock.mockRejectedValue({ response: { data: { status: 500, code: 'INTERNAL_SERVER_ERROR', message: '服务处理失败', path: '/x' } } })
-    mount(
+    const wrapper = mount(
       defineComponent({
         components: { TasksView },
         template: '<TasksView />',
@@ -116,5 +121,14 @@ describe('TasksView', () => {
 
     const store = useMessageStore(pinia)
     expect(store.feedback?.content).toContain('服务处理失败')
+    expect(wrapper.text()).toContain('服务处理失败')
+    expect(wrapper.text()).toContain('确认门户后端可用后重新加载')
+  })
+
+  it('空列表展示空态引导', async () => {
+    listMock.mockResolvedValue({ total: 0, items: [] })
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.text()).toContain('还没有任务')
   })
 })

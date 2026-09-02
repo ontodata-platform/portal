@@ -63,6 +63,7 @@ describe('NotificationsView', () => {
     await flushPromises()
     expect(listMock).toHaveBeenCalled()
     expect(wrapper.text()).toContain('全部已读')
+    expect(wrapper.text()).toContain('通知中心')
   })
 
   it('可将单条标为已读并刷新', async () => {
@@ -73,5 +74,12 @@ describe('NotificationsView', () => {
     await flushPromises()
     expect(markReadMock).toHaveBeenCalledWith('n-1')
     expect(listMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('空列表展示空态引导', async () => {
+    listMock.mockResolvedValue({ total: 0, items: [] })
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.text()).toContain('暂无通知')
   })
 })

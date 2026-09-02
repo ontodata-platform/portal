@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import { resultApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { PortalResult } from '@/types/portal'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import ErrorState from '@/ui-kit/ErrorState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t, locale } = useI18n()
+const router = useRouter()
 const messageStore = useMessageStore()
 
 const loading = ref(false)
+const loadError = ref('')
 const rows = ref<PortalResult[]>([])
 const total = ref(0)
 const query = reactive({ page: 1, size: 20, type: '', domain: '', keyword: '' })
@@ -40,8 +46,16 @@ function formatTime(value: string): string {
   return new Date(value).toLocaleString(locale.value)
 }
 
+function describeLoadError(error: unknown): string {
+  const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+  if (message) return message
+  if (error instanceof Error && error.message) return error.message
+  return String(error)
+}
+
 async function load() {
   loading.value = true
+  loadError.value = ''
   try {
     const page = await resultApi.list({
       page: query.page,
@@ -53,6 +67,7 @@ async function load() {
     rows.value = page.items
     total.value = page.total
   } catch (error) {
+    loadError.value = describeLoadError(error)
     messageStore.reportError(error)
   } finally {
     loading.value = false
@@ -90,7 +105,22 @@ onMounted(load)
 </script>
 
 <template>
-  <a-card>
+  <div>
+    <PageHeader
+      :eyebrow="t('menu.groupPortal')"
+      :title="t('menu.results')"
+      :description="t('results.pageDesc')"
+    />
+
+    <ErrorState
+      v-if="loadError"
+      :reason="loadError"
+      :next-step="t('common.loadNextStep')"
+      :action-label="t('common.reload')"
+      @retry="load"
+    />
+
+    <a-card v-else>
     <a-space style="margin-bottom: 12px" wrap>
       <a-input v-model:value="query.domain" :placeholder="t('results.domainPlaceholder')" style="width: 200px" />
       <a-input v-model:value="query.type" :placeholder="t('results.typePlaceholder')" style="width: 220px" />
@@ -107,7 +137,15 @@ onMounted(load)
       <a-button @click="registerOpen = true">{{ t('results.registerButton') }}</a-button>
     </a-space>
 
+    <EmptyState
+      v-if="!loading && rows.length === 0"
+      :title="t('results.emptyTitle')"
+      :description="t('results.emptyDesc')"
+      :action-label="t('menu.tasks')"
+      @action="router.push('/tasks')"
+    />
     <a-table
+      v-else
       :columns="columns"
       :data-source="rows"
       :loading="loading"
@@ -167,5 +205,6 @@ onMounted(load)
         <a-descriptions-item :label="t('tasks.traceId')">{{ detail.traceId ?? '-' }}</a-descriptions-item>
       </a-descriptions>
     </a-modal>
-  </a-card>
+    </a-card>
+  </div>
 </template>

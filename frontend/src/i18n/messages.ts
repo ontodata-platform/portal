@@ -26,6 +26,8 @@ export const zhCn = {
     requester: '提出人',
     applicant: '申请人',
     delete: '删除',
+    reload: '重新加载',
+    loadNextStep: '确认门户后端可用后重新加载。',
   },
   layout: {
     appName: 'ontodata 管理门户',
@@ -252,6 +254,9 @@ export const zhCn = {
     resourceRefs: '资源引用',
     resultRefs: '结果引用',
     traceId: '链路标识',
+    pageDesc: '跨系统长任务在这里看进度、阶段和结果引用，不手填内部编码。',
+    emptyTitle: '还没有任务',
+    emptyDesc: '发布、构建或执行发生后会出现在这里。可先从个人工作台看待办。',
   },
   results: {
     resultId: '结果标识',
@@ -267,6 +272,9 @@ export const zhCn = {
     sourceTaskIdLabel: '关联任务标识',
     sourceTaskIdPlaceholder: '统一任务中心的任务标识（可空）',
     detailModal: '结果详情',
+    pageDesc: '各软件登记的结果引用集中在这里，可追溯到来源任务。',
+    emptyTitle: '还没有结果引用',
+    emptyDesc: '任务成功后会登记到这里。也可手工登记一条可追踪的结果引用。',
   },
   approvals: {
     approvalType: '审批类型',
@@ -307,6 +315,9 @@ export const zhCn = {
     batchReject: '批量驳回',
     batchDecided: '已处理 {succeeded} 条，失败 {failed} 条',
     slaDeadlinePlaceholder: '可选，超过该时间仍待审则标记超期',
+    pageDesc: '待办审批在这里决定。智能助手升级的 R4 单会带编码深链过来。',
+    emptyTitle: '还没有审批单',
+    emptyDesc: '有待你处理的申请时会出现在这里。也可从个人工作台进入。',
   },
   search: {
     description: '跨数据资产、算法能力与工作流模板的关键词检索，结果按调用方密级裁剪。',
@@ -329,6 +340,8 @@ export const zhCn = {
     approvalDecided: '审批结果',
     taskCompleted: '执行完成',
     marked: '已标为已读',
+    pageDesc: '审批结果与任务完成会推到这里，未读优先处理。',
+    emptyDesc: '没有新通知。有审批决定或任务完成时会出现在这里。',
   },
   requirements: {
     assigneeTarget: '分派目标',
@@ -417,6 +430,8 @@ export const enUs: MessageSchema = {
     requester: 'Requester',
     applicant: 'Applicant',
     delete: 'Delete',
+    reload: 'Reload',
+    loadNextStep: 'Confirm the portal backend is up, then reload.',
   },
   layout: {
     appName: 'ontodata Portal',
@@ -647,6 +662,9 @@ export const enUs: MessageSchema = {
     resourceRefs: 'Resource Refs',
     resultRefs: 'Result Refs',
     traceId: 'Trace ID',
+    pageDesc: 'Track cross-system long-running tasks here: progress, stage, and result refs. Do not type internal codes.',
+    emptyTitle: 'No tasks yet',
+    emptyDesc: 'Publish, build, or execute work and it will show up here. Start from the personal workbench for todos.',
   },
   results: {
     resultId: 'Result ID',
@@ -662,6 +680,9 @@ export const enUs: MessageSchema = {
     sourceTaskIdLabel: 'Related Task ID',
     sourceTaskIdPlaceholder: 'Task id in the Unified Task Center (optional)',
     detailModal: 'Result Detail',
+    pageDesc: 'Result references registered by each product land here, traceable to the source task.',
+    emptyTitle: 'No result references yet',
+    emptyDesc: 'Successful tasks register here. You can also register a traceable result reference manually.',
   },
   approvals: {
     approvalType: 'Approval Type',
@@ -702,6 +723,9 @@ export const enUs: MessageSchema = {
     batchReject: 'Batch Reject',
     batchDecided: 'Processed {succeeded}, failed {failed}',
     slaDeadlinePlaceholder: 'Optional; pending items past this time are marked overdue',
+    pageDesc: 'Decide pending approvals here. R4 tickets from the assistant arrive with a deep-link code.',
+    emptyTitle: 'No approvals yet',
+    emptyDesc: 'Requests waiting on you will appear here. You can also enter from the personal workbench.',
   },
   search: {
     description: 'Keyword search across data assets, capabilities and workflow templates. Hits are clipped by caller clearance.',
@@ -724,6 +748,8 @@ export const enUs: MessageSchema = {
     approvalDecided: 'Approval result',
     taskCompleted: 'Execution completed',
     marked: 'Marked as read',
+    pageDesc: 'Approval outcomes and completed tasks land here. Unread items first.',
+    emptyDesc: 'No new notifications. Approval decisions and completed tasks will appear here.',
   },
   requirements: {
     assigneeTarget: 'Assignee',
