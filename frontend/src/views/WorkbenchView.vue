@@ -6,6 +6,8 @@ import { useRouter } from 'vue-router'
 
 import { workbenchApi } from '@/api/portal'
 import { catalogItems, catalogTotal } from '@/catalog'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 
@@ -84,6 +86,11 @@ onMounted(() => {
 
 <template>
   <div class="workbench-view">
+    <PageHeader
+      :eyebrow="t('menu.groupPortal')"
+      :title="t('menu.workbench')"
+      :description="t('workbench.pageDesc')"
+    />
     <!-- 算法转换能力目录 -->
     <a-card :bordered="false" class="section-card" style="margin-bottom: 16px">
       <a-alert
@@ -99,7 +106,13 @@ onMounted(() => {
         <h3 class="section-title">{{ t('workbench.capabilityTitle') }}</h3>
       </div>
 
+      <EmptyState
+        v-if="!capabilityLoading && capabilityAggregation?.available && capabilityRows.length === 0"
+        :title="t('workbench.emptyCapabilityTitle')"
+        :description="t('workbench.emptyCapabilityDesc')"
+      />
       <a-table
+        v-else
         :columns="capabilityColumns"
         :data-source="capabilityRows"
         :loading="capabilityLoading"
@@ -137,7 +150,13 @@ onMounted(() => {
         <h3 class="section-title">{{ t('workbench.templateTitle') }}</h3>
       </div>
 
+      <EmptyState
+        v-if="!templateLoading && templateAggregation?.available && templateRows.length === 0"
+        :title="t('workbench.emptyTemplateTitle')"
+        :description="t('workbench.emptyTemplateDesc')"
+      />
       <a-table
+        v-else
         :columns="templateColumns"
         :data-source="templateRows"
         :loading="templateLoading"

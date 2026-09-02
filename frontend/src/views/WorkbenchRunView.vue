@@ -7,6 +7,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { ApiError } from '@/api/client'
 import { workbenchApi } from '@/api/portal'
 import { catalogItem } from '@/catalog'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 
@@ -102,6 +104,13 @@ onMounted(loadTemplate)
 
 <template>
   <div class="workbench-run-view">
+    <PageHeader
+      :eyebrow="t('menu.groupPortal')"
+      :title="t('workbench.runTitle')"
+      :description="template?.name ?? t('workbench.runPageDesc')"
+      :status="template ? 'running' : undefined"
+      :status-label="template ? t('workbench.runReadyLabel') : undefined"
+    />
     <a-card :bordered="false" class="run-card">
       <template #title>
         <a-space>
@@ -216,7 +225,12 @@ onMounted(loadTemplate)
           </a-form>
         </template>
         <template v-else-if="!loading && aggregation?.available">
-          <a-empty :description="t('workbench.templateUnavailable')" />
+          <EmptyState
+            :title="t('workbench.runEmptyTitle')"
+            :description="t('workbench.runEmptyDesc')"
+            :action-label="t('workbench.backToList')"
+            @action="router.push('/workbench')"
+          />
         </template>
       </a-spin>
     </a-card>

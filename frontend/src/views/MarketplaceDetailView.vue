@@ -6,6 +6,8 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { marketplaceApi } from '@/api/portal'
 import { catalogItem } from '@/catalog'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 
@@ -80,6 +82,13 @@ onMounted(loadDetail)
 
 <template>
   <div class="marketplace-detail-view">
+    <PageHeader
+      :eyebrow="t('menu.groupPortal')"
+      :title="service?.name ?? t('marketplace.detailTitle')"
+      :description="t('marketplace.detailPageDesc')"
+      :status="service ? 'success' : undefined"
+      :status-label="service ? service.status : undefined"
+    />
     <a-card :bordered="false" class="detail-card">
       <template #title>
         <a-space>
@@ -140,7 +149,12 @@ onMounted(loadDetail)
           </a-descriptions>
         </template>
         <template v-else-if="!loading && aggregation?.available">
-          <a-empty :description="t('marketplace.unavailable')" />
+          <EmptyState
+            :title="t('marketplace.emptyDetailTitle')"
+            :description="t('marketplace.emptyDetailDesc')"
+            :action-label="t('marketplace.backToList')"
+            @action="router.push('/marketplace')"
+          />
         </template>
       </a-spin>
     </a-card>

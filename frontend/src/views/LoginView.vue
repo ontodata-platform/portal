@@ -40,7 +40,60 @@ onMounted(async () => {
 </script>
 
 <template>
-  <a-card>
-    <p>正在跳转到统一身份认证……</p>
-  </a-card>
+  <div class="auth-transition">
+    <div class="auth-panel">
+      <p class="auth-brand">ontodata 管理门户</p>
+      <p class="auth-message">正在跳转到统一身份认证……</p>
+      <span class="auth-spinner" aria-hidden="true"></span>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.auth-transition {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.auth-panel {
+  display: grid;
+  gap: var(--od-space-1);
+  justify-items: center;
+  border: 1px solid var(--od-color-line);
+  border-radius: 10px;
+  padding: var(--od-space-4) var(--od-space-4);
+  background: var(--od-color-panel);
+  box-shadow: 0 1px 4px rgba(16, 42, 67, 0.06);
+}
+
+.auth-brand {
+  margin: 0;
+  color: var(--od-color-primary);
+  font-family: var(--od-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.auth-message {
+  margin: 0;
+  color: var(--od-color-muted);
+}
+
+.auth-spinner {
+  width: 18px;
+  height: 18px;
+  margin-top: var(--od-space-1);
+  border: 2px solid var(--od-color-line);
+  border-top-color: var(--od-color-accent);
+  border-radius: 50%;
+  animation: auth-spin 0.9s linear infinite;
+}
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

@@ -8,6 +8,7 @@ import { ApiError } from '@/api/client'
 import AgentConfirmCard from '@/components/AgentConfirmCard.vue'
 import { localAgentMockApi } from '@/mocks/agentMockApi'
 import { useLocalMock } from '@/mocks/localMode'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 import { useMessageStore } from '@/stores/message'
 import type {
   AgentDef,
@@ -314,6 +315,11 @@ onUnmounted(stopStream)
 </script>
 
 <template>
+  <PageHeader
+    :eyebrow="t('menu.groupCollab')"
+    :title="t('menu.agentChat')"
+    :description="t('agentChat.pageDesc')"
+  />
   <a-card>
     <a-space style="margin-bottom: 12px" wrap>
       <a-select
