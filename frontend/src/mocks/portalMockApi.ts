@@ -6,6 +6,8 @@
  * 以便后续联调只替换 transport adapter，而不改写页面业务逻辑。
  */
 
+import { demoIdentity } from './seed'
+
 type RecordValue = Record<string, unknown>
 
 export interface PortalMockRequest {
@@ -78,8 +80,8 @@ export function createPortalMockApi(): PortalMockApi {
     },
     {
       code: 'apr-delivery-002', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'svc-order-insight',
-      title: '订单洞察服务订阅', requester: '当前用户', status: 'APPROVED', slaStatus: 'MET',
-      detail: { serviceCode: 'svc-order-insight', deliveryStatus: 'FAILED', deliveryError: '本地模拟：等待管理平台重新投递' },
+      title: '设备遥测服务订阅', requester: '当前用户', status: 'APPROVED', slaStatus: 'MET',
+      detail: { serviceCode: 'svc-order-insight', deliveryStatus: 'FAILED', deliveryError: '等待管理平台重新投递' },
       createdAt: timestamp, updatedAt: timestamp,
     },
   ]
@@ -104,16 +106,17 @@ export function createPortalMockApi(): PortalMockApi {
     },
   ]
   const notices: RecordValue[] = [
-    { code: 'ntc-001', title: '平台本地模拟验收说明', content: '当前展示的是浏览器内演示数据，不代表真实生产环境。', section: '公告', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
-    { code: 'ntc-002', title: '数据服务目录更新', content: '新增订单洞察服务，支持申请后审批投递。', section: '服务动态', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
+    { code: 'ntc-001', title: '本周质量分析批次已开放', content: '客户质量分析-周批已对制造业数据团队开放，可在算法工作台提交。', section: '公告', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
+    { code: 'ntc-002', title: '数据服务目录更新', content: '新增设备遥测-日增量，支持申请后审批投递。', section: '服务动态', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
   ]
   const notifications: RecordValue[] = [
     { id: 'ntf-001', type: 'APPROVAL_DECIDED', title: '有一项数据服务申请待审批', body: '请在审批中心处理风险评分服务申请。', resourceRef: 'apr-data-001', createdAt: timestamp },
     { id: 'ntf-002', type: 'TASK_COMPLETED', title: '数据导入任务已完成', body: '订单数据质量校验已通过。', resourceRef: 'tsk-import-002', readAt: timestamp, createdAt: timestamp },
   ]
   const services: RecordValue[] = [
-    { code: 'svc-risk-score', name: '风险评分数据服务', status: 'ONLINE', currentVersion: 3, description: '提供企业风险等级和评分。' },
-    { code: 'svc-order-insight', name: '订单洞察数据服务', status: 'ONLINE', currentVersion: 2, description: '提供订单聚合与趋势分析。' },
+    { code: 'svc-risk-score', name: '客户主数据-月度快照', status: 'ONLINE', currentVersion: '2.1.0', classification: 'INTERNAL', subscribed: true, description: '制造业客户主数据月度快照。' },
+    { code: 'svc-order-insight', name: '设备遥测-日增量', status: 'ONLINE', currentVersion: '1.4.2', classification: 'CONFIDENTIAL', subscribed: false, description: '产线设备遥测日增量。' },
+    { code: 'ds-supplier-credit', name: '供应商信用-季度版', status: 'ONLINE', currentVersion: '3.0.1', classification: 'INTERNAL', subscribed: false, description: '供应商信用季度评估。' },
   ]
   const capabilities: RecordValue[] = [
     { code: 'cap-risk-score', name: '风险评分算法能力', status: 'ADMITTED', currentVersion: 3, description: '已准入的风险评分算法。' },
@@ -295,7 +298,7 @@ export function createPortalMockApi(): PortalMockApi {
     }
     if (normalizedMethod === 'get' && path.startsWith('/scenarios/')) return clone(find(scenarios, 'code', path.slice('/scenarios/'.length), path))
 
-    if (normalizedMethod === 'get' && path === '/personal/me') return { name: '本地模拟用户', tenantId: 'default', orgId: 'demo-org', projectId: 'demo-project', roles: ['user', 'operator'], devMode: true }
+    if (normalizedMethod === 'get' && path === '/personal/me') return { ...demoIdentity }
     if (normalizedMethod === 'get' && path === '/personal/requirements') return page(requirements.filter((item) => item.requester === '当前用户'), params)
     if (normalizedMethod === 'get' && path === '/personal/approvals') return page(approvals.filter((item) => item.requester === '当前用户'), params)
     if (normalizedMethod === 'get' && path === '/personal/todos') return {
@@ -323,7 +326,8 @@ export function createPortalMockApi(): PortalMockApi {
       return { dryRun: params.dryRun !== 'false' && params.dryRun !== false, tasks: 0, approvals: 0, requirements: 0, feedbacks: 0, notices: 0 }
     }
 
-    throw error(404, 'MOCK_ROUTE_NOT_FOUND', `本地模拟尚未覆盖 ${normalizedMethod.toUpperCase()} ${path}`, path)
+    console.warn(`[mock] uncovered route ${normalizedMethod.toUpperCase()} ${path}`)
+    throw error(404, 'NOT_FOUND', '未找到对应资源', path)
   }
 
   return { request }

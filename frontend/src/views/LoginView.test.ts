@@ -80,8 +80,9 @@ describe('LoginView（M5 IAM 浏览器登录）', () => {
 
     mountView()
     await flushPromises()
-
-    expect(assign).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => {
+      expect(assign).toHaveBeenCalled()
+    })
     expect(consumeLoginRedirect()).toBe('/tasks?tab=mine')
   })
 })

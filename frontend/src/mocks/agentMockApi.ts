@@ -34,7 +34,7 @@ export const SAMPLE_R4_APPROVAL = 'apr-r4-sample'
 const retrievalDef: AgentDetail = {
   id: 'agent-platform-assistant',
   tenantId: 'default',
-  name: '平台助手（本地模拟）',
+  name: '平台助手',
   description: '只读检索演示。输入「更新」可打出 R2/R3 确认卡。',
   owner: 'platform-team',
   createdAt: timestamp,
@@ -44,7 +44,7 @@ const retrievalDef: AgentDetail = {
 const qualityDef: AgentDetail = {
   id: 'agent-quality-assistant',
   tenantId: 'default',
-  name: '质量分析助手（本地样板）',
+  name: '质量分析助手',
   description: '3B 确认流样板：提问 → 提交工作流 → R4 审批 → 结果。',
   owner: 'platform-team',
   createdAt: timestamp,
@@ -123,7 +123,7 @@ export function createLocalAgentMockApi() {
       )
       return
     }
-    const answer = `已收到“${content}”。这是本地模拟回复：门户将保留资源定位与审批边界，真实环境恢复后再进行联调。`
+    const answer = `已收到“${content}”。门户将保留资源定位与审批边界，可继续提问或去办理。`
     sessionHandlers.forEach((handler) => handler.onNode?.('portal-assistant', 'RUNNING'))
     for (const chunk of [answer.slice(0, 16), answer.slice(16, 38), answer.slice(38)]) {
       sessionHandlers.forEach((handler) => handler.onToken?.(chunk))
@@ -263,7 +263,7 @@ export function createLocalAgentMockApi() {
     },
     catalogSearch: async (params: { q: string }): Promise<CatalogSearchResponse> => ({
       hits: params.q.trim()
-        ? [{ kind: 'workflow', id: 'tpl-risk-flow', title: '供应链风险研判流程', snippet: '本地模拟目录命中。', classification: 'INTERNAL', source: 'recombine' }]
+        ? [{ kind: 'workflow', id: 'tpl-quality-weekly', title: '客户质量分析-周批', snippet: '目录命中质量分析流程。', classification: 'INTERNAL', source: 'recombine' }]
         : [],
     }),
     stream: async (sessionId: string, handlers: LocalAgentStreamHandlers, signal: AbortSignal): Promise<void> => {

@@ -14,7 +14,7 @@ describe('local agent mock', () => {
     await api.postMessage(session.id, '查看任务状态')
     await Promise.resolve()
 
-    expect(tokens.join('')).toContain('本地模拟回复')
+    expect(tokens.join('')).toContain('门户将保留资源定位与审批边界')
     expect(done).toHaveBeenCalledWith(expect.objectContaining({ status: 'completed' }))
     controller.abort()
     await stream

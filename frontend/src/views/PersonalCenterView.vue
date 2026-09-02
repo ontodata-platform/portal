@@ -229,9 +229,6 @@ onMounted(loadAll)
           <div class="user-meta">
             <h3 class="user-title">
               {{ t('personal.welcome') }}，{{ identityStore.name }}
-              <a-tag v-if="identityStore.devMode" color="orange" style="margin-left: 8px">
-                {{ t('layout.devMode') }}
-              </a-tag>
             </h3>
             <div class="user-sub">
               <span>{{ t('layout.tenant') }}: <strong>{{ identityStore.tenantId }}</strong></span>

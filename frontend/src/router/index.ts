@@ -1,4 +1,5 @@
 import {
+  createMemoryHistory,
   createRouter,
   createWebHistory,
   type RouteLocationNormalized,
@@ -189,7 +190,7 @@ export const routes: RouteRecordRaw[] = [
   ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: import.meta.env.VITEST ? createMemoryHistory() : createWebHistory(),
   routes,
 })
 
