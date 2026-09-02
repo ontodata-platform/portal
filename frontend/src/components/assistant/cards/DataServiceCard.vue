@@ -18,7 +18,7 @@ const router = useRouter()
 
 function open() {
   emit('action', 'navigate')
-  void router.push(`/marketplace/${props.payload.code}`)
+  void router.push(`/data-workbench/${props.payload.code}`)
 }
 </script>
 

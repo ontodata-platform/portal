@@ -58,7 +58,7 @@ onMounted(load)
 <template>
   <div>
     <PageHeader
-      :eyebrow="t('marketplace.dimensionLabel')"
+      :eyebrow="t('menu.groupPortal')"
       :title="t('menu.marketplace')"
       :description="t('marketplace.description')"
     />
@@ -82,11 +82,10 @@ onMounted(load)
     />
 
     <div class="toolbar">
-      <a-tag color="blue">{{ t('marketplace.dimensionLabel') }}</a-tag>
       <a-input-search
         v-model:value="query.keyword"
         :placeholder="t('marketplace.searchPlaceholder')"
-        style="width: 280px"
+        style="width: 360px"
         allow-clear
         @search="
           query.page = 1;

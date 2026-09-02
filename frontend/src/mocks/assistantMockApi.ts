@@ -19,7 +19,7 @@ export function routeAssistantIntent(text: string): AssistantTurnResult {
       text: `为你找到 ${seedDataServices.length} 个数据服务，可直接查看详情或申请订阅。`,
       cards: seedDataServices.map((payload) => ({ type: 'data-service' as const, payload })),
       citations: [{ source: 'data-platform', version: 'catalog-v1' }],
-      actions: [{ label: '去数据商城', kind: 'navigate', target: '/marketplace' }],
+      actions: [{ label: '去数据工作台', kind: 'navigate', target: '/data-workbench' }],
     }
   }
   if (ALGO_RE.test(q)) {
@@ -67,7 +67,7 @@ export function routeAssistantIntent(text: string): AssistantTurnResult {
           payload: {
             title: '申请数据服务授权',
             steps: ['在商城打开目标服务', '提交授权申请', '等待审批通过后查看投递结果'],
-            target: '/marketplace/ds-device-daily',
+            target: '/data-workbench/ds-device-daily',
           },
         },
       ],

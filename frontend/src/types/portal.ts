@@ -138,7 +138,7 @@ export interface OperationsStatistics {
   pendingFeedbacks: number
 }
 
-/** 上游目录条目（数据商城/算法工作台聚合透传，字段与各软件目录响应同构）。 */
+/** 上游目录条目（数据工作台/算法工作台聚合透传，字段与各软件目录响应同构）。 */
 export interface CatalogEntry {
   code: string
   name: string
@@ -176,12 +176,12 @@ export interface PortalIdentity {
   devMode: boolean
 }
 
-/** 数据商城申请请求体。 */
+/** 数据工作台申请请求体。 */
 export interface ApplyDataServiceRequest {
   grantedColumns?: string[]
 }
 
-/** 数据商城申请响应。 */
+/** 数据工作台申请响应。 */
 export interface MarketplaceApplyResponse {
   approvalCode: string
   status: string

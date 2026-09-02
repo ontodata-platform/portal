@@ -96,7 +96,7 @@ onMounted(loadDetail)
 <template>
   <div class="marketplace-detail-view">
     <PageHeader
-      :eyebrow="t('marketplace.dimensionLabel')"
+      :eyebrow="t('menu.marketplace')"
       :title="service?.name ?? t('marketplace.detailTitle')"
       :description="t('marketplace.detailPageDesc')"
       :status="service ? 'success' : undefined"
@@ -105,7 +105,7 @@ onMounted(loadDetail)
     <a-card :bordered="false" class="detail-card">
       <template #title>
         <a-space>
-          <a-button type="link" @click="router.push('/marketplace')">
+          <a-button type="link" @click="router.push('/data-workbench')">
             <template #icon><ArrowLeftOutlined /></template>
             {{ t('marketplace.backToList') }}
           </a-button>
@@ -167,7 +167,7 @@ onMounted(loadDetail)
             :title="t('marketplace.emptyDetailTitle')"
             :description="t('marketplace.emptyDetailDesc')"
             :action-label="t('marketplace.backToList')"
-            @action="router.push('/marketplace')"
+            @action="router.push('/data-workbench')"
           />
         </template>
       </a-spin>

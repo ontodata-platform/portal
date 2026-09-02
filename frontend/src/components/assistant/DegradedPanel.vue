@@ -39,7 +39,7 @@ void search()
       </template>
     </a-list>
     <a-row :gutter="12" class="shortcuts">
-      <a-col :span="6"><a-card hoverable @click="router.push('/marketplace')">{{ t('menu.marketplace') }}</a-card></a-col>
+      <a-col :span="6"><a-card hoverable @click="router.push('/data-workbench')">{{ t('menu.marketplace') }}</a-card></a-col>
       <a-col :span="6"><a-card hoverable @click="router.push('/workbench')">{{ t('menu.workbench') }}</a-card></a-col>
       <a-col :span="6"><a-card hoverable @click="router.push('/personal')">{{ t('menu.personal') }}</a-card></a-col>
       <a-col :span="6"><a-card hoverable @click="router.push('/personal/tasks')">{{ t('menu.tasks') }}</a-card></a-col>

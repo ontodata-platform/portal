@@ -116,6 +116,6 @@ describe('SearchView', () => {
       kind: 'data_asset',
       id: 'dsv-a1',
     })
-    expect(pushMock).toHaveBeenCalledWith('/marketplace/dsv-a1')
+    expect(pushMock).toHaveBeenCalledWith('/data-workbench/dsv-a1')
   })
 })

@@ -7,7 +7,7 @@ import {
   RobotOutlined,
   SafetyCertificateOutlined,
   SearchOutlined,
-  ShopOutlined,
+  DatabaseOutlined,
   UserOutlined,
 } from '@ant-design/icons-vue'
 import type { MenuProps } from 'ant-design-vue'
@@ -35,7 +35,7 @@ const navItems = computed(() => {
   const items = [
     { key: '/assistant', label: t('menu.assistant'), icon: RobotOutlined },
     { key: '/personal', label: t('menu.personal'), icon: UserOutlined },
-    { key: '/marketplace', label: t('menu.marketplace'), icon: ShopOutlined },
+    { key: '/data-workbench', label: t('menu.marketplace'), icon: DatabaseOutlined },
     { key: '/workbench', label: t('menu.workbench'), icon: AppstoreOutlined },
   ]
   if (identityStore.canAccessOperations) {
@@ -47,7 +47,7 @@ const navItems = computed(() => {
 const selectedKeys = computed(() => {
   const path = route.path
   if (path.startsWith('/personal')) return ['/personal']
-  if (path.startsWith('/marketplace')) return ['/marketplace']
+  if (path.startsWith('/data-workbench') || path.startsWith('/marketplace')) return ['/data-workbench']
   if (path.startsWith('/workbench')) return ['/workbench']
   if (path.startsWith('/admin')) return ['/admin/operations']
   if (path.startsWith('/assistant')) return ['/assistant']

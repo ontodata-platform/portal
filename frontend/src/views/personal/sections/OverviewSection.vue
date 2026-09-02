@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import {
   AppstoreOutlined,
+  DatabaseOutlined,
   RobotOutlined,
   SafetyCertificateOutlined,
-  ShopOutlined,
 } from '@ant-design/icons-vue'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -23,7 +23,7 @@ const notifications = ref<PortalNotification[]>([])
 
 const shortcuts = [
   { key: '/assistant', labelKey: 'personal.overview.shortcutAssistant', icon: RobotOutlined, admin: false },
-  { key: '/marketplace', labelKey: 'personal.overview.shortcutMarketplace', icon: ShopOutlined, admin: false },
+  { key: '/data-workbench', labelKey: 'personal.overview.shortcutMarketplace', icon: DatabaseOutlined, admin: false },
   { key: '/workbench', labelKey: 'personal.overview.shortcutWorkbench', icon: AppstoreOutlined, admin: false },
   { key: '/admin/operations', labelKey: 'personal.overview.shortcutAdmin', icon: SafetyCertificateOutlined, admin: true },
 ]

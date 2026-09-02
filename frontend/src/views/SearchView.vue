@@ -68,7 +68,7 @@ async function search() {
 
 function openHit(hit: Pick<CatalogSearchHit, 'kind' | 'id'>) {
   if (hit.kind === 'data_asset') {
-    router.push(`/marketplace/${encodeURIComponent(hit.id)}`)
+    router.push(`/data-workbench/${encodeURIComponent(hit.id)}`)
     return
   }
   if (hit.kind === 'workflow') {

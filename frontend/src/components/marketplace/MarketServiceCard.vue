@@ -19,7 +19,7 @@ const tone = computed(() => {
 })
 
 function open() {
-  void router.push(`/marketplace/${encodeURIComponent(props.item.code)}`)
+  void router.push(`/data-workbench/${encodeURIComponent(props.item.code)}`)
 }
 </script>
 

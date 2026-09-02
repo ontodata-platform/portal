@@ -75,6 +75,14 @@ export const routes: RouteRecordRaw[] = [
     { path: '/notifications', redirect: passQuery('/personal/notifications') },
     { path: '/scenarios', redirect: '/admin/assemblies' },
     { path: '/operations', redirect: '/admin/operations' },
+    { path: '/marketplace', redirect: '/data-workbench' },
+    {
+      path: '/marketplace/:code',
+      redirect: (to: { params: RouteLocationNormalized['params']; query: RouteLocationNormalized['query'] }) => ({
+        path: `/data-workbench/${String(to.params.code ?? '')}`,
+        query: to.query,
+      }),
+    },
     { path: '/search', redirect: passQuery('/assistant') },
     {
       path: '/agent/chat',
@@ -140,12 +148,12 @@ export const routes: RouteRecordRaw[] = [
           ],
         },
         {
-          path: 'marketplace',
+          path: 'data-workbench',
           component: () => import('@/views/MarketplaceView.vue'),
           meta: { titleKey: 'menu.marketplace', group: 'groupPortal' },
         },
         {
-          path: 'marketplace/:code',
+          path: 'data-workbench/:code',
           component: () => import('@/views/MarketplaceDetailView.vue'),
           meta: { titleKey: 'menu.marketplaceDetail', group: 'groupPortal' },
         },

@@ -34,14 +34,14 @@ describe('路由守卫 authGuard（WP-07 身份闭环与角色鉴权）', () => 
 
   it('IAM 关闭（开发模式）：无会话也直通所有路由', async () => {
     vi.stubEnv('VITE_IAM_ENABLED', 'false')
-    await expect(authGuard(toRoute('/marketplace'))).resolves.toBe(true)
+    await expect(authGuard(toRoute('/data-workbench'))).resolves.toBe(true)
   })
 
   it('IAM 启用且无会话：重定向登录页并记录目标路由', async () => {
     vi.stubEnv('VITE_IAM_ENABLED', 'true')
-    await expect(authGuard(toRoute('/marketplace'))).resolves.toEqual({
+    await expect(authGuard(toRoute('/data-workbench'))).resolves.toEqual({
       path: '/login',
-      query: { redirect: '/marketplace' },
+      query: { redirect: '/data-workbench' },
     })
   })
 
@@ -133,6 +133,7 @@ describe('IA v2 路由与旧路径重定向', () => {
     ['/notifications', '/personal/notifications'],
     ['/scenarios', '/admin/assemblies'],
     ['/operations', '/admin/operations'],
+    ['/marketplace', '/data-workbench'],
     ['/search', '/assistant'],
   ])('重定向 %s → %s', async (from, to) => {
     await router.push(from)

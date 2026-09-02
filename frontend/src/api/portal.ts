@@ -117,7 +117,7 @@ export const operationsApi = {
   statistics: () => client.get<OperationsStatistics>('/operations/statistics').then((r) => r.data),
 }
 
-/** 数据商城：经管理平台正式 REST 契约聚合数据服务目录与申请。 */
+/** 数据工作台：经管理平台正式 REST 契约聚合数据目录与使用申请（API 路径仍为 /marketplace/*）。 */
 export const marketplaceApi = {
   dataServices: (params: ListParams) =>
     client.get<UpstreamAggregation>('/marketplace/data-services', { params }).then((r) => r.data),

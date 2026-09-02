@@ -72,7 +72,7 @@ describe('MainLayout v2', () => {
 
     expect(wrapper.text()).toContain('智能服务')
     expect(wrapper.text()).toContain('个人工作台')
-    expect(wrapper.text()).toContain('数据商城')
+    expect(wrapper.text()).toContain('数据工作台')
     expect(wrapper.text()).toContain('算法工作台')
     expect(wrapper.text()).toContain('管理端')
     expect(wrapper.text()).not.toContain('统一任务中心')

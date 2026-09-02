@@ -102,7 +102,7 @@ describe('MarketplaceDetailView', () => {
     })
     await flushPromises()
 
-    expect(wrapper.text()).toContain('未找到该数据服务')
+    expect(wrapper.text()).toContain('未找到这条数据')
     expect(useMessageStore(pinia).feedback).toBeNull()
   })
 })

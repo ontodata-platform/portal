@@ -31,7 +31,7 @@ describe('assistantMockApi 意图路由', () => {
     const result = routeAssistantIntent('申请开通设备遥测权限')
     expect(result.cards?.[0]?.type).toBe('guide')
     if (result.cards?.[0]?.type === 'guide') {
-      expect(result.cards[0].payload.target).toContain('/marketplace/')
+      expect(result.cards[0].payload.target).toContain('/data-workbench/')
     }
   })
 
