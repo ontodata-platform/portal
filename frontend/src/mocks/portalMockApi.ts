@@ -6,7 +6,7 @@
  * 以便后续联调只替换 transport adapter，而不改写页面业务逻辑。
  */
 
-import { demoIdentity, seedDataServices } from './seed'
+import { demoIdentity, relativeIso, seedDataServices } from './seed'
 
 type RecordValue = Record<string, unknown>
 
@@ -85,26 +85,40 @@ export function createPortalMockApi(): PortalMockApi {
       createdAt: timestamp, updatedAt: timestamp,
     },
   ]
-  const tasks: RecordValue[] = [
-    {
-      taskId: 'tsk-run-001', taskType: 'WORKFLOW_EXECUTION', sourceSystem: 'algorithm-recombine', status: 'RUNNING', stage: '执行节点 2/3', progress: 62,
-      resourceRefs: ['tpl-risk-flow@2', 'cap-risk-score@3'], resultRefs: [], traceId: 'mock-trace-run-001', createdAt: timestamp, updatedAt: timestamp,
-    },
-    {
-      taskId: 'tsk-import-002', taskType: 'DATA_IMPORT', sourceSystem: 'data-platform', status: 'SUCCESS', stage: '质量校验完成', progress: 100,
-      resourceRefs: ['dataset-order@12'], resultRefs: ['result-quality-002'], traceId: 'mock-trace-import-002', createdAt: timestamp, updatedAt: timestamp,
-    },
-  ]
-  const requirements: RecordValue[] = [
-    {
-      code: 'req-001', requirementType: 'COMPREHENSIVE', title: '供应链风险分析场景', description: '整合订单数据、风险算法和本体规则。', requester: '当前用户',
-      status: 'IN_PROGRESS', assigneeSystem: 'algorithm-recombine', assigneeRef: 'tpl-risk-flow', createdAt: timestamp, updatedAt: timestamp,
-    },
-    {
-      code: 'req-002', requirementType: 'DATA', title: '补充区域仓储数据', description: '申请区域仓储日快照。', requester: '当前用户',
-      status: 'OPEN', createdAt: timestamp, updatedAt: timestamp,
-    },
-  ]
+
+/** 我的运行（近 7 天分布的演示数据）：时间用相对偏移，保证图表随当前日期滚动 */
+ const tasks: RecordValue[] = [
+   {
+     taskId: 'tsk-run-001', taskType: 'WORKFLOW_EXECUTION', sourceSystem: 'algorithm-recombine', status: 'RUNNING', stage: '执行节点 2/3', progress: 62,
+     resourceRefs: ['tpl-quality-weekly@1', 'ds-customer-monthly@v2026.08'], resultRefs: [], traceId: 'mock-trace-run-001', createdAt: relativeIso(2), updatedAt: relativeIso(1),
+   },
+   {
+     taskId: 'tsk-import-002', taskType: 'DATA_IMPORT', sourceSystem: 'data-platform', status: 'SUCCESS', stage: '质量校验完成', progress: 100,
+     resourceRefs: ['dataset-order@12'], resultRefs: ['result-quality-002'], traceId: 'mock-trace-import-002', createdAt: relativeIso(28), updatedAt: relativeIso(27),
+   },
+   {
+     taskId: 'tsk-run-003', taskType: 'WORKFLOW_EXECUTION', sourceSystem: 'algorithm-recombine', status: 'SUCCESS', stage: '已完成', progress: 100,
+     resourceRefs: ['cap-anomaly-detect@2', 'ds-device-daily@v2026.09.01'], resultRefs: ['result-anomaly-001'], traceId: 'mock-trace-run-003', createdAt: relativeIso(50), updatedAt: relativeIso(49),
+   },
+   {
+     taskId: 'tsk-run-004', taskType: 'WORKFLOW_EXECUTION', sourceSystem: 'algorithm-recombine', status: 'FAILED', stage: '预检未通过', progress: 0,
+     resourceRefs: ['tpl-churn-train@1'], resultRefs: [], traceId: 'mock-trace-run-004', createdAt: relativeIso(74), updatedAt: relativeIso(74),
+   },
+   {
+     taskId: 'tsk-import-005', taskType: 'DATA_IMPORT', sourceSystem: 'data-platform', status: 'SUCCESS', stage: '交付完成', progress: 100,
+     resourceRefs: ['ds-supplier-credit@v3.0.1'], resultRefs: ['result-supplier-001'], traceId: 'mock-trace-import-005', createdAt: relativeIso(98), updatedAt: relativeIso(97),
+   },
+ ]
+   const requirements: RecordValue[] = [
+     {
+       code: 'req-001', requirementType: 'COMPREHENSIVE', title: '供应链风险分析场景', description: '整合订单数据、风险算法和本体规则。', requester: '当前用户',
+       status: 'IN_PROGRESS', assigneeSystem: 'algorithm-recombine', assigneeRef: 'tpl-risk-flow', createdAt: timestamp, updatedAt: timestamp,
+     },
+     {
+       code: 'req-002', requirementType: 'DATA', title: '补充区域仓储数据', description: '申请区域仓储日快照。', requester: '当前用户',
+       status: 'OPEN', createdAt: timestamp, updatedAt: timestamp,
+     },
+   ]
   const notices: RecordValue[] = [
     { code: 'ntc-001', title: '本周质量分析批次已开放', content: '客户质量分析-周批已对制造业数据团队开放，可在算法工作台提交。', section: '公告', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
     { code: 'ntc-002', title: '数据服务目录更新', content: '新增设备遥测-日增量，支持申请后审批投递。', section: '服务动态', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
