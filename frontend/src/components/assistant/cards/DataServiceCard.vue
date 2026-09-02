@@ -33,7 +33,12 @@ function open() {
 </template>
 
 <style scoped>
-.card { cursor: pointer; }
+.card {
+  cursor: pointer;
+  border-radius: 14px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  box-shadow: none;
+}
 .name { font-weight: 600; }
-.meta { color: #64748b; font-size: 12px; margin: 4px 0 8px; }
+.meta { color: var(--od-gray-500, #64748b); font-size: 12px; margin: 4px 0 8px; }
 </style>

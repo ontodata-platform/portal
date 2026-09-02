@@ -21,18 +21,6 @@ vi.mock('@/mocks/localMode', () => ({
 
 const stubs = {
   'a-button': { props: ['type', 'size', 'loading'], emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' },
-  'a-textarea': {
-    props: ['value', 'placeholder'],
-    emits: ['update:value', 'pressEnter'],
-    template:
-      '<textarea class="hero-input" :value="value" :placeholder="placeholder" @input="$emit(\'update:value\', $event.target.value)" />',
-  },
-  'a-input': {
-    props: ['value', 'placeholder'],
-    emits: ['update:value', 'pressEnter'],
-    template: '<input :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
-  },
-  'a-input-search': { props: ['value'], template: '<input class="degraded-search" />' },
   'a-alert': { props: ['type', 'message'], template: '<div class="alert">{{ message }}<slot name="action" /></div>' },
   'a-card': { props: ['title', 'size'], template: '<div class="card"><slot /></div>' },
   'a-tag': { template: '<span><slot /></span>' },
@@ -58,7 +46,7 @@ describe('AssistantView', () => {
   it('落地态渲染建议卡', async () => {
     const wrapper = mountView()
     await flushPromises()
-    expect(wrapper.text()).toContain('智能服务')
+    expect(wrapper.text()).toContain('随时问我吧')
     expect(wrapper.text()).toContain('找数据服务')
     expect(wrapper.text()).toContain('跑质量分析')
   })
@@ -67,7 +55,7 @@ describe('AssistantView', () => {
     const wrapper = mountView()
     await flushPromises()
     await wrapper.find('textarea.hero-input').setValue('帮我找数据服务')
-    await wrapper.findAll('button').find((btn) => btn.text() === '发送')?.trigger('click')
+    await wrapper.find('button.send-btn').trigger('click')
     await vi.waitFor(() => {
       expect(wrapper.text()).toContain('客户主数据-月度快照')
     })

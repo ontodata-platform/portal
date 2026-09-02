@@ -6,40 +6,43 @@ const emit = defineEmits<{ pick: [intent: IntentSuggestion] }>()
 </script>
 
 <template>
-  <div class="intent-grid">
+  <div class="intent-chips">
     <button
       v-for="intent in intents"
       :key="intent.id"
       type="button"
-      class="intent-card"
+      class="chip"
       @click="emit('pick', intent)"
     >
-      <strong>{{ intent.title }}</strong>
-      <span>{{ intent.example }}</span>
+      {{ intent.title }}
     </button>
   </div>
 </template>
 
 <style scoped>
-.intent-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
+.intent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
-.intent-card {
-  text-align: left;
-  padding: 14px;
-  border: 1px solid #e8eef4;
-  border-radius: 12px;
+.chip {
+  border: 1px solid var(--od-gray-200, #e2e8f0);
   background: #fff;
+  color: var(--od-gray-700, #334155);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
   cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
-.intent-card span {
-  display: block;
-  margin-top: 6px;
-  color: #64748b;
-  font-size: 13px;
+.chip:hover {
+  border-color: var(--od-primary-300, #7a9fc4);
+  color: var(--od-primary-600, #1b446a);
+  background: var(--od-primary-50, #eef4fa);
 }
 </style>
