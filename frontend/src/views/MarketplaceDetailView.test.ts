@@ -90,4 +90,19 @@ describe('MarketplaceDetailView', () => {
 
     expect(wrapper.text()).toContain('管理平台服务异常')
   })
+
+  it('详情 404 展示本页空态且不上抛全局错误条', async () => {
+    const { ApiError } = await import('@/api/client')
+    const { useMessageStore } = await import('@/stores/message')
+    vi.mocked(marketplaceApi.find).mockRejectedValue(new ApiError(404, 'NOT_FOUND', '未找到对应资源', '/marketplace/data-services/x', 'mock-not-found'))
+
+    const pinia = createPinia()
+    const wrapper = mount(MarketplaceDetailView, {
+      global: { plugins: [pinia, i18n], stubs },
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('未找到该数据服务')
+    expect(useMessageStore(pinia).feedback).toBeNull()
+  })
 })

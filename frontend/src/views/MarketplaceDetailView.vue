@@ -4,6 +4,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
+import { ApiError } from '@/api/client'
 import { marketplaceApi } from '@/api/portal'
 import { catalogItem } from '@/catalog'
 import EmptyState from '@/ui-kit/EmptyState.vue'
@@ -19,6 +20,7 @@ const messageStore = useMessageStore()
 const code = computed(() => String(route.params.code ?? ''))
 
 const loading = ref(false)
+const notFound = ref(false)
 const aggregation = ref<UpstreamAggregation | null>(null)
 const service = ref<CatalogEntry | null>(null)
 
@@ -32,12 +34,23 @@ const applyForm = reactive({
 async function loadDetail() {
   if (!code.value) return
   loading.value = true
+  notFound.value = false
+  aggregation.value = null
+  service.value = null
   try {
     const res = await marketplaceApi.find(code.value)
     aggregation.value = res
     service.value = catalogItem(res, code.value)
+    notFound.value = !service.value && Boolean(res.available)
   } catch (error) {
-    messageStore.reportError(error)
+    const apiError = error instanceof ApiError ? error : ApiError.from(error)
+    if (apiError.status === 404 || apiError.code === 'NOT_FOUND') {
+      // 预期内的「服务不存在」：本页空态说明即可，不上抛全局红条
+      notFound.value = true
+      if (messageStore.feedback?.kind === 'error') messageStore.clear()
+    } else {
+      messageStore.reportError(error)
+    }
   } finally {
     loading.value = false
   }
@@ -83,7 +96,7 @@ onMounted(loadDetail)
 <template>
   <div class="marketplace-detail-view">
     <PageHeader
-      :eyebrow="t('menu.groupPortal')"
+      :eyebrow="t('marketplace.dimensionLabel')"
       :title="service?.name ?? t('marketplace.detailTitle')"
       :description="t('marketplace.detailPageDesc')"
       :status="service ? 'success' : undefined"
@@ -120,6 +133,7 @@ onMounted(loadDetail)
                   {{ service.status }}
                 </a-tag>
                 <a-tag color="purple">v{{ service.currentVersion }}</a-tag>
+                <a-tag v-if="service.classification" color="orange">{{ service.classification }}</a-tag>
               </a-space>
             </div>
 
@@ -148,7 +162,7 @@ onMounted(loadDetail)
             </a-descriptions-item>
           </a-descriptions>
         </template>
-        <template v-else-if="!loading && aggregation?.available">
+        <template v-else-if="!loading && (notFound || aggregation?.available)">
           <EmptyState
             :title="t('marketplace.emptyDetailTitle')"
             :description="t('marketplace.emptyDetailDesc')"

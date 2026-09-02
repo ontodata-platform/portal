@@ -193,7 +193,7 @@ onMounted(() => {
           :type="messageStore.feedback.kind"
           :message="messageStore.feedback.content"
           :description="
-            messageStore.feedback.traceId
+            messageStore.feedback.traceId && !String(messageStore.feedback.traceId).startsWith('mock')
               ? t('layout.feedbackTrace', { traceId: messageStore.feedback.traceId })
               : undefined
           "

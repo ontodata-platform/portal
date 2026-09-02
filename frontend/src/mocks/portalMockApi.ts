@@ -6,7 +6,7 @@
  * 以便后续联调只替换 transport adapter，而不改写页面业务逻辑。
  */
 
-import { demoIdentity } from './seed'
+import { demoIdentity, seedDataServices } from './seed'
 
 type RecordValue = Record<string, unknown>
 
@@ -69,9 +69,9 @@ function aggregate(sourceSystem: string, items: RecordValue[], message?: string)
 export function createPortalMockApi(): PortalMockApi {
   const approvals: RecordValue[] = [
     {
-      code: 'apr-data-001', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'svc-risk-score',
-      title: '风险评分服务使用申请', requester: '张晓明', status: 'PENDING', slaStatus: 'ON_TIME',
-      detail: { serviceCode: 'svc-risk-score', grantedColumns: ['score', 'level'] }, createdAt: timestamp, updatedAt: timestamp,
+      code: 'apr-data-001', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-customer-monthly',
+      title: '客户主数据服务使用申请', requester: '张晓明', status: 'PENDING', slaStatus: 'ON_TIME',
+      detail: { serviceCode: 'ds-customer-monthly', grantedColumns: ['customer_id', 'segment'] }, createdAt: timestamp, updatedAt: timestamp,
     },
     {
       code: 'apr-r4-sample', approvalType: 'R4_TOOL_CALL', sourceSystem: 'mcp-gateway', sourceCode: 'cfm-sample',
@@ -79,9 +79,9 @@ export function createPortalMockApi(): PortalMockApi {
       detail: { tool: 'workflow.submit_execution', riskLevel: 'R4' }, createdAt: timestamp, updatedAt: timestamp,
     },
     {
-      code: 'apr-delivery-002', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'svc-order-insight',
+      code: 'apr-delivery-002', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-device-daily',
       title: '设备遥测服务订阅', requester: '当前用户', status: 'APPROVED', slaStatus: 'MET',
-      detail: { serviceCode: 'svc-order-insight', deliveryStatus: 'FAILED', deliveryError: '等待管理平台重新投递' },
+      detail: { serviceCode: 'ds-device-daily', deliveryStatus: 'FAILED', deliveryError: '等待管理平台重新投递' },
       createdAt: timestamp, updatedAt: timestamp,
     },
   ]
@@ -110,14 +110,23 @@ export function createPortalMockApi(): PortalMockApi {
     { code: 'ntc-002', title: '数据服务目录更新', content: '新增设备遥测-日增量，支持申请后审批投递。', section: '服务动态', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
   ]
   const notifications: RecordValue[] = [
-    { id: 'ntf-001', type: 'APPROVAL_DECIDED', title: '有一项数据服务申请待审批', body: '请在审批中心处理风险评分服务申请。', resourceRef: 'apr-data-001', createdAt: timestamp },
+    { id: 'ntf-001', type: 'APPROVAL_DECIDED', title: '有一项数据服务申请待审批', body: '请在审批中心处理客户主数据服务申请。', resourceRef: 'apr-data-001', createdAt: timestamp },
     { id: 'ntf-002', type: 'TASK_COMPLETED', title: '数据导入任务已完成', body: '订单数据质量校验已通过。', resourceRef: 'tsk-import-002', readAt: timestamp, createdAt: timestamp },
   ]
-  const services: RecordValue[] = [
-    { code: 'svc-risk-score', name: '客户主数据-月度快照', status: 'ONLINE', currentVersion: '2.1.0', classification: 'INTERNAL', subscribed: true, description: '制造业客户主数据月度快照。' },
-    { code: 'svc-order-insight', name: '设备遥测-日增量', status: 'ONLINE', currentVersion: '1.4.2', classification: 'CONFIDENTIAL', subscribed: false, description: '产线设备遥测日增量。' },
-    { code: 'ds-supplier-credit', name: '供应商信用-季度版', status: 'ONLINE', currentVersion: '3.0.1', classification: 'INTERNAL', subscribed: false, description: '供应商信用季度评估。' },
-  ]
+  const services: RecordValue[] = seedDataServices.map((item) => ({
+    code: item.code,
+    name: item.name,
+    status: 'ONLINE',
+    currentVersion: item.version,
+    classification: item.classification,
+    subscribed: item.subscribed,
+    description:
+      item.code === 'ds-customer-monthly'
+        ? '制造业客户主数据月度快照，供分析与订阅投递。'
+        : item.code === 'ds-device-daily'
+          ? '产线设备遥测日增量，含密级字段需审批后开通。'
+          : '供应商信用季度评估，支持按服务申请订阅。',
+  }))
   const capabilities: RecordValue[] = [
     { code: 'cap-risk-score', name: '风险评分算法能力', status: 'ADMITTED', currentVersion: 3, description: '已准入的风险评分算法。' },
     { code: 'cap-order-check', name: '订单校验算法能力', status: 'ADMITTED', currentVersion: 1, description: '已准入的订单校验算法。' },

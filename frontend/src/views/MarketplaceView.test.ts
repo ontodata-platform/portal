@@ -24,7 +24,7 @@ const stubs = {
   'a-table': { props: ['columns', 'dataSource', 'loading', 'rowKey', 'pagination', 'customRow'], template: '<div class="table"><slot /></div>' },
   'a-space': { template: '<div><slot /></div>' },
   'a-button': { props: ['type', 'size', 'ghost'], emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' },
-  'a-tag': { props: ['color'], template: '<span><slot /></span>' },
+  'a-tag': { props: ['color'], template: '<span class="tag"><slot /></span>' },
   'a-alert': { props: ['type', 'showIcon', 'message', 'description'], template: '<div class="alert"><slot />{{ message }}</div>' },
   'a-input-search': { props: ['value'], emits: ['update:value', 'search'], template: '<input :value="value" @input="$emit(\'update:value\', $event.target.value)" />' },
   'a-pagination': { template: '<div class="pager" />' },

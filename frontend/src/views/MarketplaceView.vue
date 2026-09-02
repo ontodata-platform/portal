@@ -40,6 +40,10 @@ async function load() {
     })
     rows.value = catalogItems(aggregation.value)
     total.value = catalogTotal(aggregation.value)
+    // 列表加载成功后清掉上一页残留的全局错误条（如详情 404）
+    if (messageStore.feedback?.kind === 'error') {
+      messageStore.clear()
+    }
   } catch (error) {
     loadError.value = describeLoadError(error)
     messageStore.reportError(error)
@@ -54,7 +58,7 @@ onMounted(load)
 <template>
   <div>
     <PageHeader
-      :eyebrow="t('menu.groupPortal')"
+      :eyebrow="t('marketplace.dimensionLabel')"
       :title="t('menu.marketplace')"
       :description="t('marketplace.description')"
     />
@@ -77,7 +81,8 @@ onMounted(load)
       :description="t('marketplace.description')"
     />
 
-    <a-space style="margin-bottom: 16px">
+    <div class="toolbar">
+      <a-tag color="blue">{{ t('marketplace.dimensionLabel') }}</a-tag>
       <a-input-search
         v-model:value="query.keyword"
         :placeholder="t('marketplace.searchPlaceholder')"
@@ -88,7 +93,7 @@ onMounted(load)
           load();
         "
       />
-    </a-space>
+    </div>
 
     <SkeletonList v-if="loading" variant="cards" :rows="6" />
     <EmptyState
@@ -120,6 +125,14 @@ onMounted(load)
 .marketplace-card {
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .card-grid {
