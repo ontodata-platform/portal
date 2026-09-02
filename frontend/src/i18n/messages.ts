@@ -191,6 +191,10 @@ export const zhCn = {
     viewDetail: '查看详情与申请',
     emptyTitle: '还没有数据服务',
     emptyDesc: '管理平台发布数据服务后会出现在这里。可先确认上游目录是否可用。',
+    card: {
+      subscribed: '已订阅',
+      unsubscribed: '未订阅',
+    },
   },
   workbench: {
     capabilityUnavailable: '算法转换工具能力目录不可用',
@@ -699,6 +703,10 @@ export const enUs: MessageSchema = {
     viewDetail: 'View Detail & Apply',
     emptyTitle: 'No data services yet',
     emptyDesc: 'Published data services from the management platform appear here. First check that the upstream catalog is available.',
+    card: {
+      subscribed: 'Subscribed',
+      unsubscribed: 'Not subscribed',
+    },
   },
   workbench: {
     pageDesc: 'Unified catalog of admitted capabilities and published workflow templates; runs are tracked in the task center.',

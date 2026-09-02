@@ -35,6 +35,47 @@
   --od-topbar-height: 64px;
   --od-focus-ring: 0 0 0 3px rgb(43 108 176 / 24%);
 
+  --od-primary-50: #eef4fa;
+  --od-primary-100: #d6e4f0;
+  --od-primary-200: #adc6de;
+  --od-primary-300: #7a9fc4;
+  --od-primary-400: #4d7aa8;
+  --od-primary-500: #1f4e79;
+  --od-primary-600: #1b446a;
+  --od-primary-700: #163856;
+  --od-primary-800: #112c43;
+  --od-primary-900: #0d2b45;
+
+  --od-gray-50: #ffffff;
+  --od-gray-100: #f8fafc;
+  --od-gray-200: #e2e8f0;
+  --od-gray-300: #cbd5e1;
+  --od-gray-400: #94a3b8;
+  --od-gray-500: #64748b;
+  --od-gray-600: #475569;
+  --od-gray-700: #334155;
+  --od-gray-800: #1e293b;
+  --od-gray-900: #0f172a;
+
+  --od-radius-ctl: 8px;
+  --od-radius-card: 12px;
+  --od-radius-pop: 16px;
+  --od-shadow-1: 0 1px 2px rgb(15 23 42 / 6%);
+  --od-shadow-2: 0 4px 12px rgb(15 23 42 / 8%);
+  --od-shadow-3: 0 12px 32px rgb(15 23 42 / 12%);
+  --od-text-12: 12px;
+  --od-text-13: 13px;
+  --od-text-14: 14px;
+  --od-text-16: 16px;
+  --od-text-20: 20px;
+  --od-text-28: 28px;
+  --od-chart-1: #1f4e79;
+  --od-chart-2: #2b6cb0;
+  --od-chart-3: #168a62;
+  --od-chart-4: #d68a1f;
+  --od-chart-5: #6558b1;
+  --od-chart-6: #c53030;
+
   /* 本体旧变量别名，避免既有页面一次性改完 */
   --color-ink: var(--od-color-ink);
   --color-ink-soft: var(--od-color-ink-soft);

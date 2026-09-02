@@ -44,6 +44,12 @@ onMounted(() => {
 
 <template>
   <div class="overview">
+    <div class="mini-chart" aria-hidden="true">
+      <span style="height: 40%"></span>
+      <span style="height: 70%"></span>
+      <span style="height: 55%"></span>
+      <span style="height: 85%"></span>
+    </div>
     <a-row :gutter="16" class="shortcuts">
       <a-col
         v-for="item in shortcuts.filter((s) => !s.admin || identityStore.canAccessOperations)"
@@ -108,7 +114,25 @@ onMounted(() => {
 
 .shortcut-icon {
   font-size: 22px;
-  color: #1f4e79;
+  color: var(--od-primary-500);
   margin-bottom: 8px;
+}
+
+.mini-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 72px;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: var(--od-radius-card);
+  box-shadow: var(--od-shadow-1);
+}
+
+.mini-chart span {
+  flex: 1;
+  border-radius: 6px 6px 0 0;
+  background: var(--od-chart-1);
+  opacity: 0.8;
 }
 </style>

@@ -27,6 +27,9 @@ const stubs = {
   'a-tag': { props: ['color'], template: '<span><slot /></span>' },
   'a-alert': { props: ['type', 'showIcon', 'message', 'description'], template: '<div class="alert"><slot />{{ message }}</div>' },
   'a-input-search': { props: ['value'], emits: ['update:value', 'search'], template: '<input :value="value" @input="$emit(\'update:value\', $event.target.value)" />' },
+  'a-pagination': { template: '<div class="pager" />' },
+  MarketServiceCard: { props: ['item'], template: '<div class="market-card">{{ item.name }}</div>' },
+  SkeletonList: { template: '<div class="skel" />' },
 }
 
 function mountView() {

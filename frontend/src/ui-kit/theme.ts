@@ -7,7 +7,8 @@ export const ontodataTheme = {
     colorError: '#c53030',
     colorText: '#102a43',
     colorBgLayout: '#f4f7fb',
-    borderRadius: 6,
+    borderRadius: 8,
+    fontSize: 14,
     fontFamily: 'Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif',
   },
 }
