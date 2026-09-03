@@ -142,6 +142,19 @@ export interface TestDataReceipt {
   note: string
 }
 
+/** 数据集摘要（数据工作台「数据集」签；底座依赖 D-4） */
+export interface DatasetSummary {
+  code: string
+  name: string
+  domain: string
+  classification: string
+  version: string
+  snapshotDate: string
+  qualityPassRate: string
+  status: 'ONLINE' | 'OFFLINE'
+  description: string
+}
+
 export interface AlgorithmRunNode {
   name: string
   state: 'SUCCEEDED' | 'RUNNING' | 'PENDING' | 'FAILED' | 'CANCELLED'

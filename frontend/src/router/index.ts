@@ -160,6 +160,12 @@ export const routes: RouteRecordRaw[] = [
           meta: { titleKey: 'menu.marketplace', group: 'groupPortal' },
         },
         {
+          path: 'data-workbench/dataset/:code',
+          name: 'data-workbench-dataset',
+          component: () => import('@/views/data-workbench/DatasetDetailView.vue'),
+          meta: { titleKey: 'menu.marketplaceDetail', group: 'groupPortal' },
+        },
+        {
           path: 'data-workbench/:code',
           component: () => import('@/views/MarketplaceDetailView.vue'),
           meta: { titleKey: 'menu.marketplaceDetail', group: 'groupPortal' },
