@@ -442,6 +442,14 @@ onMounted(() => {
   box-shadow: var(--od-shadow-xs);
 }
 
+:deep(.workspace-tabs .ant-tabs-nav) {
+  margin-bottom: 0 !important;
+}
+
+:deep(.workspace-tabs .ant-tabs-content-holder) {
+  display: none !important;
+}
+
 .tab-label {
   display: inline-flex;
   align-items: center;

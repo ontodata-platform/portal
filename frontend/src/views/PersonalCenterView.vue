@@ -195,7 +195,6 @@ onMounted(loadAll)
     <PageHeader
       eyebrow="服务门户"
       :title="t('menu.personal')"
-      description="先看待办和投递，再决定去审批、商城还是智能助手。"
     >
       <template #extra>
         <a-space>

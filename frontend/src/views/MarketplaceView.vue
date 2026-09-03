@@ -1,16 +1,29 @@
 <script setup lang="ts">
-import { SearchOutlined, DatabaseOutlined } from '@ant-design/icons-vue'
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  DatabaseOutlined,
+  DownloadOutlined,
+  EyeOutlined,
+  SearchOutlined,
+  WarningOutlined,
+} from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import {
+  dataWorkbenchApi,
+  type DataApplication,
+  type DataSubscription,
+  type DatasetSummary,
+} from '@/api/data-workbench'
 import { marketplaceApi } from '@/api/portal'
-import { dataWorkbenchApi } from '@/api/data-workbench'
 import { catalogItems, catalogTotal } from '@/catalog'
 import MarketServiceCard from '@/components/marketplace/MarketServiceCard.vue'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
-import type { DatasetSummary } from '@/types/descriptor'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
@@ -21,6 +34,14 @@ const router = useRouter()
 const messageStore = useMessageStore()
 
 const activeTab = ref('services')
+
+// ── 数据服务签（目录） ──
+const loading = ref(false)
+const loadError = ref('')
+const aggregation = ref<UpstreamAggregation | null>(null)
+const rows = ref<CatalogEntry[]>([])
+const total = ref(0)
+const query = reactive({ page: 1, size: 20, keyword: '' })
 
 // ── 数据集签（v5 §14.3，底座依赖 D-4，mock 先行） ──
 const datasetsLoading = ref(false)
@@ -33,44 +54,13 @@ const domainOptions = computed(() => [
   ...domains.value.map((domain) => ({ label: domain, value: domain })),
 ])
 
-async function loadDatasets() {
-  datasetsLoading.value = true
-  try {
-    const res = await dataWorkbenchApi.listDatasets({
-      page: 1,
-      size: 50,
-      keyword: datasetQuery.keyword || undefined,
-      domain: datasetQuery.domain || undefined,
-    })
-    datasets.value = res.items
-  } catch (error) {
-    messageStore.reportError(error)
-  } finally {
-    datasetsLoading.value = false
-  }
-}
+// ── 我的申请签 ──
+const applicationsLoading = ref(false)
+const applications = ref<DataApplication[]>([])
 
-async function loadDomains() {
-  try {
-    domains.value = await dataWorkbenchApi.listDomains()
-  } catch {
-    domains.value = []
-  }
-}
-
-function onTabChange(tab: string | number) {
-  if (tab === 'datasets' && datasets.value.length === 0) {
-    void loadDatasets()
-    void loadDomains()
-  }
-}
-
-const loading = ref(false)
-const loadError = ref('')
-const aggregation = ref<UpstreamAggregation | null>(null)
-const rows = ref<CatalogEntry[]>([])
-const total = ref(0)
-const query = reactive({ page: 1, size: 20, keyword: '' })
+// ── 我的订阅与交付签 ──
+const subscriptionsLoading = ref(false)
+const subscriptions = ref<DataSubscription[]>([])
 
 function describeLoadError(error: unknown): string {
   const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
@@ -101,6 +91,84 @@ async function load() {
   }
 }
 
+async function loadDatasets() {
+  datasetsLoading.value = true
+  try {
+    const res = await dataWorkbenchApi.listDatasets({
+      page: 1,
+      size: 50,
+      keyword: datasetQuery.keyword || undefined,
+      domain: datasetQuery.domain || undefined,
+    })
+    datasets.value = res.items
+  } catch (error) {
+    messageStore.reportError(error)
+  } finally {
+    datasetsLoading.value = false
+  }
+}
+
+async function loadDomains() {
+  try {
+    domains.value = await dataWorkbenchApi.listDomains()
+  } catch {
+    domains.value = []
+  }
+}
+
+async function loadApplications() {
+  applicationsLoading.value = true
+  try {
+    const res = await dataWorkbenchApi.listMyApplications()
+    applications.value = res.items
+  } catch (error) {
+    messageStore.reportError(error)
+  } finally {
+    applicationsLoading.value = false
+  }
+}
+
+async function loadSubscriptions() {
+  subscriptionsLoading.value = true
+  try {
+    const res = await dataWorkbenchApi.listMySubscriptions()
+    subscriptions.value = res.items
+  } catch (error) {
+    messageStore.reportError(error)
+  } finally {
+    subscriptionsLoading.value = false
+  }
+}
+
+function onTabChange(tab: string | number) {
+  if (tab === 'datasets' && datasets.value.length === 0) {
+    void loadDatasets()
+    void loadDomains()
+  } else if (tab === 'applications' && applications.value.length === 0) {
+    void loadApplications()
+  } else if (tab === 'subscriptions' && subscriptions.value.length === 0) {
+    void loadSubscriptions()
+  }
+}
+
+const applicationColumns = [
+  { title: t('dataWorkbench.applicationCode'), dataIndex: 'code', key: 'code', width: 140 },
+  { title: t('common.name'), dataIndex: 'serviceName', key: 'serviceName' },
+  { title: t('common.status'), key: 'status', width: 120 },
+  { title: t('common.submittedAt'), dataIndex: 'submittedAt', key: 'submittedAt', width: 180 },
+  { title: t('common.remark'), dataIndex: 'remark', key: 'remark' },
+  { title: t('common.action'), key: 'action', width: 130 },
+]
+
+const subscriptionColumns = [
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 120 },
+  { title: t('common.name'), key: 'serviceName' },
+  { title: t('dataWorkbench.deliveryType'), key: 'deliveryType', width: 120 },
+  { title: t('dataWorkbench.expiresAt'), key: 'expiresAt', width: 220 },
+  { title: t('dataWorkbench.rowsCount'), key: 'rowsCount', width: 110 },
+  { title: t('common.action'), key: 'action', width: 160 },
+]
+
 onMounted(load)
 </script>
 
@@ -125,57 +193,59 @@ onMounted(load)
       class="dw-tabs"
       @change="onTabChange"
     >
+      <!-- 签页 1: 数据服务 -->
       <a-tab-pane key="services" :tab="t('dataWorkbench.tabServices')">
-    <a-card :bordered="false" class="marketplace-card">
-      <a-alert
-        v-if="aggregation && !aggregation.available"
-        type="warning"
-        show-icon
-        style="margin-bottom: 16px; border-radius: 8px"
-        :message="aggregation.message ?? t('marketplace.unavailable')"
-        :description="t('marketplace.description')"
-      />
+        <a-card :bordered="false" class="marketplace-card">
+          <a-alert
+            v-if="aggregation && !aggregation.available"
+            type="warning"
+            show-icon
+            style="margin-bottom: 16px; border-radius: 8px"
+            :message="aggregation.message ?? t('marketplace.unavailable')"
+            :description="t('marketplace.description')"
+          />
 
-      <div class="toolbar">
-        <a-input
-          v-model:value="query.keyword"
-          :placeholder="t('marketplace.searchPlaceholder')"
-          style="width: 320px"
-          allow-clear
-          @press-enter="query.page = 1; load()"
-        >
-          <template #prefix><SearchOutlined style="color: #94a3b8" /></template>
-        </a-input>
-        <a-button type="primary" @click="query.page = 1; load()">
-          {{ t('common.query') }}
-        </a-button>
-      </div>
+          <div class="toolbar">
+            <a-input
+              v-model:value="query.keyword"
+              :placeholder="t('marketplace.searchPlaceholder')"
+              style="width: 320px"
+              allow-clear
+              @press-enter="query.page = 1; load()"
+            >
+              <template #prefix><SearchOutlined style="color: #94a3b8" /></template>
+            </a-input>
+            <a-button type="primary" @click="query.page = 1; load()">
+              {{ t('common.query') }}
+            </a-button>
+          </div>
 
-      <SkeletonList v-if="loading" variant="cards" :rows="6" />
-      <EmptyState
-        v-else-if="rows.length === 0"
-        :title="t('marketplace.emptyTitle')"
-        :description="t('marketplace.emptyDesc')"
-      />
-      <div v-else class="card-grid">
-        <MarketServiceCard v-for="item in rows" :key="item.code" :item="item" />
-      </div>
-      <div v-if="total > query.size" class="pager">
-        <a-pagination
-          :current="query.page"
-          :page-size="query.size"
-          :total="total"
-          @change="
-            (page: number) => {
-              query.page = page
-              load()
-            }
-          "
-        />
-      </div>
-    </a-card>
+          <SkeletonList v-if="loading" variant="cards" :rows="6" />
+          <EmptyState
+            v-else-if="rows.length === 0"
+            :title="t('marketplace.emptyTitle')"
+            :description="t('marketplace.emptyDesc')"
+          />
+          <div v-else class="card-grid">
+            <MarketServiceCard v-for="item in rows" :key="item.code" :item="item" />
+          </div>
+          <div v-if="total > query.size" class="pager">
+            <a-pagination
+              :current="query.page"
+              :page-size="query.size"
+              :total="total"
+              @change="
+                (page: number) => {
+                  query.page = page
+                  load()
+                }
+              "
+            />
+          </div>
+        </a-card>
       </a-tab-pane>
 
+      <!-- 签页 2: 数据集 (v5 §14.3 新增) -->
       <a-tab-pane key="datasets" :tab="t('dataWorkbench.tabDatasets')">
         <a-card :bordered="false" class="marketplace-card">
           <div class="toolbar">
@@ -227,6 +297,132 @@ onMounted(load)
           </div>
         </a-card>
       </a-tab-pane>
+
+      <!-- 签页 3: 我的申请 -->
+      <a-tab-pane key="applications" :tab="t('dataWorkbench.tabApplications')">
+        <a-card :bordered="false" class="marketplace-card">
+          <SkeletonList v-if="applicationsLoading" variant="list" :rows="4" />
+          <EmptyState
+            v-else-if="applications.length === 0"
+            :title="t('dataWorkbench.emptyApplications')"
+            :description="t('dataWorkbench.emptyApplicationsDesc')"
+          />
+          <a-table
+            v-else
+            :columns="applicationColumns"
+            :data-source="applications"
+            row-key="code"
+            :pagination="false"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'code'">
+                <span class="mono-code">{{ record.code }}</span>
+              </template>
+              <template v-else-if="column.key === 'status'">
+                <a-tag v-if="record.status === 'DELIVERED'" color="success">
+                  <template #icon><CheckCircleOutlined /></template>
+                  已交付
+                </a-tag>
+                <a-tag v-else-if="record.status === 'PENDING'" color="processing">
+                  <template #icon><ClockCircleOutlined /></template>
+                  审批中
+                </a-tag>
+                <a-tag v-else-if="record.status === 'REJECTED'" color="error">
+                  <template #icon><CloseCircleOutlined /></template>
+                  已驳回
+                </a-tag>
+                <a-tag v-else color="default">{{ record.status }}</a-tag>
+              </template>
+              <template v-else-if="column.key === 'action'">
+                <a-space size="small">
+                  <a-button
+                    v-if="record.status === 'DELIVERED'"
+                    size="small"
+                    type="link"
+                    @click="router.push(`/data-workbench/${encodeURIComponent(record.serviceCode)}`)"
+                  >
+                    去使用
+                  </a-button>
+                  <a-button
+                    v-else-if="record.status === 'REJECTED'"
+                    size="small"
+                    type="link"
+                    @click="router.push(`/data-workbench/${encodeURIComponent(record.serviceCode)}`)"
+                  >
+                    {{ t('dataWorkbench.reapply') }}
+                  </a-button>
+                  <span v-else class="text-muted">{{ record.currentApprover ?? '-' }}</span>
+                </a-space>
+              </template>
+            </template>
+          </a-table>
+        </a-card>
+      </a-tab-pane>
+
+      <!-- 签页 4: 我的订阅与交付 -->
+      <a-tab-pane key="subscriptions" :tab="t('dataWorkbench.tabSubscriptions')">
+        <a-card :bordered="false" class="marketplace-card">
+          <SkeletonList v-if="subscriptionsLoading" variant="list" :rows="4" />
+          <EmptyState
+            v-else-if="subscriptions.length === 0"
+            :title="t('dataWorkbench.emptySubscriptions')"
+            :description="t('dataWorkbench.emptySubscriptionsDesc')"
+          />
+          <a-table
+            v-else
+            :columns="subscriptionColumns"
+            :data-source="subscriptions"
+            row-key="code"
+            :pagination="false"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'serviceName'">
+                <div>
+                  <div style="font-weight: 600">{{ record.serviceName }}</div>
+                  <span class="mono-code">{{ record.serviceCode }}</span>
+                  <a-tag style="margin-left: 6px">{{ record.version }}</a-tag>
+                </div>
+              </template>
+              <template v-else-if="column.key === 'deliveryType'">
+                <a-tag color="blue">{{ record.deliveryType }}</a-tag>
+              </template>
+              <template v-else-if="column.key === 'expiresAt'">
+                <div style="display: flex; align-items: center; gap: 6px">
+                  <span>{{ record.expiresAt }}</span>
+                  <a-tag v-if="record.isExpiringSoon" color="warning">
+                    <template #icon><WarningOutlined /></template>
+                    {{ t('dataWorkbench.expiringSoon') }}
+                  </a-tag>
+                </div>
+              </template>
+              <template v-else-if="column.key === 'rowsCount'">
+                <span class="mono-code">{{ record.rowsCount.toLocaleString() }}</span>
+              </template>
+              <template v-else-if="column.key === 'action'">
+                <a-space size="small">
+                  <a-button
+                    v-if="record.previewUrl"
+                    size="small"
+                    type="primary"
+                    ghost
+                    @click="router.push(record.previewUrl)"
+                  >
+                    <template #icon><EyeOutlined /></template>
+                    {{ t('dataWorkbench.previewData') }}
+                  </a-button>
+                  <a-button
+                    size="small"
+                    @click="messageStore.info('开始下载受控交付物，请注意数据安全规范')"
+                  >
+                    <template #icon><DownloadOutlined /></template>
+                    下载
+                  </a-button>
+                </a-space>
+              </template>
+            </template>
+          </a-table>
+        </a-card>
+      </a-tab-pane>
     </a-tabs>
   </div>
 </template>
@@ -258,6 +454,13 @@ onMounted(load)
 .dataset-card {
   border: 1px solid var(--od-gray-200, #e2e8f0);
   border-radius: var(--od-radius-card, 12px);
+  transition: all 0.2s ease;
+}
+
+.dataset-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--od-shadow-2);
+  border-color: var(--od-primary-300, #93c5fd);
 }
 
 .dataset-head {
@@ -307,5 +510,10 @@ onMounted(load)
   justify-content: space-between;
   font-size: 12px;
   color: var(--od-gray-500, #64748b);
+}
+
+.text-muted {
+  font-size: 12px;
+  color: var(--od-gray-400, #94a3b8);
 }
 </style>

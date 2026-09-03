@@ -1,11 +1,18 @@
 /**
- * 数据工作台——数据集 API（v5 §14.3，底座依赖 D-4）。
+ * 数据工作台——数据集 API（v5 §14.3，底座依赖 D-1/D-4）。
  * mock/真实双模式：底座就绪后切换，页面组件无感。
  */
 import { client } from '@/api/client'
+import {
+  localDataWorkbenchMockApi,
+  type DataApplication,
+  type DataSubscription,
+  type DatasetSummary,
+} from '@/mocks/dataWorkbenchMockApi'
 import { useLocalMock } from '@/mocks/localMode'
-import { localDataWorkbenchMockApi } from '@/mocks/dataWorkbenchMockApi'
-import type { DatasetSummary, ServiceDescriptor } from '@/types/descriptor'
+import type { ServiceDescriptor } from '@/types/descriptor'
+
+export type { DataApplication, DataSubscription, DatasetSummary }
 
 export interface DatasetDetail extends DatasetSummary {
   descriptor: ServiceDescriptor
@@ -37,5 +44,17 @@ export const dataWorkbenchApi = {
     viaMock(
       () => localDataWorkbenchMockApi.request('GET', `/datasets/${encodeURIComponent(code)}`) as Promise<DatasetDetail>,
       () => client.get(`/datasets/${encodeURIComponent(code)}`).then((r) => r.data),
+    ),
+
+  listMyApplications: (): Promise<DatasetPage<DataApplication>> =>
+    viaMock(
+      () => localDataWorkbenchMockApi.request('GET', '/my/applications') as Promise<DatasetPage<DataApplication>>,
+      () => client.get('/my/applications').then((r) => r.data),
+    ),
+
+  listMySubscriptions: (): Promise<DatasetPage<DataSubscription>> =>
+    viaMock(
+      () => localDataWorkbenchMockApi.request('GET', '/my/subscriptions') as Promise<DatasetPage<DataSubscription>>,
+      () => client.get('/my/data-subscriptions').then((r) => r.data),
     ),
 }

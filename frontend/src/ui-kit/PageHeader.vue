@@ -34,8 +34,8 @@ defineProps<{
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--od-space-3);
-  margin-bottom: var(--od-space-3);
-  padding: 4px 0 8px 0;
+  margin-bottom: 12px;
+  padding: 0 0 4px 0;
 }
 
 .od-page-header__eyebrow {

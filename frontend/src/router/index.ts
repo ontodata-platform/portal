@@ -73,7 +73,7 @@ export const routes: RouteRecordRaw[] = [
     { path: '/results', redirect: passQuery('/personal/results') },
     { path: '/requirements', redirect: passQuery('/personal/requirements') },
     { path: '/notifications', redirect: passQuery('/personal/notifications') },
-    { path: '/scenarios', redirect: '/admin/assemblies' },
+    { path: '/scenarios', redirect: '/admin/operations' },
     { path: '/operations', redirect: '/admin/operations' },
     { path: '/marketplace', redirect: '/data-workbench' },
     {
