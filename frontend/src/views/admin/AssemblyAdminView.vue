@@ -380,7 +380,6 @@ onMounted(load)
     <PageHeader
       :eyebrow="t('menu.groupCollab')"
       :title="t('menu.scenarios')"
-      :description="t('scenarios.pageDesc')"
     />
 
     <ErrorState

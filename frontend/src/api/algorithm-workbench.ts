@@ -37,7 +37,19 @@ function viaMock<T>(mockCall: () => Promise<T>, realCall: () => Promise<T>): Pro
 }
 
 export const algorithmWorkbenchApi = {
-  listServices: (params: { page: number; size: number } = { page: 1, size: 20 }): Promise<PageResult<AlgorithmServiceSummary>> =>
+  listCategories: (): Promise<string[]> =>
+    viaMock(
+      () => localAlgorithmWorkbenchMockApi.request('GET', '/algorithm-categories').then((res) => (res as { items: string[] }).items),
+      () => client.get('/algorithm-categories').then((r) => r.data.items),
+    ),
+
+  uploadTestData: (fileName: string): Promise<{ ref: string; fileName: string; note: string }> =>
+    viaMock(
+      () => localAlgorithmWorkbenchMockApi.request('POST', '/test-data', {}, { fileName }) as Promise<{ ref: string; fileName: string; note: string }>,
+      () => client.post('/test-data', { fileName }).then((r) => r.data),
+    ),
+
+  listServices: (params: { page: number; size: number; keyword?: string; category?: string } = { page: 1, size: 20 }): Promise<PageResult<AlgorithmServiceSummary>> =>
     viaMock(
       () => localAlgorithmWorkbenchMockApi.request('GET', '/algorithm-services', { ...params }) as Promise<PageResult<AlgorithmServiceSummary>>,
       () => client.get('/algorithm-services', { params }).then((r) => r.data),
@@ -55,7 +67,10 @@ export const algorithmWorkbenchApi = {
       () => client.post(`/algorithm-services/${encodeURIComponent(code)}/preflight`, { inputs }).then((r) => r.data),
     ),
 
-  submitRun: (code: string, payload: { inputs: Record<string, string>; tier: 'standard' | 'long' }): Promise<RunReceipt> =>
+  submitRun: (
+    code: string,
+    payload: { inputs: Record<string, string>; tier: 'standard' | 'long'; outputs?: { name: string; description?: string; archiveTier: 'standard' | 'long' }; testDataRefs?: string[] },
+  ): Promise<RunReceipt> =>
     viaMock(
       () => localAlgorithmWorkbenchMockApi.request('POST', `/algorithm-services/${encodeURIComponent(code)}/runs`, {}, payload) as Promise<RunReceipt>,
       () => client.post(`/algorithm-services/${encodeURIComponent(code)}/runs`, payload).then((r) => r.data),

@@ -61,7 +61,7 @@ void loadStatus()
 
 <template>
   <div class="platform-admin-view">
-    <PageHeader :eyebrow="t('menu.admin')" :title="t('menu.adminPlatform')" :description="t('admin.platformDesc')" />
+    <PageHeader :eyebrow="t('menu.admin')" :title="t('menu.adminPlatform')" />
     <a-row :gutter="16">
       <a-col :xs="24" :lg="12">
         <a-card :title="t('admin.rebuildTitle')" class="admin-card">

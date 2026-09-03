@@ -56,7 +56,6 @@ onMounted(load)
     <PageHeader
       :eyebrow="t('menu.groupPortal')"
       :title="service?.name ?? t('menu.algorithmWorkbench')"
-      :description="service?.description ?? ''"
     />
 
     <ErrorState
@@ -70,6 +69,9 @@ onMounted(load)
     <a-card v-else :bordered="false" class="detail-card">
       <SkeletonList v-if="loading" variant="list" :rows="6" />
       <template v-else-if="service">
+        <div class="detail-category">
+          <a-tag color="geekblue" class="category-badge">{{ service.category }}</a-tag>
+        </div>
         <DescriptorRenderer :descriptor="service.descriptor" @action="onAction" />
       </template>
     </a-card>
@@ -80,5 +82,13 @@ onMounted(load)
 .detail-card {
   border-radius: var(--od-radius-card, 12px);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.detail-category {
+  margin-bottom: 12px;
+}
+
+.category-badge {
+  font-size: 12px;
 }
 </style>

@@ -225,7 +225,6 @@ onMounted(() => {
     <PageHeader
       :eyebrow="t('menu.groupOperations')"
       :title="t('menu.operations')"
-      :description="t('operations.pageDesc')"
     />
 
     <ErrorState

@@ -55,13 +55,27 @@ function formatTime(iso: string): string {
 const servicesLoading = ref(false)
 const servicesError = ref('')
 const services = ref<AlgorithmServiceSummary[]>([])
+const categories = ref<string[]>([])
+const selectedCategory = ref('')
 const serviceQuery = reactive({ page: 1, size: 20, keyword: '' })
+
+async function loadCategories() {
+  try {
+    categories.value = await algorithmWorkbenchApi.listCategories()
+  } catch {
+    categories.value = []
+  }
+}
 
 async function loadServices() {
   servicesLoading.value = true
   servicesError.value = ''
   try {
-    const res = await algorithmWorkbenchApi.listServices({ ...serviceQuery })
+    const res = await algorithmWorkbenchApi.listServices({
+      ...serviceQuery,
+      keyword: serviceQuery.keyword || undefined,
+      category: selectedCategory.value || undefined,
+    })
     services.value = res.items
   } catch (error) {
     servicesError.value = describeLoadError(error)
@@ -69,6 +83,12 @@ async function loadServices() {
   } finally {
     servicesLoading.value = false
   }
+}
+
+function pickCategory(category: string) {
+  selectedCategory.value = category
+  serviceQuery.page = 1
+  void loadServices()
 }
 
 function openDetail(code: string) {
@@ -157,7 +177,7 @@ const artifactColumns = computed(() => [
   { title: t('common.name'), dataIndex: 'name', key: 'name' },
   { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName', width: 180 },
   { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 200 },
-  { title: t('common.updatedAt'), dataIndex: 'startedAt', key: 'startedAt', width: 200 },
+  { title: t('common.updatedAt'), dataIndex: 'startedAtText', key: 'startedAtText', width: 200 },
   { title: t('algoWorkbench.colActions'), key: 'actions', width: 120 },
 ])
 
@@ -168,6 +188,7 @@ function onTabChange(tab: 'discover' | 'runs' | 'artifacts') {
 
 onMounted(() => {
   void loadServices()
+  void loadCategories()
   if (activeTab.value !== 'discover') void loadRuns()
 })
 </script>
@@ -177,12 +198,29 @@ onMounted(() => {
     <PageHeader
       :eyebrow="t('menu.groupPortal')"
       :title="t('menu.algorithmWorkbench')"
-      :description="t('algoWorkbench.pageDesc')"
     />
 
     <a-card :bordered="false" class="wb-card">
       <a-tabs v-model:active-key="activeTab" @change="onTabChange">
         <a-tab-pane key="discover" :tab="t('algoWorkbench.tabDiscover')">
+          <div class="category-row">
+            <a-tag
+              :color="selectedCategory === '' ? 'blue' : 'default'"
+              class="cat-chip"
+              @click="pickCategory('')"
+            >
+              {{ t('algoWorkbench.allCategories') }}
+            </a-tag>
+            <a-tag
+              v-for="cat in categories"
+              :key="cat"
+              :color="selectedCategory === cat ? 'blue' : 'default'"
+              class="cat-chip"
+              @click="pickCategory(cat)"
+            >
+              {{ cat }}
+            </a-tag>
+          </div>
           <div class="toolbar">
             <a-input
               v-model:value="serviceQuery.keyword"
@@ -215,6 +253,7 @@ onMounted(() => {
             <div v-for="service in services" :key="service.code" class="service-card">
               <div class="service-head">
                 <h3 class="service-name" :title="service.name">{{ service.name }}</h3>
+                <a-tag class="cat-badge">{{ service.category }}</a-tag>
                 <a-tag color="blue" class="status-badge">{{ service.status }}</a-tag>
               </div>
               <p class="service-desc">{{ service.description }}</p>
@@ -329,6 +368,24 @@ onMounted(() => {
                     <p v-if="node.humanReason" class="node-reason">{{ node.humanReason }}</p>
                   </a-timeline-item>
                 </a-timeline>
+                <div v-if="record.container" class="container-panel">
+                  <div class="container-title">{{ t('algoWorkbench.containerTitle') }}</div>
+                  <a-descriptions :column="3" size="small">
+                    <a-descriptions-item :label="t('algoWorkbench.containerId')">
+                      <span class="mono-code">{{ record.container.containerId }}</span>
+                    </a-descriptions-item>
+                    <a-descriptions-item :label="t('algoWorkbench.image')">{{ record.container.image }}</a-descriptions-item>
+                    <a-descriptions-item :label="t('algoWorkbench.node')">{{ record.container.node }}</a-descriptions-item>
+                    <a-descriptions-item :label="t('common.status')">
+                      <a-tag :color="record.container.state === 'RUNNING' ? 'processing' : record.container.state === 'FAILED' ? 'error' : 'default'">
+                        {{ record.container.state }}
+                      </a-tag>
+                    </a-descriptions-item>
+                    <a-descriptions-item :label="t('algoWorkbench.cpu')">{{ record.container.cpu }}</a-descriptions-item>
+                    <a-descriptions-item :label="t('algoWorkbench.mem')">{{ record.container.mem }}</a-descriptions-item>
+                  </a-descriptions>
+                  <pre v-if="record.container.logTail.length" class="container-log">{{ record.container.logTail.join('\n') }}</pre>
+                </div>
               </div>
             </template>
           </a-table>
@@ -377,6 +434,24 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.category-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.cat-chip {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 10px;
+  user-select: none;
+}
+
+.cat-badge {
+  font-size: 11px;
 }
 
 .card-grid {
@@ -525,5 +600,29 @@ onMounted(() => {
   margin: 4px 0 0;
   color: var(--od-color-blocked, #dc2626);
   font-size: 12px;
+}
+
+.container-panel {
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+}
+
+.container-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--od-gray-800, #1e293b);
+}
+
+.container-log {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  background: var(--od-gray-50, #f8fafc);
+  border-radius: 6px;
+  font-family: var(--od-font-mono, monospace);
+  font-size: 12px;
+  color: var(--od-gray-700, #334155);
+  white-space: pre-wrap;
 }
 </style>

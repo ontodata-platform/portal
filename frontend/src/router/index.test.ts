@@ -131,7 +131,7 @@ describe('IA v2 路由与旧路径重定向', () => {
     ['/results', '/personal/results'],
     ['/requirements', '/personal/requirements'],
     ['/notifications', '/personal/notifications'],
-    ['/scenarios', '/admin/assemblies'],
+    ['/scenarios', '/admin/operations'],
     ['/operations', '/admin/operations'],
     ['/marketplace', '/data-workbench'],
     ['/search', '/assistant'],

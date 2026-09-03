@@ -222,7 +222,6 @@ onMounted(load)
     <PageHeader
       :eyebrow="t('menu.groupCollab')"
       :title="t('menu.requirements')"
-      :description="t('requirements.pageDesc')"
     />
 
     <ErrorState

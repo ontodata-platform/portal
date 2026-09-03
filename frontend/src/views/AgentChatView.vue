@@ -318,7 +318,6 @@ onUnmounted(stopStream)
   <PageHeader
     :eyebrow="t('menu.groupCollab')"
     :title="t('menu.agentChat')"
-    :description="t('agentChat.pageDesc')"
   />
   <a-card>
     <a-space style="margin-bottom: 12px" wrap>

@@ -60,7 +60,6 @@ onMounted(load)
     <PageHeader
       :eyebrow="t('menu.groupPortal')"
       :title="t('menu.marketplace')"
-      :description="t('marketplace.description')"
     />
 
     <ErrorState

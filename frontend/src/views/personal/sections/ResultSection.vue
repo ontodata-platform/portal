@@ -115,7 +115,6 @@ onMounted(load)
     <PageHeader
       :eyebrow="t('menu.groupPortal')"
       :title="t('menu.results')"
-      :description="t('results.pageDesc')"
     />
 
     <ErrorState

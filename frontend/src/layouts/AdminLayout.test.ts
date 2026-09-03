@@ -24,8 +24,6 @@ describe('AdminLayout', () => {
 
     expect(wrapper.text()).toContain('管理端')
     expect(wrapper.text()).toContain('运营')
-    expect(wrapper.text()).toContain('编排')
-    expect(wrapper.text()).toContain('平台')
     expect(wrapper.text()).toContain('返回用户视图')
 
     await wrapper.find('.admin-back').trigger('click')

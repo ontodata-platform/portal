@@ -89,7 +89,6 @@ onMounted(load)
     <PageHeader
       :eyebrow="t('menu.groupCollab')"
       :title="t('menu.notifications')"
-      :description="t('notifications.pageDesc')"
     >
       <template #extra>
         <a-button type="primary" ghost @click="markAllRead">

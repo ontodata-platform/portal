@@ -97,7 +97,6 @@ onMounted(loadDetail)
     <PageHeader
       :eyebrow="t('menu.marketplace')"
       :title="service?.name ?? t('marketplace.detailTitle')"
-      :description="t('marketplace.detailPageDesc')"
       :status="service ? 'success' : undefined"
       :status-label="service ? service.status : undefined"
     />

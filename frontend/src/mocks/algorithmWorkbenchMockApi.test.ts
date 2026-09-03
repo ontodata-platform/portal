@@ -59,4 +59,36 @@ describe('算法工作台 mock API', () => {
     expect(res.items.length).toBeGreaterThan(0)
     expect(res.items[0].version).toBeTruthy()
   })
+
+  it('服务摘要携带算法分类，且分类清单可查询', async () => {
+    const list = (await api.request('GET', '/algorithm-services')) as { items: Array<{ category: string }> }
+    expect(list.items.every((item) => item.category.length > 0)).toBe(true)
+    const cats = (await api.request('GET', '/algorithm-categories')) as { items: string[] }
+    expect(cats.items.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('目录支持按分类过滤', async () => {
+    const res = (await api.request('GET', '/algorithm-services', { category: '预测' })) as {
+      items: Array<{ category: string }>
+    }
+    expect(res.items.length).toBeGreaterThan(0)
+    expect(res.items.every((item) => item.category === '预测')).toBe(true)
+  })
+
+  it('测试数据上传：CSV 返回临时引用，其他类型拒绝', async () => {
+    const ok = (await api.request('POST', '/test-data', {}, { fileName: 'sample.csv' })) as { ref: string }
+    expect(ok.ref).toMatch(/^test:/)
+    await expect(
+      api.request('POST', '/test-data', {}, { fileName: 'sample.txt' }),
+    ).rejects.toMatchObject({ response: { status: 422 } })
+  })
+
+  it('运行详情包含算法容器状态', async () => {
+    const run = (await api.request('GET', '/my/algorithm-runs/task-b2c3d4e5')) as {
+      container?: { containerId: string; image: string; logTail: string[] }
+    }
+    expect(run.container?.containerId).toBeTruthy()
+    expect(run.container?.image).toContain('anomaly-detect')
+    expect(run.container?.logTail.length).toBeGreaterThan(0)
+  })
 })

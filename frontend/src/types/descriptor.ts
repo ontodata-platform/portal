@@ -107,6 +107,8 @@ export interface ServiceDescriptor {
 export interface AlgorithmServiceSummary {
   code: string
   name: string
+  /** 算法分类（质量分析/预测/异常检测/文本处理/图像处理…），支撑分类筛选（A-6） */
+  category: string
   description: string
   inputHint: string
   typicalDuration: string
@@ -115,7 +117,31 @@ export interface AlgorithmServiceSummary {
   badges: string[]
 }
 
-/** 我的运行（算法工作台） */
+/** 运行输出声明（向导「输出配置」提交内容，A-7） */
+export interface RunOutputSpec {
+  name: string
+  description?: string
+  archiveTier: 'standard' | 'long'
+}
+
+/** 算法容器状态（来自容器管理平台，经重组平台同步；ADR-004，A-4） */
+export interface AlgorithmContainerInfo {
+  containerId: string
+  image: string
+  node: string
+  state: 'CREATED' | 'RUNNING' | 'EXITED' | 'FAILED'
+  cpu: string
+  mem: string
+  logTail: string[]
+}
+
+/** 测试数据上传回执（临时引用 test:*，仅本次运行有效，A-5） */
+export interface TestDataReceipt {
+  ref: string
+  fileName: string
+  note: string
+}
+
 export interface AlgorithmRunNode {
   name: string
   state: 'SUCCEEDED' | 'RUNNING' | 'PENDING' | 'FAILED' | 'CANCELLED'
@@ -137,6 +163,9 @@ export interface AlgorithmRun {
   fixHint?: string
   nodes: AlgorithmRunNode[]
   artifacts: Array<{ name: string; kind: string; size: string }>
+  container?: AlgorithmContainerInfo
+  outputSpec?: RunOutputSpec
+  testDataRefs?: string[]
 }
 
 /** 我的订阅交付（运行向导 dataset-ref 的选项来源；L2 由 D-1 聚合接口提供） */

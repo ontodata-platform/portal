@@ -84,7 +84,6 @@ function openHit(hit: Pick<CatalogSearchHit, 'kind' | 'id'>) {
     <PageHeader
       :eyebrow="t('menu.groupCollab')"
       :title="t('menu.search')"
-      :description="t('search.description')"
     />
 
     <a-card :bordered="false">

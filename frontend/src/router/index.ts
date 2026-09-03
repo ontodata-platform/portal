@@ -191,18 +191,9 @@ export const routes: RouteRecordRaw[] = [
               component: () => import('@/views/admin/OperationsAdminView.vue'),
               meta: { titleKey: 'menu.adminOperations', roles: ADMIN_ROLES },
             },
-            {
-              path: 'assemblies',
-              name: 'admin-assemblies',
-              component: () => import('@/views/admin/AssemblyAdminView.vue'),
-              meta: { titleKey: 'menu.adminAssemblies', roles: ADMIN_ROLES },
-            },
-            {
-              path: 'platform',
-              name: 'admin-platform',
-              component: () => import('@/views/admin/PlatformAdminView.vue'),
-              meta: { titleKey: 'menu.adminPlatform', roles: ADMIN_ROLES },
-            },
+            // v5 裁剪：应用上架/平台运维入口下线（视图保留，路由重定向保兼容）
+            { path: 'assemblies', redirect: '/admin/operations' },
+            { path: 'platform', redirect: '/admin/operations' },
           ],
         },
       ],

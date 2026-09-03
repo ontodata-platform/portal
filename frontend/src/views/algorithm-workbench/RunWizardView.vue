@@ -37,6 +37,15 @@ const preflight = ref<PreflightResult | null>(null)
 
 const tier = ref<'standard' | 'long'>('standard')
 
+// 输出在线配置（A-7）：与输入一并提交
+const outputs = reactive({ name: '', description: '', archiveTier: 'standard' as 'standard' | 'long' })
+
+// 测试数据导入（A-5）：dataset-ref 输入可上传 CSV/JSON 生成临时引用（仅本次运行有效）
+const testDataTags = reactive<Record<string, string>>({})
+const testDataRefs = ref<string[]>([])
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const fileTargetKey = ref('')
+
 const inputOptions = (input: DescriptorInput) => {
   if (input.kind === 'dataset-ref') {
     return deliveries.value.map((delivery) => ({
@@ -67,6 +76,7 @@ async function load() {
     service.value = detail
     deliveries.value = myDeliveries
     inputs.value = detail.descriptor.sections.find((section) => section.type === 'inputs')?.inputs ?? []
+    outputs.name = `${detail.name}-结果`
     fillDefaults()
   } catch (error) {
     loadError.value = (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? String(error)
@@ -87,6 +97,31 @@ const inputValues = computed(() => {
 
 const missingRequired = computed(() =>
   inputs.value.filter((input) => input.required && !inputValues.value[input.key]),
+)
+
+function pickTestFile(key: string) {
+  fileTargetKey.value = key
+  fileInputRef.value?.click()
+}
+
+async function onTestFileChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file || !fileTargetKey.value) return
+  try {
+    const receipt = await algorithmWorkbenchApi.uploadTestData(file.name)
+    form[fileTargetKey.value] = receipt.ref
+    testDataTags[fileTargetKey.value] = file.name
+    testDataRefs.value = [...testDataRefs.value.filter((item) => !item.startsWith('test:')), receipt.ref]
+  } catch (error) {
+    messageStore.reportError(error)
+  } finally {
+    target.value = ''
+  }
+}
+
+const usedTestDataRefs = computed(() =>
+  inputs.value.filter((input) => (form[input.key] ?? '').startsWith('test:')).map((input) => form[input.key]),
 )
 
 function nextFromStep1() {
@@ -116,6 +151,12 @@ async function submit() {
     const receipt = await algorithmWorkbenchApi.submitRun(code.value, {
       inputs: inputValues.value,
       tier: tier.value,
+      outputs: {
+        name: outputs.name.trim() || `${service.value?.name ?? code.value}-结果`,
+        description: outputs.description.trim() || undefined,
+        archiveTier: outputs.archiveTier,
+      },
+      testDataRefs: usedTestDataRefs.value.length > 0 ? usedTestDataRefs.value : undefined,
     })
     messageStore.success(t('algoWorkbench.submitSuccess', { taskId: receipt.taskId }))
     void router.push('/algorithm-workbench?tab=runs')
@@ -134,7 +175,6 @@ onMounted(load)
     <PageHeader
       :eyebrow="t('menu.groupPortal')"
       :title="service?.name ?? t('menu.algorithmWorkbench')"
-      :description="t('algoWorkbench.runPageDesc')"
     />
 
     <ErrorState
@@ -183,6 +223,14 @@ onMounted(load)
                 option-filter-prop="label"
                 style="max-width: 520px"
               />
+              <div v-if="input.kind === 'dataset-ref'" class="test-import-row">
+                <a-button size="small" @click="pickTestFile(input.key)">
+                  {{ t('algoWorkbench.importTestData') }}
+                </a-button>
+                <a-tag v-if="testDataTags[input.key]" color="orange" class="test-tag">
+                  {{ t('algoWorkbench.testDataOnly') }}：{{ testDataTags[input.key] }}
+                </a-tag>
+              </div>
               <a-select
                 v-else-if="input.kind === 'select'"
                 v-model:value="form[input.key]"
@@ -207,7 +255,28 @@ onMounted(load)
                 style="max-width: 420px"
               />
             </a-form-item>
+
+            <a-divider class="output-divider">{{ t('algoWorkbench.outputsTitle') }}</a-divider>
+            <a-form-item :label="t('algoWorkbench.outputName')" :extra="t('algoWorkbench.outputNameHint')">
+              <a-input v-model:value="outputs.name" style="max-width: 420px" />
+            </a-form-item>
+            <a-form-item :label="t('algoWorkbench.outputDesc')">
+              <a-textarea v-model:value="outputs.description" :rows="2" style="max-width: 520px" />
+            </a-form-item>
+            <a-form-item :label="t('algoWorkbench.archiveTier')">
+              <a-radio-group v-model:value="outputs.archiveTier">
+                <a-radio value="standard">{{ t('algoWorkbench.tierStandard') }}</a-radio>
+                <a-radio value="long">{{ t('algoWorkbench.tierLong') }}</a-radio>
+              </a-radio-group>
+            </a-form-item>
           </a-form>
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept=".csv,.json"
+            style="display: none"
+            @change="onTestFileChange"
+          />
           <div class="wizard-actions">
             <a-button @click="router.push('/algorithm-workbench')">{{ t('algoWorkbench.wizardPrev') }}</a-button>
             <a-button type="primary" @click="nextFromStep1">{{ t('algoWorkbench.wizardNext') }}</a-button>
@@ -387,5 +456,20 @@ onMounted(load)
 
 .mono-text {
   font-family: var(--od-font-mono, monospace);
+}
+
+.output-divider {
+  margin: 8px 0 16px;
+}
+
+.test-import-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.test-tag {
+  font-size: 12px;
 }
 </style>

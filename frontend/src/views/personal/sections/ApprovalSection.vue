@@ -218,7 +218,6 @@ onMounted(async () => {
     <PageHeader
       :eyebrow="t('menu.groupPortal')"
       :title="t('menu.approvals')"
-      :description="t('approvals.pageDesc')"
     />
 
     <ErrorState

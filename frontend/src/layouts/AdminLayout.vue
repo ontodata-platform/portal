@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ApartmentOutlined, ArrowLeftOutlined, DatabaseOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { ArrowLeftOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -8,10 +8,9 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
+// v5 裁剪：应用上架/平台运维入口下线，仅保留内容运营
 const items = [
   { key: '/admin/operations', labelKey: 'menu.adminOperations', icon: SettingOutlined },
-  { key: '/admin/assemblies', labelKey: 'menu.adminAssemblies', icon: ApartmentOutlined },
-  { key: '/admin/platform', labelKey: 'menu.adminPlatform', icon: DatabaseOutlined },
 ]
 
 const selectedKeys = computed(() => {
