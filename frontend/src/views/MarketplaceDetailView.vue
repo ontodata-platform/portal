@@ -7,10 +7,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { ApiError } from '@/api/client'
 import { marketplaceApi } from '@/api/portal'
 import { catalogItem } from '@/catalog'
-import EmptyState from '@/ui-kit/EmptyState.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
+import EmptyState from '@/ui-kit/EmptyState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -45,7 +45,6 @@ async function loadDetail() {
   } catch (error) {
     const apiError = error instanceof ApiError ? error : ApiError.from(error)
     if (apiError.status === 404 || apiError.code === 'NOT_FOUND') {
-      // 预期内的「服务不存在」：本页空态说明即可，不上抛全局红条
       notFound.value = true
       if (messageStore.feedback?.kind === 'error') messageStore.clear()
     } else {
@@ -82,7 +81,7 @@ async function submitApply() {
     })
     messageStore.success(t('marketplace.applySuccess', { code: res.approvalCode }))
     applyOpen.value = false
-    router.push('/personal')
+    void router.push('/personal')
   } catch (error) {
     messageStore.reportError(error)
   } finally {
@@ -118,7 +117,7 @@ onMounted(loadDetail)
           v-if="aggregation && !aggregation.available"
           type="warning"
           show-icon
-          style="margin-bottom: 16px"
+          style="margin-bottom: 16px; border-radius: 8px"
           :message="aggregation.message ?? t('marketplace.unavailable')"
           :description="t('marketplace.description')"
         />
@@ -127,12 +126,12 @@ onMounted(loadDetail)
           <div class="service-header">
             <div class="service-title-area">
               <h2 class="service-name">{{ service.name }}</h2>
-              <a-space>
-                <a-tag color="blue">{{ service.code }}</a-tag>
+              <a-space wrap>
+                <span class="mono-badge">{{ service.code }}</span>
                 <a-tag :color="service.status === 'PUBLISHED' || service.status === 'ONLINE' ? 'success' : 'default'">
                   {{ service.status }}
                 </a-tag>
-                <a-tag color="purple">v{{ service.currentVersion }}</a-tag>
+                <a-tag color="blue">v{{ service.currentVersion }}</a-tag>
                 <a-tag v-if="service.classification" color="orange">{{ service.classification }}</a-tag>
               </a-space>
             </div>
@@ -142,6 +141,7 @@ onMounted(loadDetail)
                 type="primary"
                 size="large"
                 :disabled="!aggregation?.available"
+                class="apply-main-btn"
                 @click="openApplyModal"
               >
                 <template #icon><KeyOutlined /></template>
@@ -150,12 +150,14 @@ onMounted(loadDetail)
             </div>
           </div>
 
-          <a-divider />
+          <a-divider style="margin: 20px 0" />
 
           <a-descriptions :title="t('marketplace.details')" bordered :column="2" size="middle">
-            <a-descriptions-item :label="t('common.stableCode')">{{ service.code }}</a-descriptions-item>
+            <a-descriptions-item :label="t('common.stableCode')">
+              <span class="mono-text">{{ service.code }}</span>
+            </a-descriptions-item>
             <a-descriptions-item :label="t('common.name')">{{ service.name }}</a-descriptions-item>
-            <a-descriptions-item :label="t('common.currentVersion')">{{ service.currentVersion }}</a-descriptions-item>
+            <a-descriptions-item :label="t('common.currentVersion')">v{{ service.currentVersion }}</a-descriptions-item>
             <a-descriptions-item :label="t('common.status')">{{ service.status }}</a-descriptions-item>
             <a-descriptions-item v-if="service.description" :label="t('scenarios.description')" :span="2">
               {{ service.description }}
@@ -178,6 +180,7 @@ onMounted(loadDetail)
       v-model:open="applyOpen"
       :title="t('marketplace.applyModal')"
       :confirm-loading="applying"
+      width="560px"
       @ok="submitApply"
     >
       <a-form layout="vertical">
@@ -222,13 +225,14 @@ onMounted(loadDetail)
 
 <style scoped>
 .detail-card {
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-radius: var(--od-radius-card, 12px);
+  box-shadow: var(--od-shadow-1);
 }
 
 .detail-title {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 650;
+  color: var(--od-gray-900, #0f172a);
 }
 
 .service-header {
@@ -237,12 +241,34 @@ onMounted(loadDetail)
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
+  padding: 8px 0;
 }
 
 .service-name {
   margin: 0 0 8px 0;
-  font-size: 20px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--od-gray-900, #0f172a);
+  letter-spacing: -0.01em;
+}
+
+.mono-badge {
+  font-family: var(--od-font-mono, monospace);
+  background: var(--od-gray-100, #f1f5f9);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--od-gray-700, #334155);
+}
+
+.mono-text {
+  font-family: var(--od-font-mono, monospace);
+}
+
+.apply-main-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 0 24px;
 }
 </style>

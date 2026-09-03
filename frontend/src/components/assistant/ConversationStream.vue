@@ -39,10 +39,10 @@ const router = useRouter()
 .stream {
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  width: min(760px, 100%);
+  gap: 20px;
+  width: min(780px, 100%);
   margin: 0 auto;
-  padding: 8px 0 24px;
+  padding: 12px 0 28px;
 }
 
 .row {
@@ -63,9 +63,11 @@ const router = useRouter()
 }
 
 .row.user .bubble {
-  background: var(--od-primary-50, #eef4fa);
-  border-radius: 18px 18px 6px 18px;
-  padding: 12px 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 18px 18px 4px 18px;
+  padding: 12px 18px;
+  box-shadow: var(--od-shadow-xs);
 }
 
 .row.assistant .bubble,
@@ -78,13 +80,19 @@ const router = useRouter()
   margin: 0;
   font-size: 15px;
   line-height: 1.75;
-  color: var(--od-gray-800, #1e293b);
+  color: var(--od-gray-900, #0f172a);
   white-space: pre-wrap;
 }
 
 .cursor {
-  color: var(--od-primary-500, #1f4e79);
+  color: var(--od-color-accent, #2563eb);
   margin-left: 2px;
+  animation: blink 0.9s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .citations {
@@ -97,12 +105,13 @@ const router = useRouter()
 .cite {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
-  background: var(--od-gray-100, #f8fafc);
+  background: #ffffff;
   border: 1px solid var(--od-gray-200, #e2e8f0);
   color: var(--od-gray-600, #475569);
   font-size: 12px;
+  box-shadow: var(--od-shadow-xs);
 }
 
 .cite::before {
@@ -110,7 +119,7 @@ const router = useRouter()
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--od-primary-400, #4d7aa8);
+  background: var(--od-color-accent, #2563eb);
   margin-right: 6px;
 }
 
@@ -123,15 +132,20 @@ const router = useRouter()
 
 .action {
   border: 1px solid var(--od-gray-200, #e2e8f0);
-  background: #fff;
+  background: #ffffff;
   border-radius: 999px;
   padding: 6px 14px;
   font-size: 13px;
-  color: var(--od-primary-600, #1b446a);
+  font-weight: 500;
+  color: var(--od-color-primary, #1e40af);
   cursor: pointer;
+  box-shadow: var(--od-shadow-xs);
+  transition: all 0.15s ease;
 }
 
 .action:hover {
-  background: var(--od-primary-50, #eef4fa);
+  background: var(--od-primary-50, #eff6ff);
+  border-color: var(--od-primary-300, #93c5fd);
+  transform: translateY(-1px);
 }
 </style>

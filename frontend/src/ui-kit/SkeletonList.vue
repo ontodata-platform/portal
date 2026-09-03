@@ -4,7 +4,7 @@ defineProps<{ rows?: number; variant?: 'list' | 'cards' | 'chat' }>()
 
 <template>
   <div class="skel" :class="variant || 'list'">
-    <div v-for="n in rows ?? 3" :key="n" class="bar" />
+    <div v-for="n in rows ?? 3" :key="n" class="bar"></div>
   </div>
 </template>
 

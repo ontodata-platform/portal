@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ArrowRightOutlined, BellOutlined, FileDoneOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -47,11 +48,15 @@ const weekBars = computed(() => {
 
 const weekTotal = computed(() => weekBars.value.reduce((sum, bucket) => sum + bucket.count, 0))
 
+function formatTime(value?: string): string {
+  if (!value) return '-'
+  return new Date(value).toLocaleDateString(locale.value)
+}
+
 async function load() {
-  // 各源独立加载：单一来源异常不影响其余区块（fail-soft）
   const [resultPage, noticePage, taskPage] = await Promise.allSettled([
-    resultApi.list({ page: 1, size: 3 }),
-    personalApi.notifications({ page: 1, size: 3 }),
+    resultApi.list({ page: 1, size: 4 }),
+    personalApi.notifications({ page: 1, size: 4 }),
     taskApi.list({ page: 1, size: 100 }),
   ])
   if (resultPage.status === 'fulfilled') results.value = resultPage.value.items
@@ -66,8 +71,14 @@ onMounted(() => {
 
 <template>
   <div class="overview">
-    <a-card size="small" class="week-card">
-      <template #title>{{ t('personal.overview.weeklyTitle') }}</template>
+    <!-- 近 7 天任务执行活跃度卡片 -->
+    <a-card :bordered="false" class="week-card">
+      <template #title>
+        <div class="card-header-flex">
+          <span class="card-title">{{ t('personal.overview.weeklyTitle') }}</span>
+          <span class="badge-total">{{ t('personal.overview.weeklyTotal', { total: weekTotal }) }}</span>
+        </div>
+      </template>
       <div
         class="week-chart"
         role="img"
@@ -85,45 +96,97 @@ onMounted(() => {
           @keydown.enter="router.push('/personal/tasks')"
         >
           <span class="week-count">{{ bar.count }}</span>
-          <span class="week-bar" :style="{ height: `${Math.max(bar.heightPercent, 4)}%` }"></span>
+          <div class="week-bar-container">
+            <span class="week-bar" :style="{ height: `${Math.max(bar.heightPercent, 8)}%` }"></span>
+          </div>
           <span class="week-label">{{ bar.label }}</span>
         </div>
       </div>
       <div class="week-foot">
-        <span>{{ t('personal.overview.weeklyTotal', { total: weekTotal }) }}</span>
-        <a @click="router.push('/personal/tasks')">{{ t('personal.overview.weeklyLink') }}</a>
+        <span class="chart-tip">💡 点击柱体可直接查看当日任务明细</span>
+        <a class="drilldown-link" @click="router.push('/personal/tasks')">
+          {{ t('personal.overview.weeklyLink') }}
+          <ArrowRightOutlined />
+        </a>
       </div>
     </a-card>
 
+    <!-- 最新产出与动态通知双栏 -->
     <a-row :gutter="16">
       <a-col :xs="24" :lg="12">
-        <a-card :title="t('personal.overview.recentResults')" size="small">
+        <a-card :bordered="false" class="section-card">
+          <template #title>
+            <div class="card-header-flex">
+              <span class="card-title">
+                <FileDoneOutlined style="color: #059669; margin-right: 6px" />
+                {{ t('personal.overview.recentResults') }}
+              </span>
+              <a-button type="link" size="small" @click="router.push('/personal/results')">
+                全部
+              </a-button>
+            </div>
+          </template>
           <EmptyState
             v-if="results.length === 0"
             :title="t('personal.overview.emptyResults')"
             :action-label="t('personal.overview.tabResults')"
             @action="router.push('/personal/results')"
           />
-          <a-list v-else :data-source="results">
-            <template #renderItem="{ item }">
-              <a-list-item>{{ item.resultId }} · {{ item.sourceSystem }}</a-list-item>
-            </template>
-          </a-list>
+          <div v-else class="result-list">
+            <div
+              v-for="item in results"
+              :key="item.resultId"
+              class="result-item"
+              role="button"
+              tabindex="0"
+              @click="router.push('/personal/results')"
+            >
+              <div class="result-main">
+                <span class="result-id">{{ item.resultId }}</span>
+                <a-tag color="blue" class="source-tag">{{ item.sourceSystem }}</a-tag>
+              </div>
+              <span class="result-date">{{ formatTime(item.createdAt) }}</span>
+            </div>
+          </div>
         </a-card>
       </a-col>
+
       <a-col :xs="24" :lg="12">
-        <a-card :title="t('personal.overview.recentNotifications')" size="small">
+        <a-card :bordered="false" class="section-card">
+          <template #title>
+            <div class="card-header-flex">
+              <span class="card-title">
+                <BellOutlined style="color: #d97706; margin-right: 6px" />
+                {{ t('personal.overview.recentNotifications') }}
+              </span>
+              <a-button type="link" size="small" @click="router.push('/personal/notifications')">
+                全部
+              </a-button>
+            </div>
+          </template>
           <EmptyState
             v-if="notifications.length === 0"
             :title="t('personal.overview.emptyNotifications')"
             :action-label="t('personal.overview.tabNotifications')"
             @action="router.push('/personal/notifications')"
           />
-          <a-list v-else :data-source="notifications">
-            <template #renderItem="{ item }">
-              <a-list-item>{{ item.title }}</a-list-item>
-            </template>
-          </a-list>
+          <div v-else class="notice-list">
+            <div
+              v-for="item in notifications"
+              :key="item.id"
+              class="notice-item"
+              :class="{ unread: !item.readAt }"
+              role="button"
+              tabindex="0"
+              @click="router.push('/personal/notifications')"
+            >
+              <div class="notice-title-row">
+                <span v-if="!item.readAt" class="notice-dot"></span>
+                <span class="notice-title">{{ item.title }}</span>
+              </div>
+              <span class="notice-time">{{ formatTime(item.createdAt) }}</span>
+            </div>
+          </div>
         </a-card>
       </a-col>
     </a-row>
@@ -137,15 +200,40 @@ onMounted(() => {
   gap: 16px;
 }
 
-.week-card {
+.week-card,
+.section-card {
   border-radius: var(--od-radius-card, 12px);
+  box-shadow: var(--od-shadow-xs);
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+}
+
+.card-header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--od-gray-900, #0f172a);
+}
+
+.badge-total {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--od-color-accent, #2563eb);
+  background: var(--od-primary-50, #eff6ff);
+  padding: 3px 10px;
+  border-radius: 20px;
 }
 
 .week-chart {
   display: flex;
   align-items: stretch;
   gap: 12px;
-  height: 132px;
+  height: 140px;
+  padding: 10px 0 0;
 }
 
 .week-column {
@@ -154,51 +242,147 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 8px;
   border-radius: 8px;
-  padding: 8px 4px;
+  padding: 6px 4px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .week-column:hover,
 .week-column.today {
-  background: color-mix(in srgb, var(--od-color-accent, #2b6cb0) 8%, transparent);
+  background: var(--od-primary-50, #eff6ff);
 }
 
 .week-count {
   font-family: var(--od-font-mono, monospace);
   font-size: 13px;
-  font-weight: 600;
-  color: var(--od-color-ink, #102a43);
+  font-weight: 700;
+  color: var(--od-gray-800, #1e293b);
+}
+
+.week-bar-container {
+  width: 100%;
+  max-width: 36px;
+  height: 80px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 .week-bar {
   width: 100%;
-  max-width: 48px;
   border-radius: 6px 6px 2px 2px;
-  background: var(--od-chart-1, #1f4e79);
-  opacity: 0.85;
+  background: linear-gradient(180deg, #3b82f6 0%, #1e40af 100%);
+  transition: height 0.3s ease;
 }
 
 .week-column.today .week-bar {
-  background: var(--od-color-accent, #2b6cb0);
-  opacity: 1;
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
 }
 
 .week-label {
   font-size: 12px;
-  color: var(--od-color-muted, #52677a);
+  font-weight: 500;
+  color: var(--od-gray-500, #64748b);
 }
 
 .week-foot {
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
-  color: var(--od-color-muted, #52677a);
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--od-gray-100, #f1f5f9);
+  color: var(--od-gray-500, #64748b);
   font-size: 12px;
 }
 
-.week-foot a {
+.drilldown-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--od-color-accent, #2563eb);
+  font-weight: 600;
   cursor: pointer;
+}
+
+.result-list,
+.notice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-item,
+.notice-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--od-gray-50, #f8fafc);
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.result-item:hover,
+.notice-item:hover {
+  background: #fff;
+  border-color: var(--od-primary-300, #93c5fd);
+  box-shadow: var(--od-shadow-xs);
+  transform: translateX(2px);
+}
+
+.result-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-id {
+  font-family: var(--od-font-mono, monospace);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--od-gray-900, #0f172a);
+}
+
+.source-tag {
+  font-size: 11px;
+}
+
+.result-date,
+.notice-time {
+  font-size: 12px;
+  color: var(--od-gray-400, #94a3b8);
+}
+
+.notice-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.notice-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563eb;
+  flex-shrink: 0;
+}
+
+.notice-title {
+  font-size: 13px;
+  color: var(--od-gray-800, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notice-item.unread .notice-title {
+  font-weight: 600;
 }
 </style>

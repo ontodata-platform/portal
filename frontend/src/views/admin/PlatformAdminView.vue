@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ClearOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -59,28 +60,48 @@ void loadStatus()
 </script>
 
 <template>
-  <div>
+  <div class="platform-admin-view">
     <PageHeader :eyebrow="t('menu.admin')" :title="t('menu.adminPlatform')" :description="t('admin.platformDesc')" />
     <a-row :gutter="16">
       <a-col :xs="24" :lg="12">
-        <a-card :title="t('admin.rebuildTitle')">
-          <p>{{ t('admin.rebuildDesc') }}</p>
-          <a-button type="primary" :loading="rebuilding" @click="rebuild">{{ t('admin.rebuildAction') }}</a-button>
+        <a-card :title="t('admin.rebuildTitle')" class="admin-card">
+          <p class="card-desc">{{ t('admin.rebuildDesc') }}</p>
+          <a-button type="primary" :loading="rebuilding" @click="rebuild">
+            <template #icon><ReloadOutlined /></template>
+            {{ t('admin.rebuildAction') }}
+          </a-button>
           <pre v-if="rebuildResult" class="result">{{ JSON.stringify(rebuildResult, null, 2) }}</pre>
         </a-card>
       </a-col>
       <a-col :xs="24" :lg="12">
-        <a-card :title="t('admin.retentionTitle')" :loading="statusLoading">
-          <p>{{ t('admin.retentionDesc') }}</p>
-          <dl v-if="status" class="status">
-            <div><dt>{{ t('admin.retentionDays') }}</dt><dd>{{ status.retentionDays }}</dd></div>
-            <div><dt>{{ t('admin.cutoffAt') }}</dt><dd>{{ status.cutoffAt }}</dd></div>
-            <div><dt>{{ t('menu.tasks') }}</dt><dd>{{ status.tasks }}</dd></div>
-            <div><dt>{{ t('menu.approvals') }}</dt><dd>{{ status.approvals }}</dd></div>
+        <a-card :title="t('admin.retentionTitle')" :loading="statusLoading" class="admin-card">
+          <p class="card-desc">{{ t('admin.retentionDesc') }}</p>
+          <dl v-if="status" class="status-grid">
+            <div class="status-box">
+              <dt>{{ t('admin.retentionDays') }}</dt>
+              <dd><strong>{{ status.retentionDays }} 天</strong></dd>
+            </div>
+            <div class="status-box">
+              <dt>{{ t('admin.cutoffAt') }}</dt>
+              <dd class="mono-text">{{ status.cutoffAt }}</dd>
+            </div>
+            <div class="status-box">
+              <dt>{{ t('menu.tasks') }}</dt>
+              <dd>{{ status.tasks }} 条</dd>
+            </div>
+            <div class="status-box">
+              <dt>{{ t('menu.approvals') }}</dt>
+              <dd>{{ status.approvals }} 条</dd>
+            </div>
           </dl>
-          <a-space>
-            <a-button :loading="cleaning" @click="cleanup(true)">{{ t('admin.cleanupDryRun') }}</a-button>
-            <a-button danger :loading="cleaning" @click="cleanup(false)">{{ t('admin.cleanupExecute') }}</a-button>
+          <a-space style="margin-top: 14px">
+            <a-button :loading="cleaning" @click="cleanup(true)">
+              {{ t('admin.cleanupDryRun') }}
+            </a-button>
+            <a-button danger :loading="cleaning" @click="cleanup(false)">
+              <template #icon><ClearOutlined /></template>
+              {{ t('admin.cleanupExecute') }}
+            </a-button>
           </a-space>
           <pre v-if="cleanupResult" class="result">{{ JSON.stringify(cleanupResult, null, 2) }}</pre>
         </a-card>
@@ -90,22 +111,63 @@ void loadStatus()
 </template>
 
 <style scoped>
-.status {
-  display: grid;
-  gap: 8px;
-  margin: 12px 0;
+.platform-admin-view {
+  display: flex;
+  flex-direction: column;
 }
 
-.status div {
-  display: flex;
-  justify-content: space-between;
+.admin-card {
+  border-radius: var(--od-radius-card, 12px);
+  box-shadow: var(--od-shadow-1);
+}
+
+.card-desc {
+  color: var(--od-gray-500, #64748b);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.status-box {
+  background: var(--od-gray-50, #f8fafc);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+}
+
+.status-box dt {
+  font-size: 12px;
+  color: var(--od-gray-400, #94a3b8);
+  margin-bottom: 4px;
+}
+
+.status-box dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--od-gray-800, #1e293b);
+}
+
+.mono-text {
+  font-family: var(--od-font-mono, monospace);
+  font-size: 12px;
 }
 
 .result {
-  margin-top: 12px;
+  margin-top: 16px;
   font-size: 12px;
-  background: #f4f7fb;
-  padding: 8px;
+  background: var(--od-gray-50, #f8fafc);
+  padding: 12px;
   border-radius: 8px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  font-family: var(--od-font-mono, monospace);
+  max-height: 200px;
+  overflow: auto;
 }
 </style>

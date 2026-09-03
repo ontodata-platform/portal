@@ -10,7 +10,7 @@ defineProps<{
 
 <template>
   <section class="od-task" :data-status="status" aria-live="polite">
-    <div class="od-task__bar" />
+    <div class="od-task__bar"></div>
     <div class="od-task__body">
       <div class="od-task__meta">
         <strong>{{ phase }}</strong>
@@ -19,7 +19,7 @@ defineProps<{
       </div>
       <p>{{ message }}</p>
       <div v-if="$slots.actions" class="od-task__actions">
-        <slot name="actions" />
+        <slot name="actions"></slot>
       </div>
     </div>
   </section>

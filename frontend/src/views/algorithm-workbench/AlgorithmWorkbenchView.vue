@@ -1,15 +1,24 @@
 <script setup lang="ts">
+import {
+  ClockCircleOutlined,
+  DownloadOutlined,
+  HistoryOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  StopOutlined,
+} from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { algorithmWorkbenchApi } from '@/api/algorithm-workbench'
+import { useMessageStore } from '@/stores/message'
+import type { AlgorithmRun, AlgorithmServiceSummary } from '@/types/descriptor'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
-import { useMessageStore } from '@/stores/message'
-import type { AlgorithmRun, AlgorithmServiceSummary } from '@/types/descriptor'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -36,6 +45,12 @@ function describeLoadError(error: unknown): string {
   return String(error)
 }
 
+function formatTime(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  return date.toLocaleString('zh-CN', { hour12: false, month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
 // ── 发现 ────────────────────────────────────────────────
 const servicesLoading = ref(false)
 const servicesError = ref('')
@@ -57,11 +72,11 @@ async function loadServices() {
 }
 
 function openDetail(code: string) {
-  router.push(`/algorithm-workbench/${encodeURIComponent(code)}`)
+  void router.push(`/algorithm-workbench/${encodeURIComponent(code)}`)
 }
 
 function openWizard(code: string) {
-  router.push(`/algorithm-workbench/${encodeURIComponent(code)}/run`)
+  void router.push(`/algorithm-workbench/${encodeURIComponent(code)}/run`)
 }
 
 // ── 我的运行 ────────────────────────────────────────────
@@ -75,7 +90,7 @@ async function loadRuns() {
   runsError.value = ''
   try {
     const res = await algorithmWorkbenchApi.listMyRuns({ page: 1, size: 50 })
-    runs.value = res.items
+    runs.value = res.items.map((run) => ({ ...run, startedAtText: formatTime(run.startedAt) }))
   } catch (error) {
     runsError.value = describeLoadError(error)
     messageStore.reportError(error)
@@ -119,7 +134,7 @@ async function cancel(taskId: string) {
 // ── 结果 ────────────────────────────────────────────────
 const artifacts = computed(() =>
   runs.value.flatMap((run) =>
-    run.artifacts.map((artifact) => ({ ...artifact, taskId: run.taskId, serviceName: run.serviceName, startedAt: run.startedAt })),
+    run.artifacts.map((artifact) => ({ ...artifact, taskId: run.taskId, serviceName: run.serviceName, startedAtText: formatTime(run.startedAt) })),
   ),
 )
 
@@ -129,21 +144,21 @@ function download(artifactName: string) {
 }
 
 const runsColumns = computed(() => [
-  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId' },
-  { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName' },
-  { title: t('common.status'), dataIndex: 'status', key: 'status' },
-  { title: t('algoWorkbench.colStage'), dataIndex: 'stage', key: 'stage' },
-  { title: t('algoWorkbench.colStarted'), dataIndex: 'startedAt', key: 'startedAt' },
-  { title: t('algoWorkbench.colDurationText'), dataIndex: 'duration', key: 'duration' },
-  { title: t('algoWorkbench.colActions'), key: 'actions' },
+  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 180 },
+  { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName', width: 180 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120 },
+  { title: t('algoWorkbench.colStage'), dataIndex: 'stage', key: 'stage', width: 160 },
+  { title: t('algoWorkbench.colStarted'), dataIndex: 'startedAtText', key: 'startedAtText', width: 130 },
+  { title: t('algoWorkbench.colDurationText'), dataIndex: 'duration', key: 'duration', width: 120 },
+  { title: t('algoWorkbench.colActions'), key: 'actions', width: 120 },
 ])
 
 const artifactColumns = computed(() => [
   { title: t('common.name'), dataIndex: 'name', key: 'name' },
-  { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName' },
-  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId' },
-  { title: t('common.updatedAt'), dataIndex: 'startedAt', key: 'startedAt' },
-  { title: t('algoWorkbench.colActions'), key: 'actions' },
+  { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName', width: 180 },
+  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 200 },
+  { title: t('common.updatedAt'), dataIndex: 'startedAt', key: 'startedAt', width: 200 },
+  { title: t('algoWorkbench.colActions'), key: 'actions', width: 120 },
 ])
 
 function onTabChange(tab: 'discover' | 'runs' | 'artifacts') {
@@ -158,7 +173,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="algorithm-workbench-view">
     <PageHeader
       :eyebrow="t('menu.groupPortal')"
       :title="t('menu.algorithmWorkbench')"
@@ -169,16 +184,18 @@ onMounted(() => {
       <a-tabs v-model:active-key="activeTab" @change="onTabChange">
         <a-tab-pane key="discover" :tab="t('algoWorkbench.tabDiscover')">
           <div class="toolbar">
-            <a-input-search
+            <a-input
               v-model:value="serviceQuery.keyword"
               :placeholder="t('algoWorkbench.searchPlaceholder')"
-              style="width: 360px"
+              style="width: 320px"
               allow-clear
-              @search="
-                serviceQuery.page = 1;
-                loadServices();
-              "
-            />
+              @press-enter="serviceQuery.page = 1; loadServices()"
+            >
+              <template #prefix><SearchOutlined style="color: #94a3b8" /></template>
+            </a-input>
+            <a-button type="primary" @click="serviceQuery.page = 1; loadServices()">
+              {{ t('common.query') }}
+            </a-button>
           </div>
 
           <ErrorState
@@ -197,20 +214,39 @@ onMounted(() => {
           <div v-else class="card-grid">
             <div v-for="service in services" :key="service.code" class="service-card">
               <div class="service-head">
-                <h3 class="service-name">{{ service.name }}</h3>
-                <a-tag color="blue">{{ service.status }}</a-tag>
+                <h3 class="service-name" :title="service.name">{{ service.name }}</h3>
+                <a-tag color="blue" class="status-badge">{{ service.status }}</a-tag>
               </div>
               <p class="service-desc">{{ service.description }}</p>
-              <dl class="service-meta">
-                <div><dt>{{ t('algoWorkbench.cardInput') }}</dt><dd>{{ service.inputHint }}</dd></div>
-                <div><dt>{{ t('algoWorkbench.cardDuration') }}</dt><dd>{{ service.typicalDuration }}</dd></div>
-                <div><dt>{{ t('algoWorkbench.cardRuns') }}</dt><dd>{{ service.runCount }}</dd></div>
-              </dl>
+
+              <div class="service-meta-grid">
+                <div class="meta-box">
+                  <span class="meta-label">{{ t('algoWorkbench.cardDuration') }}</span>
+                  <span class="meta-val">
+                    <ClockCircleOutlined />
+                    {{ service.typicalDuration }}
+                  </span>
+                </div>
+                <div class="meta-box">
+                  <span class="meta-label">{{ t('algoWorkbench.cardRuns') }}</span>
+                  <span class="meta-val">
+                    <HistoryOutlined />
+                    {{ service.runCount }}
+                  </span>
+                </div>
+              </div>
+
+              <div v-if="service.inputHint" class="service-input-hint">
+                <span class="hint-label">{{ t('algoWorkbench.cardInput') }}:</span>
+                <span class="hint-text">{{ service.inputHint }}</span>
+              </div>
+
               <div class="service-actions">
-                <a-button type="primary" size="small" @click="openWizard(service.code)">
+                <a-button type="primary" class="run-btn" @click="openWizard(service.code)">
+                  <template #icon><PlayCircleOutlined /></template>
                   {{ t('algoWorkbench.runNow') }}
                 </a-button>
-                <a-button size="small" @click="openDetail(service.code)">
+                <a-button @click="openDetail(service.code)">
                   {{ t('algoWorkbench.viewDetail') }}
                 </a-button>
               </div>
@@ -234,15 +270,18 @@ onMounted(() => {
           />
           <a-table
             v-else
+            v-model:expanded-row-keys="expandedTaskIds"
             :columns="runsColumns"
             :data-source="runs"
             :pagination="{ pageSize: 10 }"
             row-key="taskId"
-            size="small"
-            v-model:expanded-row-keys="expandedTaskIds"
+            class="runs-table"
           >
             <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'status'">
+              <template v-if="column.key === 'taskId'">
+                <span class="mono-code">{{ record.taskId }}</span>
+              </template>
+              <template v-else-if="column.key === 'status'">
                 <a-tag :color="statusColor[record.status] ?? 'default'">{{ statusText(record.status) }}</a-tag>
               </template>
               <template v-else-if="column.key === 'actions'">
@@ -253,6 +292,7 @@ onMounted(() => {
                     danger
                     @click="cancel(record.taskId)"
                   >
+                    <template #icon><StopOutlined /></template>
                     {{ t('algoWorkbench.cancel') }}
                   </a-button>
                   <a-button
@@ -260,6 +300,7 @@ onMounted(() => {
                     size="small"
                     @click="rerun(record.taskId)"
                   >
+                    <template #icon><ReloadOutlined /></template>
                     {{ t('algoWorkbench.rerun') }}
                   </a-button>
                 </a-space>
@@ -305,11 +346,14 @@ onMounted(() => {
             :data-source="artifacts"
             :pagination="{ pageSize: 10 }"
             row-key="name"
-            size="small"
           >
             <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'actions'">
-                <a-button size="small" @click="download(record.name)">
+              <template v-if="column.key === 'taskId'">
+                <span class="mono-code">{{ record.taskId }}</span>
+              </template>
+              <template v-else-if="column.key === 'actions'">
+                <a-button size="small" type="primary" ghost @click="download(record.name)">
+                  <template #icon><DownloadOutlined /></template>
                   {{ t('algoWorkbench.download') }}
                 </a-button>
               </template>
@@ -324,7 +368,7 @@ onMounted(() => {
 <style scoped>
 .wb-card {
   border-radius: var(--od-radius-card, 12px);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--od-shadow-1);
 }
 
 .toolbar {
@@ -332,28 +376,30 @@ onMounted(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
 }
 
 .service-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  border: 1px solid var(--od-color-line-soft, #e8eef3);
+  gap: 10px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
   border-radius: var(--od-radius-card, 12px);
-  padding: 16px;
-  background: var(--od-color-panel, #fff);
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  padding: 18px;
+  background: #ffffff;
+  box-shadow: var(--od-shadow-xs);
+  transition: all 0.2s ease;
 }
 
 .service-card:hover {
-  box-shadow: 0 4px 14px rgba(16, 42, 67, 0.1);
+  border-color: var(--od-primary-300, #93c5fd);
+  box-shadow: var(--od-shadow-2);
   transform: translateY(-2px);
 }
 
@@ -367,53 +413,104 @@ onMounted(() => {
 .service-name {
   margin: 0;
   font-size: 15px;
+  font-weight: 650;
+  color: var(--od-gray-900, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-badge {
+  font-size: 11px;
   font-weight: 600;
-  color: var(--od-color-ink, #102a43);
+  border-radius: 4px;
 }
 
 .service-desc {
   margin: 0;
-  color: var(--od-color-ink-soft, #334e68);
+  color: var(--od-gray-500, #64748b);
   font-size: 13px;
-  line-height: 1.6;
-  min-height: 42px;
+  line-height: 1.5;
+  min-height: 40px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-.service-meta {
+.service-meta-grid {
   display: grid;
-  gap: 4px;
-  margin: 0;
-}
-
-.service-meta div {
-  display: flex;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.meta-box {
+  background: var(--od-gray-50, #f8fafc);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-label {
+  font-size: 11px;
+  color: var(--od-gray-400, #94a3b8);
+}
+
+.meta-val {
   font-size: 12px;
+  font-weight: 600;
+  color: var(--od-gray-800, #1e293b);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.service-meta dt {
-  flex: 0 0 auto;
-  color: var(--od-color-muted, #52677a);
+.service-input-hint {
+  font-size: 12px;
+  color: var(--od-gray-500, #64748b);
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.service-meta dd {
-  margin: 0;
-  color: var(--od-color-ink-soft, #334e68);
+.hint-label {
+  font-weight: 600;
+  margin-right: 4px;
 }
 
 .service-actions {
   display: flex;
   gap: 8px;
   margin-top: auto;
+  padding-top: 8px;
+}
+
+.run-btn {
+  font-weight: 600;
+}
+
+.mono-code {
+  font-family: var(--od-font-mono, monospace);
+  font-weight: 600;
 }
 
 .run-expand {
   display: grid;
   gap: 12px;
+  padding: 8px 12px;
+  background: var(--od-gray-50, #f8fafc);
+  border-radius: 8px;
 }
 
 .run-reason {
   margin: 0;
+  border-radius: 6px;
 }
 
 .node-name {
@@ -426,7 +523,7 @@ onMounted(() => {
 
 .node-reason {
   margin: 4px 0 0;
-  color: var(--od-color-blocked, #c53030);
+  color: var(--od-color-blocked, #dc2626);
   font-size: 12px;
 }
 </style>

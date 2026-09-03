@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MenuOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { HistoryOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -95,8 +95,14 @@ watch(
 
     <div class="stage">
       <div class="floating-tools">
-        <button type="button" class="ghost-btn" :aria-label="t('assistant.sessions')" @click="historyOpen = !historyOpen">
-          <MenuOutlined />
+        <button
+          type="button"
+          class="ghost-btn"
+          :class="{ active: historyOpen }"
+          :aria-label="t('assistant.sessions')"
+          @click="historyOpen = !historyOpen"
+        >
+          <HistoryOutlined />
           <span>{{ t('assistant.sessions') }}</span>
         </button>
         <button
@@ -133,7 +139,7 @@ watch(
             />
           </div>
           <div v-else-if="pendingConfirm" class="confirm">
-            <a-card :title="t('assistant.confirmTitle')">
+            <a-card :title="t('assistant.confirmTitle')" class="confirm-card">
               <p>{{ pendingConfirm.summary.plan }}</p>
               <a-space>
                 <a-button type="primary" @click="pendingConfirm = null">{{ t('assistant.approve') }}</a-button>
@@ -169,9 +175,9 @@ watch(
 
 <style scoped>
 .assistant-page {
-  margin: -20px -24px;
+  margin: -24px;
   min-height: calc(100vh - 60px);
-  background: #fff;
+  background: #ffffff;
   display: flex;
   position: relative;
 }
@@ -181,6 +187,7 @@ watch(
   max-width: 260px;
   min-height: calc(100vh - 60px);
   z-index: 2;
+  box-shadow: 2px 0 8px rgba(15, 23, 42, 0.04);
 }
 
 .stage {
@@ -189,12 +196,13 @@ watch(
   display: flex;
   flex-direction: column;
   position: relative;
+  background: #ffffff;
 }
 
 .floating-tools {
   position: absolute;
   top: 16px;
-  left: 16px;
+  left: 20px;
   z-index: 3;
   display: flex;
   gap: 8px;
@@ -205,22 +213,28 @@ watch(
   align-items: center;
   gap: 6px;
   border: 1px solid var(--od-gray-200, #e2e8f0);
-  background: rgb(255 255 255 / 92%);
-  backdrop-filter: blur(6px);
-  border-radius: 999px;
-  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 6px 14px;
   font-size: 13px;
+  font-weight: 500;
   color: var(--od-gray-600, #475569);
   cursor: pointer;
+  box-shadow: var(--od-shadow-xs);
+  transition: all 0.15s ease;
 }
 
-.ghost-btn:hover {
-  border-color: var(--od-primary-300, #7a9fc4);
-  color: var(--od-primary-600, #1b446a);
+.ghost-btn:hover,
+.ghost-btn.active {
+  border-color: var(--od-primary-300, #93c5fd);
+  color: var(--od-color-primary, #1e40af);
+  background: #ffffff;
 }
 
 .banner {
   margin: 56px 24px 0;
+  border-radius: 8px;
 }
 
 .scroll {
@@ -234,11 +248,16 @@ watch(
   margin: 0 auto 16px;
 }
 
+.confirm-card {
+  border-radius: var(--od-radius-card, 12px);
+  box-shadow: var(--od-shadow-1);
+}
+
 .dock {
   position: sticky;
   bottom: 0;
-  padding: 8px 24px 28px;
-  background: linear-gradient(180deg, rgb(255 255 255 / 0%), #fff 28%);
+  padding: 12px 24px 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 40%, #ffffff 100%);
 }
 
 .dock :deep(.composer) {
@@ -250,7 +269,7 @@ watch(
   .history-rail {
     position: absolute;
     inset: 0 auto 0 0;
-    box-shadow: var(--od-shadow-3, 0 12px 32px rgb(15 23 42 / 12%));
+    box-shadow: var(--od-shadow-3);
     background: #fff;
   }
 }

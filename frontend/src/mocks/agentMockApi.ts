@@ -61,8 +61,14 @@ function copy<T>(value: T): T {
 }
 
 function asDef(detail: AgentDetail): AgentDef {
-  const { versions: _versions, ...rest } = detail
-  return rest
+  return {
+    id: detail.id,
+    tenantId: detail.tenantId,
+    name: detail.name,
+    description: detail.description,
+    owner: detail.owner,
+    createdAt: detail.createdAt,
+  }
 }
 
 export function createLocalAgentMockApi() {

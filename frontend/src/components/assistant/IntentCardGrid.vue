@@ -14,7 +14,8 @@ const emit = defineEmits<{ pick: [intent: IntentSuggestion] }>()
       class="chip"
       @click="emit('pick', intent)"
     >
-      {{ intent.title }}
+      <span class="chip-dot"></span>
+      <span>{{ intent.title }}</span>
     </button>
   </div>
 </template>
@@ -31,18 +32,32 @@ const emit = defineEmits<{ pick: [intent: IntentSuggestion] }>()
 
 .chip {
   border: 1px solid var(--od-gray-200, #e2e8f0);
-  background: #fff;
+  background: #ffffff;
   color: var(--od-gray-700, #334155);
   border-radius: 999px;
-  padding: 8px 16px;
+  padding: 8px 18px;
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  box-shadow: var(--od-shadow-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--od-color-accent, #2563eb);
 }
 
 .chip:hover {
-  border-color: var(--od-primary-300, #7a9fc4);
-  color: var(--od-primary-600, #1b446a);
-  background: var(--od-primary-50, #eef4fa);
+  border-color: var(--od-primary-300, #93c5fd);
+  color: var(--od-color-primary, #1e40af);
+  background: var(--od-primary-50, #eff6ff);
+  transform: translateY(-1px);
+  box-shadow: var(--od-shadow-1);
 }
 </style>

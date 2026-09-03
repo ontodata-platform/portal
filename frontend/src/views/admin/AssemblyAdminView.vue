@@ -356,7 +356,6 @@ async function save() {
     editOpen.value = false
     await load()
   } catch (error) {
-    // 钉扎/装配校验错误（前端预检 ApiError 或后端 400 fieldErrors）弹窗内联展示，不关窗
     formError.value = error instanceof ApiError ? error.detail : String(error)
   } finally {
     saving.value = false
@@ -377,7 +376,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div>
+  <div class="assembly-admin-view">
     <PageHeader
       :eyebrow="t('menu.groupCollab')"
       :title="t('menu.scenarios')"
@@ -393,292 +392,327 @@ onMounted(load)
     />
 
     <a-card v-else :bordered="false" class="scenarios-card">
-    <a-space style="margin-bottom: 16px" wrap>
-      <a-select v-model:value="query.status" :placeholder="t('scenarios.statusPlaceholder')" allow-clear style="width: 150px">
-        <a-select-option value="DRAFT">{{ t('scenarios.draft') }}</a-select-option>
-        <a-select-option value="PUBLISHED">{{ t('scenarios.published') }}</a-select-option>
-        <a-select-option value="DEPRECATED">{{ t('scenarios.deprecated') }}</a-select-option>
-      </a-select>
-      <a-input v-model:value="query.keyword" :placeholder="t('scenarios.keywordPlaceholder')" style="width: 200px" allow-clear />
-      <a-button
-        type="primary"
-        @click="
-          query.page = 1;
-          load();
+      <div class="toolbar-area">
+        <a-space wrap>
+          <a-select v-model:value="query.status" :placeholder="t('scenarios.statusPlaceholder')" allow-clear style="width: 140px">
+            <a-select-option value="DRAFT">{{ t('scenarios.draft') }}</a-select-option>
+            <a-select-option value="PUBLISHED">{{ t('scenarios.published') }}</a-select-option>
+            <a-select-option value="DEPRECATED">{{ t('scenarios.deprecated') }}</a-select-option>
+          </a-select>
+          <a-input
+            v-model:value="query.keyword"
+            :placeholder="t('scenarios.keywordPlaceholder')"
+            style="width: 180px"
+            allow-clear
+            @press-enter="query.page = 1; load()"
+          />
+          <a-button
+            type="primary"
+            @click="
+              query.page = 1;
+              load();
+            "
+          >
+            {{ t('common.query') }}
+          </a-button>
+        </a-space>
+
+        <a-button type="primary" @click="openCreate">
+          <template #icon><PlusOutlined /></template>
+          {{ t('scenarios.createButton') }}
+        </a-button>
+      </div>
+
+      <EmptyState
+        v-if="!loading && rows.length === 0"
+        :title="t('scenarios.emptyTitle')"
+        :description="t('scenarios.emptyDesc')"
+        :action-label="t('scenarios.createButton')"
+        @action="openCreate"
+      />
+      <a-table
+        v-else
+        :columns="columns"
+        :data-source="rows"
+        :loading="loading"
+        :row-key="(record: PortalScenario) => `${record.code}@${record.version}`"
+        class="scenario-table"
+        :pagination="{ current: query.page, pageSize: query.size, total, showTotal: (tot: number) => `共 ${tot} 项` }"
+        @change="
+          (pagination: { current?: number }) => {
+            query.page = pagination.current ?? 1;
+            load();
+          }
         "
       >
-        {{ t('common.query') }}
-      </a-button>
-      <a-button type="dashed" @click="openCreate">
-        <template #icon><PlusOutlined /></template>
-        {{ t('scenarios.createButton') }}
-      </a-button>
-    </a-space>
-
-    <EmptyState
-      v-if="!loading && rows.length === 0"
-      :title="t('scenarios.emptyTitle')"
-      :description="t('scenarios.emptyDesc')"
-      :action-label="t('scenarios.createButton')"
-      @action="openCreate"
-    />
-    <a-table
-      v-else
-      :columns="columns"
-      :data-source="rows"
-      :loading="loading"
-      :row-key="(record: PortalScenario) => `${record.code}@${record.version}`"
-      :pagination="{ current: query.page, pageSize: query.size, total }"
-      @change="
-        (pagination: { current?: number }) => {
-          query.page = pagination.current ?? 1;
-          load();
-        }
-      "
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'status'">
-          <a-tag :color="statusColor[record.status]">{{ statusText[record.status] ?? record.status }}</a-tag>
-        </template>
-        <template v-else-if="column.key === 'action'">
-          <a-space>
-            <a-button v-if="record.status === 'DRAFT'" size="small" @click="openEdit(record)">
-              {{ t('scenarios.edit') }}
-            </a-button>
-            <a-button
-              v-if="record.status === 'DRAFT'"
-              size="small"
-              type="primary"
-              @click="transition(() => scenarioApi.publish(record.code, record.version), t('scenarios.publishedMessage', { code: record.code, version: record.version }))"
-            >
-              {{ t('scenarios.publish') }}
-            </a-button>
-            <a-button
-              v-if="record.status === 'PUBLISHED'"
-              size="small"
-              danger
-              @click="transition(() => scenarioApi.deprecate(record.code, record.version), t('scenarios.deprecatedMessage', { code: record.code, version: record.version }))"
-            >
-              {{ t('scenarios.deprecate') }}
-            </a-button>
-            <a-button
-              v-if="record.status === 'PUBLISHED' || record.status === 'DEPRECATED'"
-              size="small"
-              @click="transition(() => scenarioApi.createDraft(record.code), t('scenarios.draftCreated', { code: record.code }))"
-            >
-              {{ t('scenarios.newDraft') }}
-            </a-button>
-          </a-space>
-        </template>
-      </template>
-    </a-table>
-
-    <!-- 场景编辑/创建弹窗（动态行选择器） -->
-    <a-modal
-      v-model:open="editOpen"
-      :title="editing ? t('scenarios.editModal', { code: editing.code, version: editing.version }) : t('scenarios.createModal')"
-      :confirm-loading="saving"
-      width="860px"
-      @ok="save"
-    >
-      <a-alert
-        v-if="formError"
-        type="error"
-        :message="formError"
-        show-icon
-        style="margin-bottom: 16px"
-      />
-      <a-form layout="vertical">
-        <a-row :gutter="16">
-          <a-col :span="14">
-            <a-form-item :label="t('common.name')" required>
-              <a-input v-model:value="form.name" :placeholder="t('scenarios.namePlaceholder')" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="10">
-            <a-form-item :label="t('scenarios.projectId')">
-              <a-input v-model:value="form.projectId" :placeholder="t('scenarios.projectIdPlaceholder')" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-
-        <a-form-item :label="t('scenarios.description')">
-          <a-input v-model:value="form.description" :placeholder="t('scenarios.descriptionPlaceholder')" />
-        </a-form-item>
-
-        <!-- 装配绑定列表（动态行） -->
-        <a-divider orientation="left" style="font-size: 14px; margin: 16px 0 12px 0">
-          {{ t('scenarios.bindings') }}
-        </a-divider>
-
-        <a-alert
-          v-if="!catalogAvailable.capability || !catalogAvailable.template"
-          type="info"
-          show-icon
-          style="margin-bottom: 8px"
-          :message="t('scenarios.catalogUnavailable')"
-        />
-        <a-alert
-          v-if="form.bindings.some((row) => row.type === 'DATA_SNAPSHOT')"
-          type="info"
-          show-icon
-          style="margin-bottom: 8px"
-          :message="t('scenarios.snapshotHint')"
-        />
-
-        <div v-for="(item, idx) in form.bindings" :key="idx" class="binding-row">
-          <a-row :gutter="8" align="middle">
-            <a-col :span="5">
-              <a-select v-model:value="item.type" style="width: 100%" @change="onBindingTypeChange(item)">
-                <a-select-option value="DATA_SNAPSHOT">数据快照</a-select-option>
-                <a-select-option value="CAPABILITY">算法能力</a-select-option>
-                <a-select-option value="WORKFLOW_TEMPLATE">工作流模板</a-select-option>
-              </a-select>
-            </a-col>
-            <a-col :span="7">
-              <a-select
-                v-if="item.type !== 'DATA_SNAPSHOT' && catalogReady(item.type)"
-                :value="item.ref"
-                show-search
-                option-filter-prop="label"
-                style="width: 100%"
-                :placeholder="t('scenarios.catalogSelectPlaceholder')"
-                :options="
-                  catalogFor(item.type).map((entry) => ({
-                    value: entry.code,
-                    label: `${entry.name} (${entry.code})`,
-                  }))
-                "
-                @change="(value: string) => onBindingRefChange(item, value)"
-              />
-              <a-input
-                v-else
-                v-model:value="item.ref"
-                :placeholder="item.type === 'DATA_SNAPSHOT' ? 'snap-*' : t('scenarios.bindingRef')"
-              />
-            </a-col>
-            <a-col :span="5">
-              <a-input v-model:value="item.version" :placeholder="t('scenarios.bindingVersion')" />
-            </a-col>
-            <a-col :span="5">
-              <a-input v-model:value="item.alias" :placeholder="t('scenarios.bindingAlias')" />
-            </a-col>
-            <a-col :span="2" style="text-align: center">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'code'">
+            <span class="mono-code">{{ record.code }}</span>
+          </template>
+          <template v-else-if="column.key === 'version'">
+            <a-tag color="blue">v{{ record.version }}</a-tag>
+          </template>
+          <template v-else-if="column.key === 'status'">
+            <a-tag :color="statusColor[record.status]">{{ statusText[record.status] ?? record.status }}</a-tag>
+          </template>
+          <template v-else-if="column.key === 'action'">
+            <a-space size="small">
+              <a-button v-if="record.status === 'DRAFT'" size="small" @click="openEdit(record)">
+                {{ t('scenarios.edit') }}
+              </a-button>
               <a-button
-                type="text"
-                danger
+                v-if="record.status === 'DRAFT'"
                 size="small"
-                :disabled="form.bindings.length <= 1"
-                @click="removeBindingRow(idx)"
+                type="primary"
+                @click="transition(() => scenarioApi.publish(record.code, record.version), t('scenarios.publishedMessage', { code: record.code, version: record.version }))"
               >
-                <template #icon><DeleteOutlined /></template>
+                {{ t('scenarios.publish') }}
               </a-button>
-            </a-col>
-          </a-row>
-        </div>
-
-        <a-button type="dashed" block style="margin-top: 8px" @click="addBindingRow">
-          <template #icon><PlusOutlined /></template>
-          {{ t('scenarios.addBinding') }}
-        </a-button>
-
-        <!-- 本体包引用列表（动态行） -->
-        <a-divider orientation="left" style="font-size: 14px; margin: 20px 0 12px 0">
-          {{ t('scenarios.ontologyRefs') }}
-        </a-divider>
-
-        <div v-for="(item, idx) in form.ontologyRefs" :key="idx" class="binding-row">
-          <a-row :gutter="8" align="middle">
-            <a-col :span="13">
-              <a-input v-model:value="item.packageCode" :placeholder="t('scenarios.packageCode')" />
-            </a-col>
-            <a-col :span="9">
-              <a-input v-model:value="item.version" :placeholder="t('scenarios.bindingVersion')" />
-            </a-col>
-            <a-col :span="2" style="text-align: center">
-              <a-button type="text" danger size="small" @click="removeOntologyRefRow(idx)">
-                <template #icon><DeleteOutlined /></template>
+              <a-button
+                v-if="record.status === 'PUBLISHED'"
+                size="small"
+                danger
+                @click="transition(() => scenarioApi.deprecate(record.code, record.version), t('scenarios.deprecatedMessage', { code: record.code, version: record.version }))"
+              >
+                {{ t('scenarios.deprecate') }}
               </a-button>
-            </a-col>
-          </a-row>
-        </div>
+              <a-button
+                v-if="record.status === 'PUBLISHED' || record.status === 'DEPRECATED'"
+                size="small"
+                @click="transition(() => scenarioApi.createDraft(record.code), t('scenarios.draftCreated', { code: record.code }))"
+              >
+                {{ t('scenarios.newDraft') }}
+              </a-button>
+            </a-space>
+          </template>
+        </template>
+      </a-table>
 
-        <a-button type="dashed" block style="margin-top: 8px" @click="addOntologyRefRow">
-          <template #icon><PlusOutlined /></template>
-          {{ t('scenarios.addOntologyRef') }}
-        </a-button>
-
-        <a-divider orientation="left" style="font-size: 14px; margin: 20px 0 12px 0">
-          {{ t('scenarios.presentation') }}
-        </a-divider>
-
-        <a-form-item :label="t('scenarios.entryView')">
-          <a-input v-model:value="form.entryView" :placeholder="t('scenarios.entryViewPlaceholder')" />
-        </a-form-item>
-
+      <!-- 场景编辑/创建弹窗（动态行选择器） -->
+      <a-modal
+        v-model:open="editOpen"
+        :title="editing ? t('scenarios.editModal', { code: editing.code, version: editing.version }) : t('scenarios.createModal')"
+        :confirm-loading="saving"
+        width="880px"
+        @ok="save"
+      >
         <a-alert
-          v-if="form.widgets.length > 0 && bindingAliases.length === 0"
-          type="warning"
+          v-if="formError"
+          type="error"
+          :message="formError"
           show-icon
-          style="margin-bottom: 8px"
-          :message="t('scenarios.widgetNeedAlias')"
+          style="margin-bottom: 16px; border-radius: 8px"
         />
-
-        <div v-for="(item, idx) in form.widgets" :key="idx" class="binding-row">
-          <a-row :gutter="8" align="middle">
+        <a-form layout="vertical">
+          <a-row :gutter="16">
+            <a-col :span="14">
+              <a-form-item :label="t('common.name')" required>
+                <a-input v-model:value="form.name" :placeholder="t('scenarios.namePlaceholder')" />
+              </a-form-item>
+            </a-col>
             <a-col :span="10">
-              <a-select v-model:value="item.kind" style="width: 100%">
-                <a-select-option v-for="kind in WIDGET_KINDS" :key="kind" :value="kind">
-                  {{ t(`scenarios.widgetKind.${kind}`) }}
-                </a-select-option>
-              </a-select>
-            </a-col>
-            <a-col :span="12">
-              <a-select
-                v-if="bindingAliases.length > 0"
-                v-model:value="item.bindingAlias"
-                style="width: 100%"
-                :placeholder="t('scenarios.widgetAliasPlaceholder')"
-              >
-                <a-select-option v-for="alias in bindingAliases" :key="alias" :value="alias">
-                  {{ alias }}
-                </a-select-option>
-              </a-select>
-              <a-input
-                v-else
-                v-model:value="item.bindingAlias"
-                :placeholder="t('scenarios.widgetAliasPlaceholder')"
-              />
-            </a-col>
-            <a-col :span="2" style="text-align: center">
-              <a-button type="text" danger size="small" @click="removeWidgetRow(idx)">
-                <template #icon><DeleteOutlined /></template>
-              </a-button>
+              <a-form-item :label="t('scenarios.projectId')">
+                <a-input v-model:value="form.projectId" :placeholder="t('scenarios.projectIdPlaceholder')" />
+              </a-form-item>
             </a-col>
           </a-row>
-        </div>
 
-        <a-button type="dashed" block style="margin-top: 8px" @click="addWidgetRow">
-          <template #icon><PlusOutlined /></template>
-          {{ t('scenarios.addWidget') }}
-        </a-button>
-      </a-form>
-    </a-modal>
+          <a-form-item :label="t('scenarios.description')">
+            <a-input v-model:value="form.description" :placeholder="t('scenarios.descriptionPlaceholder')" />
+          </a-form-item>
+
+          <!-- 装配绑定列表（动态行） -->
+          <a-divider orientation="left" style="font-size: 14px; margin: 16px 0 12px 0">
+            {{ t('scenarios.bindings') }}
+          </a-divider>
+
+          <a-alert
+            v-if="!catalogAvailable.capability || !catalogAvailable.template"
+            type="info"
+            show-icon
+            style="margin-bottom: 8px; border-radius: 6px"
+            :message="t('scenarios.catalogUnavailable')"
+          />
+          <a-alert
+            v-if="form.bindings.some((row) => row.type === 'DATA_SNAPSHOT')"
+            type="info"
+            show-icon
+            style="margin-bottom: 8px; border-radius: 6px"
+            :message="t('scenarios.snapshotHint')"
+          />
+
+          <div v-for="(item, idx) in form.bindings" :key="idx" class="binding-row">
+            <a-row :gutter="8" align="middle">
+              <a-col :span="5">
+                <a-select v-model:value="item.type" style="width: 100%" @change="onBindingTypeChange(item)">
+                  <a-select-option value="DATA_SNAPSHOT">数据快照</a-select-option>
+                  <a-select-option value="CAPABILITY">算法能力</a-select-option>
+                  <a-select-option value="WORKFLOW_TEMPLATE">工作流模板</a-select-option>
+                </a-select>
+              </a-col>
+              <a-col :span="7">
+                <a-select
+                  v-if="item.type !== 'DATA_SNAPSHOT' && catalogReady(item.type)"
+                  :value="item.ref"
+                  show-search
+                  option-filter-prop="label"
+                  style="width: 100%"
+                  :placeholder="t('scenarios.catalogSelectPlaceholder')"
+                  :options="
+                    catalogFor(item.type).map((entry) => ({
+                      value: entry.code,
+                      label: `${entry.name} (${entry.code})`,
+                    }))
+                  "
+                  @change="(value: string) => onBindingRefChange(item, value)"
+                />
+                <a-input
+                  v-else
+                  v-model:value="item.ref"
+                  :placeholder="item.type === 'DATA_SNAPSHOT' ? 'snap-*' : t('scenarios.bindingRef')"
+                />
+              </a-col>
+              <a-col :span="5">
+                <a-input v-model:value="item.version" :placeholder="t('scenarios.bindingVersion')" />
+              </a-col>
+              <a-col :span="5">
+                <a-input v-model:value="item.alias" :placeholder="t('scenarios.bindingAlias')" />
+              </a-col>
+              <a-col :span="2" style="text-align: center">
+                <a-button
+                  type="text"
+                  danger
+                  size="small"
+                  :disabled="form.bindings.length <= 1"
+                  @click="removeBindingRow(idx)"
+                >
+                  <template #icon><DeleteOutlined /></template>
+                </a-button>
+              </a-col>
+            </a-row>
+          </div>
+
+          <a-button type="dashed" block style="margin-top: 8px" @click="addBindingRow">
+            <template #icon><PlusOutlined /></template>
+            {{ t('scenarios.addBinding') }}
+          </a-button>
+
+          <!-- 本体包引用列表（动态行） -->
+          <a-divider orientation="left" style="font-size: 14px; margin: 20px 0 12px 0">
+            {{ t('scenarios.ontologyRefs') }}
+          </a-divider>
+
+          <div v-for="(item, idx) in form.ontologyRefs" :key="idx" class="binding-row">
+            <a-row :gutter="8" align="middle">
+              <a-col :span="13">
+                <a-input v-model:value="item.packageCode" :placeholder="t('scenarios.packageCode')" />
+              </a-col>
+              <a-col :span="9">
+                <a-input v-model:value="item.version" :placeholder="t('scenarios.bindingVersion')" />
+              </a-col>
+              <a-col :span="2" style="text-align: center">
+                <a-button type="text" danger size="small" @click="removeOntologyRefRow(idx)">
+                  <template #icon><DeleteOutlined /></template>
+                </a-button>
+              </a-col>
+            </a-row>
+          </div>
+
+          <a-button type="dashed" block style="margin-top: 8px" @click="addOntologyRefRow">
+            <template #icon><PlusOutlined /></template>
+            {{ t('scenarios.addOntologyRef') }}
+          </a-button>
+
+          <a-divider orientation="left" style="font-size: 14px; margin: 20px 0 12px 0">
+            {{ t('scenarios.presentation') }}
+          </a-divider>
+
+          <a-form-item :label="t('scenarios.entryView')">
+            <a-input v-model:value="form.entryView" :placeholder="t('scenarios.entryViewPlaceholder')" />
+          </a-form-item>
+
+          <a-alert
+            v-if="form.widgets.length > 0 && bindingAliases.length === 0"
+            type="warning"
+            show-icon
+            style="margin-bottom: 8px; border-radius: 6px"
+            :message="t('scenarios.widgetNeedAlias')"
+          />
+
+          <div v-for="(item, idx) in form.widgets" :key="idx" class="binding-row">
+            <a-row :gutter="8" align="middle">
+              <a-col :span="10">
+                <a-select v-model:value="item.kind" style="width: 100%">
+                  <a-select-option v-for="kind in WIDGET_KINDS" :key="kind" :value="kind">
+                    {{ t(`scenarios.widgetKind.${kind}`) }}
+                  </a-select-option>
+                </a-select>
+              </a-col>
+              <a-col :span="12">
+                <a-select
+                  v-if="bindingAliases.length > 0"
+                  v-model:value="item.bindingAlias"
+                  style="width: 100%"
+                  :placeholder="t('scenarios.widgetAliasPlaceholder')"
+                >
+                  <a-select-option v-for="alias in bindingAliases" :key="alias" :value="alias">
+                    {{ alias }}
+                  </a-select-option>
+                </a-select>
+                <a-input
+                  v-else
+                  v-model:value="item.bindingAlias"
+                  :placeholder="t('scenarios.widgetAliasPlaceholder')"
+                />
+              </a-col>
+              <a-col :span="2" style="text-align: center">
+                <a-button type="text" danger size="small" @click="removeWidgetRow(idx)">
+                  <template #icon><DeleteOutlined /></template>
+                </a-button>
+              </a-col>
+            </a-row>
+          </div>
+
+          <a-button type="dashed" block style="margin-top: 8px" @click="addWidgetRow">
+            <template #icon><PlusOutlined /></template>
+            {{ t('scenarios.addWidget') }}
+          </a-button>
+        </a-form>
+      </a-modal>
     </a-card>
   </div>
 </template>
 
 <style scoped>
+.assembly-admin-view {
+  display: flex;
+  flex-direction: column;
+}
+
 .scenarios-card {
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-radius: var(--od-radius-card, 12px);
+  box-shadow: var(--od-shadow-1);
+}
+
+.toolbar-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mono-code {
+  font-family: var(--od-font-mono, monospace);
+  font-weight: 600;
 }
 
 .binding-row {
   margin-bottom: 8px;
-  padding: 6px 8px;
-  background: #fafafa;
-  border-radius: 6px;
-  border: 1px solid #f0f0f0;
+  padding: 8px 10px;
+  background: var(--od-gray-50, #f8fafc);
+  border-radius: 8px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
 }
 </style>

@@ -41,7 +41,7 @@ function onKeydown(event: KeyboardEvent) {
       rows="1"
       @input="onInput"
       @keydown="onKeydown"
-    />
+    ></textarea>
     <div class="bar">
       <span class="hint">{{ t('assistant.composerHint') }}</span>
       <button
@@ -61,17 +61,17 @@ function onKeydown(event: KeyboardEvent) {
 <style scoped>
 .composer {
   width: 100%;
-  background: #fff;
+  background: #ffffff;
   border: 1px solid var(--od-gray-200, #e2e8f0);
-  border-radius: 28px;
-  box-shadow: 0 8px 28px rgb(15 23 42 / 6%);
-  padding: 14px 16px 10px;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  padding: 14px 18px 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .composer:focus-within {
-  border-color: var(--od-primary-300, #7a9fc4);
-  box-shadow: 0 10px 32px rgb(31 78 121 / 12%);
+  border-color: var(--od-color-accent, #2563eb);
+  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.14);
 }
 
 .composer.hero {
@@ -81,14 +81,14 @@ function onKeydown(event: KeyboardEvent) {
 .hero-input {
   display: block;
   width: 100%;
-  min-height: 28px;
+  min-height: 32px;
   max-height: 160px;
   border: 0;
   outline: none;
   resize: none;
   font-size: 15px;
   line-height: 1.6;
-  color: var(--od-gray-800, #1e293b);
+  color: var(--od-gray-900, #0f172a);
   background: transparent;
   font-family: inherit;
 }
@@ -103,6 +103,8 @@ function onKeydown(event: KeyboardEvent) {
   justify-content: space-between;
   margin-top: 10px;
   gap: 12px;
+  border-top: 1px solid var(--od-gray-100, #f1f5f9);
+  padding-top: 8px;
 }
 
 .hint {
@@ -118,20 +120,23 @@ function onKeydown(event: KeyboardEvent) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--od-primary-500, #1f4e79);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: #fff;
   cursor: pointer;
   flex-shrink: 0;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  transition: all 0.15s ease;
 }
 
 .send-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .send-btn:not(:disabled):hover {
-  transform: translateY(-1px);
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
 }
 
 .sr-only {

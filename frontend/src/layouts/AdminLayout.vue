@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ApartmentOutlined, DatabaseOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { ApartmentOutlined, ArrowLeftOutlined, DatabaseOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -35,22 +35,27 @@ function backToUser() {
 <template>
   <div class="admin-shell">
     <div class="admin-banner">
-      <span class="admin-badge">{{ t('admin.badge') }}</span>
-      <span class="admin-title">{{ t('menu.admin') }}</span>
-      <a-button type="link" class="admin-back" @click="backToUser">{{ t('admin.backToUser') }}</a-button>
+      <div class="admin-banner-left">
+        <span class="admin-badge">{{ t('admin.badge') }}</span>
+        <span class="admin-title">{{ t('menu.admin') }}</span>
+      </div>
+      <a-button type="link" class="admin-back" @click="backToUser">
+        <template #icon><ArrowLeftOutlined /></template>
+        {{ t('admin.backToUser') }}
+      </a-button>
     </div>
     <div class="admin-body">
       <aside class="admin-nav">
-        <a-menu mode="inline" :selected-keys="selectedKeys" @click="onNavClick">
+        <a-menu mode="inline" :selected-keys="selectedKeys" class="admin-menu" @click="onNavClick">
           <a-menu-item v-for="item in items" :key="item.key">
             <component :is="item.icon" />
             <span>{{ t(item.labelKey) }}</span>
           </a-menu-item>
         </a-menu>
       </aside>
-      <div class="admin-content">
+      <main class="admin-content">
         <RouterView />
-      </div>
+      </main>
     </div>
   </div>
 </template>
@@ -59,33 +64,54 @@ function backToUser() {
 .admin-shell {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 100px);
+  min-height: calc(100vh - 110px);
+  border-radius: var(--od-radius-card, 12px);
+  overflow: hidden;
+  box-shadow: var(--od-shadow-2);
 }
 
 .admin-banner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  background: #0d2b45;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: #fff;
-  border-radius: 8px 8px 0 0;
+}
+
+.admin-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .admin-badge {
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 700;
   padding: 2px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(37, 99, 235, 0.3);
+  border: 1px solid rgba(59, 130, 246, 0.4);
   border-radius: 999px;
+  color: #93c5fd;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .admin-title {
-  font-weight: 600;
+  font-weight: 650;
+  font-size: 15px;
+  letter-spacing: -0.01em;
 }
 
 .admin-back {
-  margin-left: auto;
-  color: #d6e4f0;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-back:hover {
+  color: #60a5fa;
 }
 
 .admin-body {
@@ -93,19 +119,36 @@ function backToUser() {
   flex: 1;
   min-height: 0;
   background: #fff;
-  border: 1px solid #e8eef4;
-  border-top: 0;
-  border-radius: 0 0 8px 8px;
 }
 
 .admin-nav {
-  width: 200px;
-  border-right: 1px solid #f0f0f0;
+  width: 210px;
+  border-right: 1px solid var(--od-gray-200, #e2e8f0);
+  background: #fafbfc;
+  padding: 8px 0;
+}
+
+.admin-menu {
+  background: transparent !important;
+  border-right: 0 !important;
+}
+
+:deep(.admin-menu .ant-menu-item) {
+  margin: 4px 8px !important;
+  border-radius: 8px !important;
+  font-weight: 500;
+}
+
+:deep(.admin-menu .ant-menu-item-selected) {
+  background: var(--od-primary-50, #eff6ff) !important;
+  color: var(--od-color-primary, #1e40af) !important;
+  font-weight: 600;
 }
 
 .admin-content {
   flex: 1;
-  padding: 16px;
+  padding: 20px 24px;
   min-width: 0;
+  background: #fff;
 }
 </style>

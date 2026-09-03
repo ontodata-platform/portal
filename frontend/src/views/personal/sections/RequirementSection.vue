@@ -1,4 +1,13 @@
 <script setup lang="ts">
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  FieldTimeOutlined,
+  PlayCircleOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  SyncOutlined,
+} from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -41,7 +50,7 @@ const columns = computed(() => [
   { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 130 },
   { title: t('common.title'), dataIndex: 'title', key: 'title' },
   { title: t('common.requester'), dataIndex: 'requester', key: 'requester', width: 120 },
-  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120 },
   { title: t('requirements.assigneeTarget'), dataIndex: 'assigneeSystem', key: 'assigneeSystem', width: 150 },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 180 },
 ])
@@ -55,7 +64,6 @@ const statusColor: Record<string, string> = {
   CANCELED: 'default',
 }
 
-/** 需求类型展示文案（协议编码不变，界面按语言翻译）。 */
 const typeLabel = computed(
   () =>
     ({
@@ -65,7 +73,6 @@ const typeLabel = computed(
     }) as Record<string, string>,
 )
 
-/** 需求状态展示文案（协议编码不变，界面按语言翻译）。 */
 const statusText = computed(
   () =>
     ({
@@ -211,7 +218,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div>
+  <div class="requirement-section">
     <PageHeader
       :eyebrow="t('menu.groupCollab')"
       :title="t('menu.requirements')"
@@ -227,157 +234,213 @@ onMounted(load)
     />
 
     <a-card v-else :bordered="false" class="requirements-card">
-    <a-space style="margin-bottom: 16px" wrap>
-      <a-select v-model:value="query.status" :placeholder="t('requirements.statusPlaceholder')" allow-clear style="width: 150px">
-        <a-select-option value="OPEN">{{ t('requirements.open') }}</a-select-option>
-        <a-select-option value="ANALYZING">{{ t('requirements.analyzing') }}</a-select-option>
-        <a-select-option value="ASSIGNED">{{ t('requirements.assigned') }}</a-select-option>
-        <a-select-option value="IN_PROGRESS">{{ t('requirements.inProgress') }}</a-select-option>
-        <a-select-option value="COMPLETED">{{ t('requirements.completed') }}</a-select-option>
-        <a-select-option value="CANCELED">{{ t('requirements.canceled') }}</a-select-option>
-      </a-select>
-      <a-select v-model:value="query.type" :placeholder="t('requirements.typePlaceholder')" allow-clear style="width: 150px">
-        <a-select-option value="DATA">{{ t('requirements.dataRequirement') }}</a-select-option>
-        <a-select-option value="ALGORITHM">{{ t('requirements.algorithmRequirement') }}</a-select-option>
-        <a-select-option value="COMPREHENSIVE">{{ t('requirements.comprehensiveRequirement') }}</a-select-option>
-      </a-select>
-      <a-input v-model:value="query.keyword" :placeholder="t('requirements.keywordPlaceholder')" style="width: 180px" allow-clear />
-      <a-button
-        type="primary"
-        @click="
-          query.page = 1;
-          load();
+      <div class="toolbar-area">
+        <a-space wrap>
+          <a-select v-model:value="query.status" :placeholder="t('requirements.statusPlaceholder')" allow-clear style="width: 140px">
+            <a-select-option value="OPEN">{{ t('requirements.open') }}</a-select-option>
+            <a-select-option value="ANALYZING">{{ t('requirements.analyzing') }}</a-select-option>
+            <a-select-option value="ASSIGNED">{{ t('requirements.assigned') }}</a-select-option>
+            <a-select-option value="IN_PROGRESS">{{ t('requirements.inProgress') }}</a-select-option>
+            <a-select-option value="COMPLETED">{{ t('requirements.completed') }}</a-select-option>
+            <a-select-option value="CANCELED">{{ t('requirements.canceled') }}</a-select-option>
+          </a-select>
+          <a-select v-model:value="query.type" :placeholder="t('requirements.typePlaceholder')" allow-clear style="width: 140px">
+            <a-select-option value="DATA">{{ t('requirements.dataRequirement') }}</a-select-option>
+            <a-select-option value="ALGORITHM">{{ t('requirements.algorithmRequirement') }}</a-select-option>
+            <a-select-option value="COMPREHENSIVE">{{ t('requirements.comprehensiveRequirement') }}</a-select-option>
+          </a-select>
+          <a-input
+            v-model:value="query.keyword"
+            :placeholder="t('requirements.keywordPlaceholder')"
+            style="width: 180px"
+            allow-clear
+            @press-enter="query.page = 1; load()"
+          />
+          <a-button type="primary" @click="query.page = 1; load()">
+            <template #icon><SearchOutlined /></template>
+            {{ t('common.query') }}
+          </a-button>
+        </a-space>
+
+        <a-button type="primary" @click="createOpen = true">
+          <template #icon><PlusOutlined /></template>
+          {{ t('requirements.createButton') }}
+        </a-button>
+      </div>
+
+      <EmptyState
+        v-if="!loading && rows.length === 0"
+        :title="t('requirements.emptyTitle')"
+        :description="t('requirements.emptyDesc')"
+        :action-label="t('requirements.createButton')"
+        @action="createOpen = true"
+      />
+
+      <a-table
+        v-else
+        :columns="columns"
+        :data-source="rows"
+        :loading="loading"
+        row-key="code"
+        class="requirement-table"
+        :pagination="{ current: query.page, pageSize: query.size, total, showTotal: (tot: number) => `共 ${tot} 项` }"
+        @change="
+          (pagination: { current?: number }) => {
+            query.page = pagination.current ?? 1;
+            load();
+          }
         "
       >
-        {{ t('common.query') }}
-      </a-button>
-      <a-button @click="createOpen = true">{{ t('requirements.createButton') }}</a-button>
-    </a-space>
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'code'">
+            <span class="mono-code">{{ record.code }}</span>
+          </template>
 
-    <EmptyState
-      v-if="!loading && rows.length === 0"
-      :title="t('requirements.emptyTitle')"
-      :description="t('requirements.emptyDesc')"
-      :action-label="t('requirements.createButton')"
-      @action="createOpen = true"
-    />
-    <a-table
-      v-else
-      :columns="columns"
-      :data-source="rows"
-      :loading="loading"
-      row-key="code"
-      :pagination="{ current: query.page, pageSize: query.size, total }"
-      @change="
-        (pagination: { current?: number }) => {
-          query.page = pagination.current ?? 1;
-          load();
-        }
-      "
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'requirementType'">
-          {{ typeLabel[record.requirementType] ?? record.requirementType }}
+          <template v-else-if="column.key === 'requirementType'">
+            <a-tag :color="record.requirementType === 'DATA' ? 'cyan' : record.requirementType === 'ALGORITHM' ? 'purple' : 'blue'">
+              {{ typeLabel[record.requirementType] ?? record.requirementType }}
+            </a-tag>
+          </template>
+
+          <template v-else-if="column.key === 'status'">
+            <a-tag :color="statusColor[record.status]" class="status-tag">
+              <template #icon>
+                <FieldTimeOutlined v-if="record.status === 'OPEN'" />
+                <SyncOutlined v-else-if="record.status === 'IN_PROGRESS' || record.status === 'ANALYZING'" spin />
+                <CheckCircleOutlined v-else-if="record.status === 'COMPLETED'" />
+                <CloseCircleOutlined v-else-if="record.status === 'CANCELED'" />
+              </template>
+              {{ statusText[record.status] ?? record.status }}
+            </a-tag>
+          </template>
+
+          <template v-else-if="column.key === 'action'">
+            <a-space size="small">
+              <a-button
+                v-if="record.status === 'OPEN'"
+                size="small"
+                type="primary"
+                ghost
+                @click="analyze(record)"
+              >
+                {{ t('requirements.analyze') }}
+              </a-button>
+              <a-button
+                v-if="record.status === 'ANALYZING'"
+                size="small"
+                type="primary"
+                @click="openAssign(record)"
+              >
+                {{ t('requirements.assign') }}
+              </a-button>
+              <a-button
+                v-if="record.status === 'ASSIGNED'"
+                size="small"
+                type="primary"
+                @click="transition(() => requirementApi.progress(record.code), t('requirements.progressed', { code: record.code }))"
+              >
+                <template #icon><PlayCircleOutlined /></template>
+                {{ t('requirements.start') }}
+              </a-button>
+              <a-button
+                v-if="record.status === 'IN_PROGRESS'"
+                size="small"
+                type="primary"
+                @click="openComplete(record)"
+              >
+                {{ t('requirements.complete') }}
+              </a-button>
+              <a-button
+                v-if="record.status === 'OPEN' || record.status === 'ANALYZING'"
+                size="small"
+                danger
+                type="text"
+                @click="cancel(record)"
+              >
+                {{ t('requirements.cancel') }}
+              </a-button>
+            </a-space>
+          </template>
         </template>
-        <template v-if="column.key === 'status'">
-          <a-tag :color="statusColor[record.status]">{{ statusText[record.status] ?? record.status }}</a-tag>
-        </template>
-        <template v-else-if="column.key === 'action'">
-          <a-space>
-            <a-button
-              v-if="record.status === 'OPEN'"
-              size="small"
-              type="primary"
-              @click="analyze(record)"
-            >
-              {{ t('requirements.analyze') }}
-            </a-button>
-            <a-button
-              v-if="record.status === 'ANALYZING'"
-              size="small"
-              type="primary"
-              @click="openAssign(record)"
-            >
-              {{ t('requirements.assign') }}
-            </a-button>
-            <a-button
-              v-if="record.status === 'ASSIGNED'"
-              size="small"
-              type="primary"
-              @click="transition(() => requirementApi.progress(record.code), t('requirements.progressed', { code: record.code }))"
-            >
-              {{ t('requirements.start') }}
-            </a-button>
-            <a-button
-              v-if="record.status === 'IN_PROGRESS'"
-              size="small"
-              type="primary"
-              @click="openComplete(record)"
-            >
-              {{ t('requirements.complete') }}
-            </a-button>
-            <a-button
-              v-if="record.status === 'OPEN' || record.status === 'ANALYZING'"
-              size="small"
-              danger
-              @click="cancel(record)"
-            >
-              {{ t('requirements.cancel') }}
-            </a-button>
-          </a-space>
-        </template>
-      </template>
-    </a-table>
+      </a-table>
 
-    <a-modal v-model:open="createOpen" :title="t('requirements.createModal')" :confirm-loading="creating" @ok="create">
-      <a-form layout="vertical">
-        <a-form-item :label="t('requirements.requirementType')" required>
-          <a-radio-group v-model:value="createForm.requirementType">
-            <a-radio value="DATA">{{ t('requirements.dataRequirement') }}</a-radio>
-            <a-radio value="ALGORITHM">{{ t('requirements.algorithmRequirement') }}</a-radio>
-            <a-radio value="COMPREHENSIVE">{{ t('requirements.comprehensiveRequirement') }}</a-radio>
-          </a-radio-group>
-        </a-form-item>
-        <a-form-item :label="t('common.title')" required>
-          <a-input v-model:value="createForm.title" :placeholder="t('requirements.titlePlaceholder')" />
-        </a-form-item>
-        <a-form-item :label="t('requirements.description')">
-          <a-textarea v-model:value="createForm.description" :placeholder="t('requirements.descriptionPlaceholder')" :rows="3" />
-        </a-form-item>
-      </a-form>
-    </a-modal>
+      <!-- 创建需求弹窗 -->
+      <a-modal
+        v-model:open="createOpen"
+        :title="t('requirements.createModal')"
+        :confirm-loading="creating"
+        width="600px"
+        @ok="create"
+      >
+        <a-form layout="vertical">
+          <a-form-item :label="t('requirements.requirementType')" required>
+            <a-radio-group v-model:value="createForm.requirementType" button-style="solid">
+              <a-radio-button value="DATA">{{ t('requirements.dataRequirement') }}</a-radio-button>
+              <a-radio-button value="ALGORITHM">{{ t('requirements.algorithmRequirement') }}</a-radio-button>
+              <a-radio-button value="COMPREHENSIVE">{{ t('requirements.comprehensiveRequirement') }}</a-radio-button>
+            </a-radio-group>
+          </a-form-item>
+          <a-form-item :label="t('common.title')" required>
+            <a-input v-model:value="createForm.title" :placeholder="t('requirements.titlePlaceholder')" />
+          </a-form-item>
+          <a-form-item :label="t('requirements.description')">
+            <a-textarea v-model:value="createForm.description" :placeholder="t('requirements.descriptionPlaceholder')" :rows="3" />
+          </a-form-item>
+        </a-form>
+      </a-modal>
 
-    <a-modal v-model:open="assignOpen" :title="t('requirements.assignModal')" :confirm-loading="assigning" @ok="assign">
-      <a-form layout="vertical">
-        <a-form-item :label="t('requirements.assignTargetLabel')" required>
-          <a-select v-model:value="assignForm.assigneeSystem">
-            <a-select-option value="data-platform">data-platform</a-select-option>
-            <a-select-option value="algorithm-transform">algorithm-transform</a-select-option>
-            <a-select-option value="algorithm-recombine">algorithm-recombine</a-select-option>
-            <a-select-option value="ontology-platform">ontology-platform</a-select-option>
-            <a-select-option value="mcp-gateway">mcp-gateway</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item :label="t('requirements.assigneeRefLabel')">
-          <a-input v-model:value="assignForm.assigneeRef" :placeholder="t('requirements.assigneeRefPlaceholder')" />
-        </a-form-item>
-      </a-form>
-    </a-modal>
+      <!-- 分派协同系统弹窗 -->
+      <a-modal v-model:open="assignOpen" :title="t('requirements.assignModal')" :confirm-loading="assigning" @ok="assign">
+        <a-form layout="vertical">
+          <a-form-item :label="t('requirements.assignTargetLabel')" required>
+            <a-select v-model:value="assignForm.assigneeSystem">
+              <a-select-option value="data-platform">data-platform (数据管理平台)</a-select-option>
+              <a-select-option value="algorithm-transform">algorithm-transform (算法转换工具)</a-select-option>
+              <a-select-option value="algorithm-recombine">algorithm-recombine (算法重组平台)</a-select-option>
+              <a-select-option value="ontology-platform">ontology-platform (本体平台)</a-select-option>
+              <a-select-option value="mcp-gateway">mcp-gateway (智能体网关)</a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item :label="t('requirements.assigneeRefLabel')">
+            <a-input v-model:value="assignForm.assigneeRef" :placeholder="t('requirements.assigneeRefPlaceholder')" />
+          </a-form-item>
+        </a-form>
+      </a-modal>
 
-    <a-modal v-model:open="closeOpen" :title="t('requirements.completeModal')" :confirm-loading="closing" @ok="complete">
-      <a-form layout="vertical">
-        <a-form-item :label="t('requirements.closedNoteLabel')" required>
-          <a-textarea v-model:value="closeForm.closedNote" :placeholder="t('requirements.closedNotePlaceholder')" :rows="3" />
-        </a-form-item>
-      </a-form>
-    </a-modal>
+      <!-- 办结需求弹窗 -->
+      <a-modal v-model:open="closeOpen" :title="t('requirements.completeModal')" :confirm-loading="closing" @ok="complete">
+        <a-form layout="vertical">
+          <a-form-item :label="t('requirements.closedNoteLabel')" required>
+            <a-textarea v-model:value="closeForm.closedNote" :placeholder="t('requirements.closedNotePlaceholder')" :rows="3" />
+          </a-form-item>
+        </a-form>
+      </a-modal>
     </a-card>
   </div>
 </template>
 
 <style scoped>
 .requirements-card {
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-radius: var(--od-radius-card, 12px);
+  box-shadow: var(--od-shadow-1);
+}
+
+.toolbar-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mono-code {
+  font-family: var(--od-font-mono, monospace);
+  font-weight: 600;
+}
+
+.status-tag {
+  font-weight: 500;
+  border-radius: 4px;
 }
 </style>

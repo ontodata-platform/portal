@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { SearchOutlined } from '@ant-design/icons-vue'
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import MarketServiceCard from '@/components/marketplace/MarketServiceCard.vue'
 import { marketplaceApi } from '@/api/portal'
 import { catalogItems, catalogTotal } from '@/catalog'
+import MarketServiceCard from '@/components/marketplace/MarketServiceCard.vue'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
@@ -40,7 +41,6 @@ async function load() {
     })
     rows.value = catalogItems(aggregation.value)
     total.value = catalogTotal(aggregation.value)
-    // 列表加载成功后清掉上一页残留的全局错误条（如详情 404）
     if (messageStore.feedback?.kind === 'error') {
       messageStore.clear()
     }
@@ -56,7 +56,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div>
+  <div class="marketplace-page">
     <PageHeader
       :eyebrow="t('menu.groupPortal')"
       :title="t('menu.marketplace')"
@@ -72,58 +72,60 @@ onMounted(load)
     />
 
     <a-card v-else :bordered="false" class="marketplace-card">
-    <a-alert
-      v-if="aggregation && !aggregation.available"
-      type="warning"
-      show-icon
-      style="margin-bottom: 16px"
-      :message="aggregation.message ?? t('marketplace.unavailable')"
-      :description="t('marketplace.description')"
-    />
-
-    <div class="toolbar">
-      <a-input-search
-        v-model:value="query.keyword"
-        :placeholder="t('marketplace.searchPlaceholder')"
-        style="width: 360px"
-        allow-clear
-        @search="
-          query.page = 1;
-          load();
-        "
+      <a-alert
+        v-if="aggregation && !aggregation.available"
+        type="warning"
+        show-icon
+        style="margin-bottom: 16px; border-radius: 8px"
+        :message="aggregation.message ?? t('marketplace.unavailable')"
+        :description="t('marketplace.description')"
       />
-    </div>
 
-    <SkeletonList v-if="loading" variant="cards" :rows="6" />
-    <EmptyState
-      v-else-if="rows.length === 0"
-      :title="t('marketplace.emptyTitle')"
-      :description="t('marketplace.emptyDesc')"
-    />
-    <div v-else class="card-grid">
-      <MarketServiceCard v-for="item in rows" :key="item.code" :item="item" />
-    </div>
-    <div v-if="total > query.size" class="pager">
-      <a-pagination
-        :current="query.page"
-        :page-size="query.size"
-        :total="total"
-        @change="
-          (page: number) => {
-            query.page = page
-            load()
-          }
-        "
+      <div class="toolbar">
+        <a-input
+          v-model:value="query.keyword"
+          :placeholder="t('marketplace.searchPlaceholder')"
+          style="width: 320px"
+          allow-clear
+          @press-enter="query.page = 1; load()"
+        >
+          <template #prefix><SearchOutlined style="color: #94a3b8" /></template>
+        </a-input>
+        <a-button type="primary" @click="query.page = 1; load()">
+          {{ t('common.query') }}
+        </a-button>
+      </div>
+
+      <SkeletonList v-if="loading" variant="cards" :rows="6" />
+      <EmptyState
+        v-else-if="rows.length === 0"
+        :title="t('marketplace.emptyTitle')"
+        :description="t('marketplace.emptyDesc')"
       />
-    </div>
+      <div v-else class="card-grid">
+        <MarketServiceCard v-for="item in rows" :key="item.code" :item="item" />
+      </div>
+      <div v-if="total > query.size" class="pager">
+        <a-pagination
+          :current="query.page"
+          :page-size="query.size"
+          :total="total"
+          @change="
+            (page: number) => {
+              query.page = page
+              load()
+            }
+          "
+        />
+      </div>
     </a-card>
   </div>
 </template>
 
 <style scoped>
 .marketplace-card {
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-radius: var(--od-radius-card, 12px);
+  box-shadow: var(--od-shadow-1);
 }
 
 .toolbar {
@@ -131,17 +133,17 @@ onMounted(load)
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
 }
 
 .pager {
-  margin-top: 16px;
+  margin-top: 20px;
   text-align: right;
 }
 </style>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CheckOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -72,11 +73,11 @@ async function markAllRead() {
 
 function openResource(item: PortalNotification) {
   if (item.type === 'APPROVAL_DECIDED') {
-    router.push('/personal/approvals')
+    void router.push('/personal/approvals')
     return
   }
   if (item.type === 'TASK_COMPLETED') {
-    router.push('/personal/tasks')
+    void router.push('/personal/tasks')
   }
 }
 
@@ -84,14 +85,17 @@ onMounted(load)
 </script>
 
 <template>
-  <div>
+  <div class="notification-section">
     <PageHeader
       :eyebrow="t('menu.groupCollab')"
       :title="t('menu.notifications')"
       :description="t('notifications.pageDesc')"
     >
       <template #extra>
-        <a-button @click="markAllRead">{{ t('notifications.markAllRead') }}</a-button>
+        <a-button type="primary" ghost @click="markAllRead">
+          <template #icon><CheckOutlined /></template>
+          {{ t('notifications.markAllRead') }}
+        </a-button>
       </template>
     </PageHeader>
 
@@ -103,51 +107,72 @@ onMounted(load)
       @retry="load"
     />
 
-    <a-card v-else :bordered="false">
-    <EmptyState
-      v-if="!loading && rows.length === 0"
-      :title="t('notifications.empty')"
-      :description="t('notifications.emptyDesc')"
-    />
-    <a-table
-      v-else
-      :columns="columns"
-      :data-source="rows"
-      :loading="loading"
-      row-key="id"
-      :pagination="{ current: query.page, pageSize: query.size, total }"
-      @change="
-        (pagination: { current?: number }) => {
-          query.page = pagination.current ?? 1
-          load()
-        }
-      "
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'type'">
-          <a-tag :color="record.type === 'APPROVAL_DECIDED' ? 'blue' : 'green'">
-            {{
-              record.type === 'APPROVAL_DECIDED'
-                ? t('notifications.approvalDecided')
-                : t('notifications.taskCompleted')
-            }}
-          </a-tag>
+    <a-card v-else :bordered="false" class="notifications-card">
+      <EmptyState
+        v-if="!loading && rows.length === 0"
+        :title="t('notifications.empty')"
+        :description="t('notifications.emptyDesc')"
+      />
+      <a-table
+        v-else
+        :columns="columns"
+        :data-source="rows"
+        :loading="loading"
+        row-key="id"
+        class="notification-table"
+        :pagination="{ current: query.page, pageSize: query.size, total, showTotal: (tot: number) => `共 ${tot} 项` }"
+        @change="
+          (pagination: { current?: number }) => {
+            query.page = pagination.current ?? 1
+            load()
+          }
+        "
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'type'">
+            <a-tag :color="record.type === 'APPROVAL_DECIDED' ? 'blue' : 'green'">
+              {{
+                record.type === 'APPROVAL_DECIDED'
+                  ? t('notifications.approvalDecided')
+                  : t('notifications.taskCompleted')
+              }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'title'">
+            <span class="notice-title-text" :class="{ unread: !record.readAt }">{{ record.title }}</span>
+          </template>
+          <template v-else-if="column.key === 'readAt'">
+            <a-tag :color="record.readAt ? 'default' : 'orange'">
+              {{ record.readAt ? t('notifications.all') : t('notifications.unread') }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'action'">
+            <a-space>
+              <a-button v-if="!record.readAt" size="small" @click="markRead(record.id)">
+                {{ t('notifications.markRead') }}
+              </a-button>
+              <a-button size="small" type="link" @click="openResource(record)">{{ t('common.detail') }}</a-button>
+            </a-space>
+          </template>
         </template>
-        <template v-else-if="column.key === 'readAt'">
-          <a-tag :color="record.readAt ? 'default' : 'orange'">
-            {{ record.readAt ? t('notifications.all') : t('notifications.unread') }}
-          </a-tag>
-        </template>
-        <template v-else-if="column.key === 'action'">
-          <a-space>
-            <a-button v-if="!record.readAt" size="small" @click="markRead(record.id)">
-              {{ t('notifications.markRead') }}
-            </a-button>
-            <a-button size="small" type="link" @click="openResource(record)">{{ t('common.detail') }}</a-button>
-          </a-space>
-        </template>
-      </template>
-    </a-table>
+      </a-table>
     </a-card>
   </div>
 </template>
+
+<style scoped>
+.notifications-card {
+  border-radius: var(--od-radius-card, 12px);
+  box-shadow: var(--od-shadow-1);
+}
+
+.notice-title-text {
+  font-size: 13px;
+  color: var(--od-gray-700, #334155);
+}
+
+.notice-title-text.unread {
+  font-weight: 600;
+  color: var(--od-gray-900, #0f172a);
+}
+</style>

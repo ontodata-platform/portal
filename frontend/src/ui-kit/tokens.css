@@ -1,53 +1,86 @@
 :root {
   color-scheme: light;
 
-  --od-color-ink: #102a43;
-  --od-color-ink-soft: #334e68;
-  --od-color-muted: #52677a;
-  --od-color-paper: #f4f7fb;
+  /* 基础文字与版面色彩体系 */
+  --od-color-ink: #0f172a;
+  --od-color-ink-soft: #334155;
+  --od-color-muted: #64748b;
+  --od-color-paper: #f8fafc;
   --od-color-panel: #ffffff;
-  --od-color-primary: #1f4e79;
-  --od-color-accent: #2b6cb0;
-  --od-color-teal: #1f7a8c;
-  --od-color-violet: #6558b1;
-  --od-color-line: #d5e0e9;
-  --od-color-line-soft: #e8eef3;
+  --od-color-panel-translucent: rgba(255, 255, 255, 0.82);
 
-  --od-color-success: #168a62;
-  --od-color-running: #2b6cb0;
-  --od-color-warning: #d68a1f;
-  --od-color-blocked: #c53030;
-  --od-color-archived: #718096;
+  /* 品牌主色与科技感点缀色 */
+  --od-color-primary: #1e40af;
+  --od-color-primary-hover: #1d4ed8;
+  --od-color-accent: #2563eb;
+  --od-color-teal: #0891b2;
+  --od-color-violet: #6366f1;
+  --od-color-line: #e2e8f0;
+  --od-color-line-soft: #f1f5f9;
 
-  --od-font-ui: Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
-  --od-font-mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  /* 业务状态体系 */
+  --od-color-success: #059669;
+  --od-color-success-bg: #ecfdf5;
+  --od-color-running: #2563eb;
+  --od-color-running-bg: #eff6ff;
+  --od-color-warning: #d97706;
+  --od-color-warning-bg: #fffbeb;
+  --od-color-blocked: #dc2626;
+  --od-color-blocked-bg: #fef2f2;
+  --od-color-archived: #64748b;
 
+  /* 字体家族 */
+  --od-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --od-font-mono: "JetBrains Mono", "Cascadia Code", "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  /* 间距刻度 */
+  --od-space-05: 4px;
   --od-space-1: 8px;
+  --od-space-15: 12px;
   --od-space-2: 16px;
+  --od-space-25: 20px;
   --od-space-3: 24px;
   --od-space-4: 32px;
+  --od-space-5: 40px;
 
-  --od-title-page: 28px;
+  /* 字号阶梯 */
+  --od-text-11: 11px;
+  --od-text-12: 12px;
+  --od-text-13: 13px;
+  --od-text-14: 14px;
+  --od-text-15: 15px;
+  --od-text-16: 16px;
+  --od-text-18: 18px;
+  --od-text-20: 20px;
+  --od-text-24: 24px;
+  --od-text-28: 28px;
+  --od-text-32: 32px;
+
+  --od-title-page: 26px;
   --od-title-section: 18px;
   --od-title-card: 16px;
 
-  --od-sidebar-width: 224px;
-  --od-topbar-height: 64px;
-  --od-focus-ring: 0 0 0 3px rgb(43 108 176 / 24%);
+  /* 布局常数 */
+  --od-sidebar-width: 230px;
+  --od-topbar-height: 60px;
+  --od-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.2);
 
-  --od-primary-50: #eef4fa;
-  --od-primary-100: #d6e4f0;
-  --od-primary-200: #adc6de;
-  --od-primary-300: #7a9fc4;
-  --od-primary-400: #4d7aa8;
-  --od-primary-500: #1f4e79;
-  --od-primary-600: #1b446a;
-  --od-primary-700: #163856;
-  --od-primary-800: #112c43;
-  --od-primary-900: #0d2b45;
+  /* 主色调色板 */
+  --od-primary-50: #eff6ff;
+  --od-primary-100: #dbeafe;
+  --od-primary-200: #bfdbfe;
+  --od-primary-300: #93c5fd;
+  --od-primary-400: #60a5fa;
+  --od-primary-500: #3b82f6;
+  --od-primary-600: #2563eb;
+  --od-primary-700: #1d4ed8;
+  --od-primary-800: #1e40af;
+  --od-primary-900: #1e3a8a;
+  --od-primary-950: #172554;
 
-  --od-gray-50: #ffffff;
-  --od-gray-100: #f8fafc;
+  /* 中性灰色阶梯 */
+  --od-gray-50: #f8fafc;
+  --od-gray-100: #f1f5f9;
   --od-gray-200: #e2e8f0;
   --od-gray-300: #cbd5e1;
   --od-gray-400: #94a3b8;
@@ -56,27 +89,39 @@
   --od-gray-700: #334155;
   --od-gray-800: #1e293b;
   --od-gray-900: #0f172a;
+  --od-gray-950: #020617;
 
+  /* 圆角 */
+  --od-radius-xs: 4px;
+  --od-radius-sm: 6px;
   --od-radius-ctl: 8px;
   --od-radius-card: 12px;
-  --od-radius-pop: 16px;
-  --od-shadow-1: 0 1px 2px rgb(15 23 42 / 6%);
-  --od-shadow-2: 0 4px 12px rgb(15 23 42 / 8%);
-  --od-shadow-3: 0 12px 32px rgb(15 23 42 / 12%);
-  --od-text-12: 12px;
-  --od-text-13: 13px;
-  --od-text-14: 14px;
-  --od-text-16: 16px;
-  --od-text-20: 20px;
-  --od-text-28: 28px;
-  --od-chart-1: #1f4e79;
-  --od-chart-2: #2b6cb0;
-  --od-chart-3: #168a62;
-  --od-chart-4: #d68a1f;
-  --od-chart-5: #6558b1;
-  --od-chart-6: #c53030;
+  --od-radius-lg: 16px;
+  --od-radius-full: 9999px;
 
-  /* 本体旧变量别名，避免既有页面一次性改完 */
+  /* 现代分层投影 */
+  --od-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --od-shadow-1: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --od-shadow-2: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --od-shadow-3: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --od-shadow-4: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  --od-shadow-glow: 0 0 20px rgba(37, 99, 235, 0.18);
+
+  /* 数据可视化与图表色 */
+  --od-chart-1: #2563eb;
+  --od-chart-2: #0891b2;
+  --od-chart-3: #059669;
+  --od-chart-4: #d97706;
+  --od-chart-5: #7c3aed;
+  --od-chart-6: #dc2626;
+
+  /* 渐变装饰 */
+  --od-gradient-hero: linear-gradient(135deg, #ffffff 0%, #f0f7ff 50%, #f8fafc 100%);
+  --od-gradient-primary: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  --od-gradient-accent: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  --od-gradient-card-hover: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(248, 250, 252, 0.8) 100%);
+
+  /* 兼容既有别名 */
   --color-ink: var(--od-color-ink);
   --color-ink-soft: var(--od-color-ink-soft);
   --color-paper: var(--od-color-paper);
@@ -96,8 +141,8 @@
 
 @media (max-width: 900px) {
   :root {
-    --od-topbar-height: 58px;
-    --od-title-page: 24px;
-    --topbar-height: 58px;
+    --od-topbar-height: 56px;
+    --od-title-page: 22px;
+    --topbar-height: 56px;
   }
 }

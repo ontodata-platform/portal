@@ -88,59 +88,59 @@ function openHit(hit: Pick<CatalogSearchHit, 'kind' | 'id'>) {
     />
 
     <a-card :bordered="false">
-    <a-space wrap style="margin-bottom: 16px">
-      <a-input-search
-        v-model:value="query.q"
-        :placeholder="t('search.placeholder')"
-        style="width: 360px"
-        enter-button
-        @search="search"
-      >
-        <template #prefix>
-          <SearchOutlined />
-        </template>
-      </a-input-search>
-      <a-select
-        v-model:value="query.kind"
-        allow-clear
-        style="width: 180px"
-        :placeholder="t('search.kindPlaceholder')"
-        :options="kindOptions"
-      />
-    </a-space>
-
-    <ErrorState
-      v-if="loadError"
-      :reason="loadError"
-      :next-step="t('common.loadNextStep')"
-      :action-label="t('common.reload')"
-      @retry="search"
-    />
-    <EmptyState
-      v-else-if="!searched && !loading"
-      :title="t('search.emptyHint')"
-    />
-    <EmptyState
-      v-else-if="searched && hits.length === 0 && !loading"
-      :title="t('search.noHits')"
-    />
-    <a-list v-else :data-source="hits" :loading="loading">
-      <template #renderItem="{ item }: { item: CatalogSearchHit }">
-        <a-list-item class="hit-row" @click="openHit(item)">
-          <a-list-item-meta :title="item.title" :description="item.snippet">
-            <template #avatar>
-              <a-tag :color="kindColor[item.kind]">{{ t(`search.kind.${item.kind}`) }}</a-tag>
-            </template>
-          </a-list-item-meta>
-          <template #extra>
-            <a-space>
-              <a-tag>{{ item.classification }}</a-tag>
-              <span class="source">{{ item.source }}</span>
-            </a-space>
+      <a-space wrap style="margin-bottom: 16px">
+        <a-input-search
+          v-model:value="query.q"
+          :placeholder="t('search.placeholder')"
+          style="width: 360px"
+          enter-button
+          @search="search"
+        >
+          <template #prefix>
+            <SearchOutlined />
           </template>
-        </a-list-item>
-      </template>
-    </a-list>
+        </a-input-search>
+        <a-select
+          v-model:value="query.kind"
+          allow-clear
+          style="width: 180px"
+          :placeholder="t('search.kindPlaceholder')"
+          :options="kindOptions"
+        />
+      </a-space>
+
+      <ErrorState
+        v-if="loadError"
+        :reason="loadError"
+        :next-step="t('common.loadNextStep')"
+        :action-label="t('common.reload')"
+        @retry="search"
+      />
+      <EmptyState
+        v-else-if="!searched && !loading"
+        :title="t('search.emptyHint')"
+      />
+      <EmptyState
+        v-else-if="searched && hits.length === 0 && !loading"
+        :title="t('search.noHits')"
+      />
+      <a-list v-else :data-source="hits" :loading="loading">
+        <template #renderItem="{ item }: { item: CatalogSearchHit }">
+          <a-list-item class="hit-row" @click="openHit(item)">
+            <a-list-item-meta :title="item.title" :description="item.snippet">
+              <template #avatar>
+                <a-tag :color="kindColor[item.kind]">{{ t(`search.kind.${item.kind}`) }}</a-tag>
+              </template>
+            </a-list-item-meta>
+            <template #extra>
+              <a-space>
+                <a-tag>{{ item.classification }}</a-tag>
+                <span class="source">{{ item.source }}</span>
+              </a-space>
+            </template>
+          </a-list-item>
+        </template>
+      </a-list>
     </a-card>
   </div>
 </template>

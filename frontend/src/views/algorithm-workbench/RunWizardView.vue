@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -8,10 +9,10 @@ import {
   type AlgorithmServiceDetail,
   type PreflightResult,
 } from '@/api/algorithm-workbench'
-import ErrorState from '@/ui-kit/ErrorState.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 import { useMessageStore } from '@/stores/message'
 import type { DescriptorInput, MyDelivery } from '@/types/descriptor'
+import ErrorState from '@/ui-kit/ErrorState.vue'
+import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -117,7 +118,7 @@ async function submit() {
       tier: tier.value,
     })
     messageStore.success(t('algoWorkbench.submitSuccess', { taskId: receipt.taskId }))
-    router.push('/algorithm-workbench?tab=runs')
+    void router.push('/algorithm-workbench?tab=runs')
   } catch (error) {
     messageStore.reportError(error)
   } finally {
@@ -129,7 +130,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div>
+  <div class="run-wizard-view">
     <PageHeader
       :eyebrow="t('menu.groupPortal')"
       :title="service?.name ?? t('menu.algorithmWorkbench')"
@@ -145,6 +146,16 @@ onMounted(load)
     />
 
     <a-card v-else :bordered="false" class="wizard-card">
+      <template #title>
+        <a-space>
+          <a-button type="link" @click="router.push('/algorithm-workbench')">
+            <template #icon><ArrowLeftOutlined /></template>
+            返回算法列表
+          </a-button>
+          <span class="wizard-title">运行向导: {{ service?.name }}</span>
+        </a-space>
+      </template>
+
       <a-spin :spinning="loading">
         <a-steps :current="step" class="wizard-steps" size="small">
           <a-step :title="t('algoWorkbench.wizardStep1')" />
@@ -213,24 +224,33 @@ onMounted(load)
                 class="preflight-check"
                 :data-state="check.state"
               >
-                <span class="preflight-label">{{ check.label }}</span>
-                <a-tag :color="check.state === 'pass' ? 'success' : 'error'">
-                  {{ check.state === 'pass' ? t('algoWorkbench.preflightPass') : t('algoWorkbench.preflightFail') }}
-                </a-tag>
-                <span class="preflight-hint">{{ check.hint }}</span>
+                <div class="check-left">
+                  <component
+                    :is="check.state === 'pass' ? CheckCircleOutlined : CloseCircleOutlined"
+                    :class="check.state === 'pass' ? 'icon-pass' : 'icon-fail'"
+                  />
+                  <span class="preflight-label">{{ check.label }}</span>
+                </div>
+                <div class="check-right">
+                  <a-tag :color="check.state === 'pass' ? 'success' : 'error'">
+                    {{ check.state === 'pass' ? t('algoWorkbench.preflightPass') : t('algoWorkbench.preflightFail') }}
+                  </a-tag>
+                  <span class="preflight-hint">{{ check.hint }}</span>
+                </div>
               </div>
               <a-alert
                 v-if="!preflight.ok"
                 type="error"
                 show-icon
                 :message="t('algoWorkbench.preflightOkRequired')"
-                style="margin-top: 12px"
+                style="margin-top: 16px; border-radius: 8px"
               />
             </div>
           </a-spin>
           <div class="wizard-actions">
             <a-button @click="step = 0">{{ t('algoWorkbench.wizardPrev') }}</a-button>
             <a-button :loading="preflightLoading" @click="runPreflight">
+              <template #icon><ReloadOutlined /></template>
               {{ t('algoWorkbench.preflightRerun') }}
             </a-button>
             <a-button
@@ -245,18 +265,23 @@ onMounted(load)
 
         <!-- 步骤 3：确认与提交 -->
         <div v-else class="wizard-body">
-          <a-descriptions :column="1" size="small" bordered class="confirm-table">
-            <a-descriptions-item :label="t('common.name')">{{ service?.name }}</a-descriptions-item>
+          <a-descriptions :column="1" size="middle" bordered class="confirm-table">
+            <a-descriptions-item :label="t('common.name')">
+              <strong>{{ service?.name }}</strong>
+            </a-descriptions-item>
             <a-descriptions-item v-for="input in inputs" :key="input.key" :label="input.label">
-              {{ inputValues[input.key] || '—' }}
+              <span class="mono-text">{{ inputValues[input.key] || '—' }}</span>
             </a-descriptions-item>
             <a-descriptions-item :label="t('algoWorkbench.wizardTier')">
-              {{ tier === 'standard' ? t('algoWorkbench.tierStandard') : t('algoWorkbench.tierLong') }}
+              <a-tag color="blue">
+                {{ tier === 'standard' ? t('algoWorkbench.tierStandard') : t('algoWorkbench.tierLong') }}
+              </a-tag>
             </a-descriptions-item>
           </a-descriptions>
           <div class="wizard-actions">
             <a-button @click="step = 1">{{ t('algoWorkbench.wizardPrev') }}</a-button>
             <a-button type="primary" :loading="submitting" @click="submit">
+              <template #icon><PlayCircleOutlined /></template>
               {{ t('algoWorkbench.wizardSubmit') }}
             </a-button>
           </div>
@@ -269,59 +294,98 @@ onMounted(load)
 <style scoped>
 .wizard-card {
   border-radius: var(--od-radius-card, 12px);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--od-shadow-1);
+}
+
+.wizard-title {
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--od-gray-900, #0f172a);
 }
 
 .wizard-steps {
-  max-width: 560px;
-  margin: 0 auto 24px;
+  max-width: 600px;
+  margin: 0 auto 32px;
 }
 
 .wizard-body {
-  max-width: 760px;
+  max-width: 720px;
   margin: 0 auto;
+  padding: 0 12px;
 }
 
 .wizard-form {
-  max-width: 560px;
+  max-width: 580px;
 }
 
 .wizard-actions {
   display: flex;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 28px;
 }
 
 .preflight {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .preflight-check {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  border: 1px solid var(--od-color-line-soft, #e8eef3);
+  border: 1px solid var(--od-gray-200, #e2e8f0);
   border-radius: 8px;
-  padding: 10px 12px;
-  background: var(--od-color-paper, #f4f7fb);
+  padding: 12px 16px;
+  background: var(--od-gray-50, #f8fafc);
+  transition: all 0.15s ease;
 }
 
 .preflight-check[data-state='fail'] {
-  border-color: color-mix(in srgb, var(--od-color-blocked, #c53030) 30%, transparent);
+  border-color: rgba(220, 38, 38, 0.3);
+  background: #fffafa;
+}
+
+.check-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-pass {
+  color: var(--od-color-success, #059669);
+  font-size: 16px;
+}
+
+.icon-fail {
+  color: var(--od-color-blocked, #dc2626);
+  font-size: 16px;
 }
 
 .preflight-label {
   font-weight: 600;
-  min-width: 96px;
+  font-size: 14px;
+  color: var(--od-gray-800, #1e293b);
+}
+
+.check-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .preflight-hint {
-  color: var(--od-color-muted, #52677a);
-  font-size: 12px;
+  color: var(--od-gray-500, #64748b);
+  font-size: 13px;
 }
 
 .confirm-table {
-  max-width: 640px;
+  max-width: 680px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mono-text {
+  font-family: var(--od-font-mono, monospace);
 }
 </style>

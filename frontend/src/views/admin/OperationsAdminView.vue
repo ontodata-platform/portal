@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { BellOutlined, CheckCircleOutlined, FormOutlined, MessageOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -20,11 +21,11 @@ const notices = ref<Notice[]>([])
 const noticeTotal = ref(0)
 const noticeQuery = reactive({ page: 1, size: 20, status: '', section: '' })
 const noticeColumns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code' },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
   { title: t('common.title'), dataIndex: 'title', key: 'title' },
-  { title: t('common.section'), dataIndex: 'section', key: 'section' },
-  { title: t('common.status'), dataIndex: 'status', key: 'status' },
-  { title: t('common.action'), dataIndex: 'action', key: 'action' },
+  { title: t('common.section'), dataIndex: 'section', key: 'section', width: 150 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
+  { title: t('common.action'), dataIndex: 'action', key: 'action', width: 150 },
 ])
 
 const noticeOpen = ref(false)
@@ -36,11 +37,11 @@ const feedbacks = ref<Feedback[]>([])
 const feedbackTotal = ref(0)
 const feedbackQuery = reactive({ page: 1, size: 20, status: '' })
 const feedbackColumns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code' },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
   { title: t('common.title'), dataIndex: 'title', key: 'title' },
-  { title: t('common.status'), dataIndex: 'status', key: 'status' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
   { title: t('common.handleNote'), dataIndex: 'handleNote', key: 'handleNote' },
-  { title: t('common.action'), dataIndex: 'action', key: 'action' },
+  { title: t('common.action'), dataIndex: 'action', key: 'action', width: 110 },
 ])
 
 const feedbackOpen = ref(false)
@@ -58,7 +59,6 @@ const noticeStatusColor: Record<string, string> = {
   ARCHIVED: 'default',
 }
 
-/** 公告/反馈状态展示文案（状态值本身是后端协议编码，界面按语言翻译展示）。 */
 const noticeStatusText: Record<string, string> = {
   DRAFT: t('operations.draft'),
   PUBLISHED: t('operations.published'),
@@ -125,9 +125,9 @@ async function loadFeedbacks() {
 
 function reloadAll() {
   loadError.value = ''
-  loadStatistics()
-  loadNotices()
-  loadFeedbacks()
+  void loadStatistics()
+  void loadNotices()
+  void loadFeedbacks()
 }
 
 async function createNotice() {
@@ -214,14 +214,14 @@ async function handleFeedback() {
 }
 
 onMounted(() => {
-  loadStatistics()
-  loadNotices()
-  loadFeedbacks()
+  void loadStatistics()
+  void loadNotices()
+  void loadFeedbacks()
 })
 </script>
 
 <template>
-  <div>
+  <div class="operations-admin-view">
     <PageHeader
       :eyebrow="t('menu.groupOperations')"
       :title="t('menu.operations')"
@@ -236,163 +236,297 @@ onMounted(() => {
       @retry="reloadAll"
     />
 
-    <a-card v-else>
-    <a-row :gutter="16" style="margin-bottom: 16px">
-      <a-col :span="8">
-        <a-statistic :title="t('operations.noticeTotal')" :value="statistics.noticeTotal" />
-      </a-col>
-      <a-col :span="8">
-        <a-statistic :title="t('operations.publishedNotices')" :value="statistics.publishedNotices" />
-      </a-col>
-      <a-col :span="8">
-        <a-statistic :title="t('operations.pendingFeedbacks')" :value="statistics.pendingFeedbacks" :value-style="{ color: statistics.pendingFeedbacks > 0 ? '#cf1322' : undefined }" />
-      </a-col>
-    </a-row>
+    <div v-else class="operations-body">
+      <!-- 统计指标卡 -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon-wrap notice">
+            <BellOutlined />
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">{{ t('operations.noticeTotal') }}</span>
+            <span class="stat-value">{{ statistics.noticeTotal }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap published">
+            <CheckCircleOutlined />
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">{{ t('operations.publishedNotices') }}</span>
+            <span class="stat-value">{{ statistics.publishedNotices }}</span>
+          </div>
+        </div>
+        <div class="stat-card" :class="{ urgent: statistics.pendingFeedbacks > 0 }">
+          <div class="stat-icon-wrap feedback">
+            <MessageOutlined />
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">{{ t('operations.pendingFeedbacks') }}</span>
+            <span class="stat-value">{{ statistics.pendingFeedbacks }}</span>
+          </div>
+        </div>
+      </div>
 
-    <a-space style="margin-bottom: 12px" wrap>
-      <a-select v-model:value="noticeQuery.status" :placeholder="t('operations.noticeStatusPlaceholder')" allow-clear style="width: 140px">
-        <a-select-option value="DRAFT">{{ t('operations.draft') }}</a-select-option>
-        <a-select-option value="PUBLISHED">{{ t('operations.published') }}</a-select-option>
-        <a-select-option value="ARCHIVED">{{ t('operations.archived') }}</a-select-option>
-      </a-select>
-      <a-input v-model:value="noticeQuery.section" :placeholder="t('operations.sectionPlaceholder')" style="width: 160px" />
-      <a-button
-        type="primary"
-        @click="
-          noticeQuery.page = 1;
-          loadNotices()
-        "
-      >
-        {{ t('operations.queryNotices') }}
-      </a-button>
-      <a-button @click="noticeOpen = true">{{ t('operations.publishNotice') }}</a-button>
-    </a-space>
-
-    <EmptyState
-      v-if="!noticeLoading && notices.length === 0"
-      :title="t('operations.emptyNotices')"
-      :description="t('operations.emptyNoticesDesc')"
-      :action-label="t('operations.publishNotice')"
-      @action="noticeOpen = true"
-    />
-    <a-table
-      v-else
-      :columns="noticeColumns"
-      :data-source="notices"
-      :loading="noticeLoading"
-      row-key="code"
-      :pagination="{ current: noticeQuery.page, pageSize: noticeQuery.size, total: noticeTotal }"
-      @change="
-        (pagination: { current?: number }) => {
-          noticeQuery.page = pagination.current ?? 1;
-          loadNotices();
-        }
-      "
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'status'">
-          <a-tag :color="noticeStatusColor[record.status]">{{ noticeStatusText[record.status] ?? record.status }}</a-tag>
-        </template>
-        <template v-else-if="column.key === 'action'">
-          <a-space>
-            <a-button v-if="record.status === 'DRAFT'" size="small" type="primary" @click="publishNotice(record)">
-              {{ t('operations.publish') }}
-            </a-button>
-            <a-button v-if="record.status === 'PUBLISHED'" size="small" @click="archiveNotice(record)">
-              {{ t('operations.archive') }}
+      <!-- 公告管理 -->
+      <a-card :bordered="false" class="op-card" :title="t('operations.noticeModalTitle')">
+        <div class="toolbar-area">
+          <a-space wrap>
+            <a-select v-model:value="noticeQuery.status" :placeholder="t('operations.noticeStatusPlaceholder')" allow-clear style="width: 140px">
+              <a-select-option value="DRAFT">{{ t('operations.draft') }}</a-select-option>
+              <a-select-option value="PUBLISHED">{{ t('operations.published') }}</a-select-option>
+              <a-select-option value="ARCHIVED">{{ t('operations.archived') }}</a-select-option>
+            </a-select>
+            <a-input v-model:value="noticeQuery.section" :placeholder="t('operations.sectionPlaceholder')" style="width: 160px" allow-clear />
+            <a-button type="primary" @click="noticeQuery.page = 1; loadNotices()">
+              <template #icon><SearchOutlined /></template>
+              {{ t('operations.queryNotices') }}
             </a-button>
           </a-space>
-        </template>
-      </template>
-    </a-table>
-
-    <a-divider orientation="left">{{ t('operations.userFeedback') }}</a-divider>
-
-    <a-space style="margin-bottom: 12px" wrap>
-      <a-select v-model:value="feedbackQuery.status" :placeholder="t('operations.feedbackStatusPlaceholder')" allow-clear style="width: 140px">
-        <a-select-option value="PENDING">{{ t('operations.pending') }}</a-select-option>
-        <a-select-option value="HANDLED">{{ t('operations.handled') }}</a-select-option>
-      </a-select>
-      <a-button
-        type="primary"
-        @click="
-          feedbackQuery.page = 1;
-          loadFeedbacks()
-        "
-      >
-        {{ t('operations.queryFeedbacks') }}
-      </a-button>
-      <a-button @click="feedbackOpen = true">{{ t('operations.submitFeedback') }}</a-button>
-    </a-space>
-
-    <EmptyState
-      v-if="!feedbackLoading && feedbacks.length === 0"
-      :title="t('operations.emptyFeedbacks')"
-      :description="t('operations.emptyFeedbacksDesc')"
-      :action-label="t('operations.submitFeedback')"
-      @action="feedbackOpen = true"
-    />
-    <a-table
-      v-else
-      :columns="feedbackColumns"
-      :data-source="feedbacks"
-      :loading="feedbackLoading"
-      row-key="code"
-      :pagination="{ current: feedbackQuery.page, pageSize: feedbackQuery.size, total: feedbackTotal }"
-      @change="
-        (pagination: { current?: number }) => {
-          feedbackQuery.page = pagination.current ?? 1;
-          loadFeedbacks();
-        }
-      "
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'status'">
-          <a-tag :color="record.status === 'HANDLED' ? 'success' : 'processing'">{{ feedbackStatusText[record.status] ?? record.status }}</a-tag>
-        </template>
-        <template v-else-if="column.key === 'action'">
-          <a-button size="small" type="primary" :disabled="record.status !== 'PENDING'" @click="openHandle(record)">
-            {{ t('operations.handle') }}
+          <a-button type="primary" @click="noticeOpen = true">
+            <template #icon><PlusOutlined /></template>
+            {{ t('operations.publishNotice') }}
           </a-button>
-        </template>
-      </template>
-    </a-table>
+        </div>
 
-    <a-modal v-model:open="noticeOpen" :title="t('operations.noticeModalTitle')" :confirm-loading="noticeCreating" @ok="createNotice">
-      <a-form layout="vertical">
-        <a-form-item :label="t('operations.formTitle')" required>
-          <a-input v-model:value="noticeForm.title" :placeholder="t('operations.noticeTitlePlaceholder')" />
-        </a-form-item>
-        <a-form-item :label="t('operations.formContent')" required>
-          <a-textarea v-model:value="noticeForm.content" :placeholder="t('operations.noticeContentPlaceholder')" :rows="4" />
-        </a-form-item>
-        <a-form-item :label="t('operations.formSection')" required>
-          <a-input v-model:value="noticeForm.section" :placeholder="t('operations.sectionExample')" />
-        </a-form-item>
-      </a-form>
-    </a-modal>
+        <EmptyState
+          v-if="!noticeLoading && notices.length === 0"
+          :title="t('operations.emptyNotices')"
+          :description="t('operations.emptyNoticesDesc')"
+          :action-label="t('operations.publishNotice')"
+          @action="noticeOpen = true"
+        />
+        <a-table
+          v-else
+          :columns="noticeColumns"
+          :data-source="notices"
+          :loading="noticeLoading"
+          row-key="code"
+          :pagination="{ current: noticeQuery.page, pageSize: noticeQuery.size, total: noticeTotal }"
+          @change="
+            (pagination: { current?: number }) => {
+              noticeQuery.page = pagination.current ?? 1;
+              loadNotices();
+            }
+          "
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'code'">
+              <span class="mono-code">{{ record.code }}</span>
+            </template>
+            <template v-else-if="column.key === 'status'">
+              <a-tag :color="noticeStatusColor[record.status]">{{ noticeStatusText[record.status] ?? record.status }}</a-tag>
+            </template>
+            <template v-else-if="column.key === 'action'">
+              <a-space size="small">
+                <a-button v-if="record.status === 'DRAFT'" size="small" type="primary" @click="publishNotice(record)">
+                  {{ t('operations.publish') }}
+                </a-button>
+                <a-button v-if="record.status === 'PUBLISHED'" size="small" @click="archiveNotice(record)">
+                  {{ t('operations.archive') }}
+                </a-button>
+              </a-space>
+            </template>
+          </template>
+        </a-table>
+      </a-card>
 
-    <a-modal v-model:open="feedbackOpen" :title="t('operations.feedbackModalTitle')" :confirm-loading="feedbackCreating" @ok="createFeedback">
-      <a-form layout="vertical">
-        <a-form-item :label="t('operations.formTitle')" required>
-          <a-input v-model:value="feedbackForm.title" :placeholder="t('operations.feedbackTitlePlaceholder')" />
-        </a-form-item>
-        <a-form-item :label="t('operations.formContent')" required>
-          <a-textarea v-model:value="feedbackForm.content" :placeholder="t('operations.feedbackContentPlaceholder')" :rows="4" />
-        </a-form-item>
-        <a-form-item :label="t('operations.formContact')">
-          <a-input v-model:value="feedbackForm.contact" :placeholder="t('operations.contactPlaceholder')" />
-        </a-form-item>
-      </a-form>
-    </a-modal>
+      <!-- 用户反馈 -->
+      <a-card :bordered="false" class="op-card" :title="t('operations.userFeedback')">
+        <div class="toolbar-area">
+          <a-space wrap>
+            <a-select v-model:value="feedbackQuery.status" :placeholder="t('operations.feedbackStatusPlaceholder')" allow-clear style="width: 140px">
+              <a-select-option value="PENDING">{{ t('operations.pending') }}</a-select-option>
+              <a-select-option value="HANDLED">{{ t('operations.handled') }}</a-select-option>
+            </a-select>
+            <a-button type="primary" @click="feedbackQuery.page = 1; loadFeedbacks()">
+              <template #icon><SearchOutlined /></template>
+              {{ t('operations.queryFeedbacks') }}
+            </a-button>
+          </a-space>
+          <a-button @click="feedbackOpen = true">
+            <template #icon><FormOutlined /></template>
+            {{ t('operations.submitFeedback') }}
+          </a-button>
+        </div>
 
-    <a-modal v-model:open="handleOpen" :title="t('operations.handleModalTitle')" :confirm-loading="handling" @ok="handleFeedback">
-      <a-form layout="vertical">
-        <a-form-item :label="t('operations.handleNoteLabel')" required>
-          <a-textarea v-model:value="handleForm.handleNote" :placeholder="t('operations.handleNotePlaceholder')" :rows="3" />
-        </a-form-item>
-      </a-form>
-    </a-modal>
-    </a-card>
+        <EmptyState
+          v-if="!feedbackLoading && feedbacks.length === 0"
+          :title="t('operations.emptyFeedbacks')"
+          :description="t('operations.emptyFeedbacksDesc')"
+          :action-label="t('operations.submitFeedback')"
+          @action="feedbackOpen = true"
+        />
+        <a-table
+          v-else
+          :columns="feedbackColumns"
+          :data-source="feedbacks"
+          :loading="feedbackLoading"
+          row-key="code"
+          :pagination="{ current: feedbackQuery.page, pageSize: feedbackQuery.size, total: feedbackTotal }"
+          @change="
+            (pagination: { current?: number }) => {
+              feedbackQuery.page = pagination.current ?? 1;
+              loadFeedbacks();
+            }
+          "
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'code'">
+              <span class="mono-code">{{ record.code }}</span>
+            </template>
+            <template v-else-if="column.key === 'status'">
+              <a-tag :color="record.status === 'HANDLED' ? 'success' : 'processing'">{{ feedbackStatusText[record.status] ?? record.status }}</a-tag>
+            </template>
+            <template v-else-if="column.key === 'action'">
+              <a-button size="small" type="primary" :disabled="record.status !== 'PENDING'" @click="openHandle(record)">
+                {{ t('operations.handle') }}
+              </a-button>
+            </template>
+          </template>
+        </a-table>
+      </a-card>
+
+      <!-- 新建公告弹窗 -->
+      <a-modal v-model:open="noticeOpen" :title="t('operations.noticeModalTitle')" :confirm-loading="noticeCreating" @ok="createNotice">
+        <a-form layout="vertical">
+          <a-form-item :label="t('operations.formTitle')" required>
+            <a-input v-model:value="noticeForm.title" :placeholder="t('operations.noticeTitlePlaceholder')" />
+          </a-form-item>
+          <a-form-item :label="t('operations.formContent')" required>
+            <a-textarea v-model:value="noticeForm.content" :placeholder="t('operations.noticeContentPlaceholder')" :rows="4" />
+          </a-form-item>
+          <a-form-item :label="t('operations.formSection')" required>
+            <a-input v-model:value="noticeForm.section" :placeholder="t('operations.sectionExample')" />
+          </a-form-item>
+        </a-form>
+      </a-modal>
+
+      <!-- 提交反馈弹窗 -->
+      <a-modal v-model:open="feedbackOpen" :title="t('operations.feedbackModalTitle')" :confirm-loading="feedbackCreating" @ok="createFeedback">
+        <a-form layout="vertical">
+          <a-form-item :label="t('operations.formTitle')" required>
+            <a-input v-model:value="feedbackForm.title" :placeholder="t('operations.feedbackTitlePlaceholder')" />
+          </a-form-item>
+          <a-form-item :label="t('operations.formContent')" required>
+            <a-textarea v-model:value="feedbackForm.content" :placeholder="t('operations.feedbackContentPlaceholder')" :rows="4" />
+          </a-form-item>
+          <a-form-item :label="t('operations.formContact')">
+            <a-input v-model:value="feedbackForm.contact" :placeholder="t('operations.contactPlaceholder')" />
+          </a-form-item>
+        </a-form>
+      </a-modal>
+
+      <!-- 办理反馈弹窗 -->
+      <a-modal v-model:open="handleOpen" :title="t('operations.handleModalTitle')" :confirm-loading="handling" @ok="handleFeedback">
+        <a-form layout="vertical">
+          <a-form-item :label="t('operations.handleNoteLabel')" required>
+            <a-textarea v-model:value="handleForm.handleNote" :placeholder="t('operations.handleNotePlaceholder')" :rows="3" />
+          </a-form-item>
+        </a-form>
+      </a-modal>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.operations-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: var(--od-radius-card, 12px);
+  box-shadow: var(--od-shadow-xs);
+}
+
+.stat-card.urgent {
+  border-color: rgba(220, 38, 38, 0.3);
+  background: #fffafa;
+}
+
+.stat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.stat-icon-wrap.notice {
+  background: var(--od-primary-50, #eff6ff);
+  color: var(--od-color-primary, #1e40af);
+}
+
+.stat-icon-wrap.published {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.stat-icon-wrap.feedback {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.stat-card.urgent .stat-icon-wrap.feedback {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--od-gray-500, #64748b);
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--od-gray-900, #0f172a);
+  font-family: var(--od-font-mono, monospace);
+  line-height: 1.2;
+}
+
+.stat-card.urgent .stat-value {
+  color: #dc2626;
+}
+
+.op-card {
+  border-radius: var(--od-radius-card, 12px);
+  box-shadow: var(--od-shadow-1);
+}
+
+.toolbar-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mono-code {
+  font-family: var(--od-font-mono, monospace);
+  font-weight: 600;
+}
+</style>
