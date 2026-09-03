@@ -162,4 +162,12 @@ describe('IA v2 路由与旧路径重定向', () => {
     await router.push('/admin')
     expect(router.currentRoute.value.path).toBe('/admin/operations')
   })
+
+  it.each(['/admin/requirements', '/admin/approvals', '/admin/iam', '/admin/operations'])(
+    '管理端路由 %s 可解析',
+    async (path) => {
+      await router.push(path)
+      expect(router.currentRoute.value.path).toBe(path)
+    },
+  )
 })

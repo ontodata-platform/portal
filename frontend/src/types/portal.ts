@@ -56,7 +56,7 @@ export interface ApprovalRequest {
   decisionNote?: string
   decisionAt?: string
   slaDeadline?: string
-  slaStatus?: 'NONE' | 'ON_TIME' | 'OVERDUE' | 'MET' | 'MISSED'
+  slaStatus?: 'NONE' | 'ON_TIME' | 'DUE_SOON' | 'OVERDUE' | 'MET' | 'MISSED'
   createdAt: string
   updatedAt: string
 }
@@ -200,6 +200,32 @@ export interface WorkbenchRunResponse {
   taskId: string
   status: string
   started: boolean
+}
+
+/** 管理端用户（Phase A mock，真实来源 Keycloak）。 */
+export interface IamUser {
+  id: string
+  name: string
+  username: string
+  tenantId: string
+  roles: string[]
+  status: 'ACTIVE' | 'DISABLED'
+}
+
+/** ABAC 策略只读条目（I-2 mock）。 */
+export interface AbacPolicy {
+  id: string
+  name: string
+  resource: string
+  action: string
+  effect: 'PERMIT' | 'DENY'
+  roles: string[]
+}
+
+/** 审批催办结果。 */
+export interface ApprovalNudgeResult {
+  ok: boolean
+  code: string
 }
 
 /** 个人中心待办统计（personal-center，M5 接 IAM 后随认证上下文）。 */

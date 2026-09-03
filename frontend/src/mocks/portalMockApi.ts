@@ -49,10 +49,12 @@ function page<T extends RecordValue>(items: T[], params: RecordValue = {}) {
   const keyword = stringValue(params.keyword)?.toLowerCase()
   const status = stringValue(params.status)
   const type = stringValue(params.type)
+  const sla = stringValue(params.sla)
   const domain = stringValue(params.domain)?.toLowerCase()
   const filtered = items.filter((item) => {
     if (status && item.status !== status) return false
     if (type && item.taskType !== type && item.approvalType !== type && item.requirementType !== type) return false
+    if (sla && item.slaStatus !== sla) return false
     if (domain && !String(item.sourceSystem ?? '').toLowerCase().includes(domain)) return false
     if (!keyword) return true
     return Object.values(item).some((value) => String(value).toLowerCase().includes(keyword))
@@ -82,7 +84,22 @@ export function createPortalMockApi(): PortalMockApi {
       code: 'apr-delivery-002', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-device-daily',
       title: '设备遥测服务订阅', requester: '当前用户', status: 'APPROVED', slaStatus: 'MET',
       detail: { serviceCode: 'ds-device-daily', deliveryStatus: 'FAILED', deliveryError: '等待管理平台重新投递' },
-      createdAt: timestamp, updatedAt: timestamp,
+      createdAt: timestamp, updatedAt: timestamp, decisionAt: timestamp, decisionBy: '陈晓',
+    },
+    {
+      code: 'apr-overdue-003', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-supplier-credit',
+      title: '供应商信用服务超期未批', requester: '王工', status: 'PENDING', slaStatus: 'OVERDUE',
+      slaDeadline: relativeIso(30), detail: { serviceCode: 'ds-supplier-credit' }, createdAt: relativeIso(48), updatedAt: relativeIso(6),
+    },
+    {
+      code: 'apr-due-004', approvalType: 'R4_TOOL_CALL', sourceSystem: 'mcp-gateway', sourceCode: 'cfm-due-soon',
+      title: '临期工具调用审批', requester: 'alice', status: 'PENDING', slaStatus: 'DUE_SOON',
+      slaDeadline: relativeIso(-4), detail: { tool: 'dataset.export', riskLevel: 'R4' }, createdAt: relativeIso(20), updatedAt: relativeIso(2),
+    },
+    {
+      code: 'apr-today-005', approvalType: 'SYSTEM_PERMISSION', sourceSystem: 'portal', sourceCode: 'role-operator',
+      title: '运营角色开通申请', requester: 'bob', status: 'APPROVED', slaStatus: 'MET',
+      decisionBy: '陈晓', decisionAt: relativeIso(2), createdAt: relativeIso(10), updatedAt: relativeIso(2),
     },
   ]
 
@@ -111,14 +128,38 @@ export function createPortalMockApi(): PortalMockApi {
  ]
    const requirements: RecordValue[] = [
      {
-       code: 'req-001', requirementType: 'COMPREHENSIVE', title: '供应链风险分析场景', description: '整合订单数据、风险算法和本体规则。', requester: '当前用户',
+       code: 'req-001', requirementType: 'COMPREHENSIVE', title: '供应链风险分析场景', description: '整合订单数据、风险算法和本体规则。', requester: '陈晓',
        status: 'IN_PROGRESS', assigneeSystem: 'algorithm-recombine', assigneeRef: 'tpl-risk-flow', createdAt: timestamp, updatedAt: timestamp,
      },
      {
-       code: 'req-002', requirementType: 'DATA', title: '补充区域仓储数据', description: '申请区域仓储日快照。', requester: '当前用户',
+       code: 'req-002', requirementType: 'DATA', title: '补充区域仓储数据', description: '申请区域仓储日快照。', requester: 'alice',
        status: 'OPEN', createdAt: timestamp, updatedAt: timestamp,
      },
+     {
+       code: 'req-003', requirementType: 'ALGORITHM', title: '设备异常检测周批', description: '把遥测日增量接入异常检测能力。', requester: 'bob',
+       status: 'ANALYZING', createdAt: timestamp, updatedAt: timestamp,
+     },
+     {
+       code: 'req-004', requirementType: 'DATA', title: '供应商信用回填', description: '把季度信用评估回填到订单分析。', requester: '王工',
+       status: 'ASSIGNED', assigneeSystem: 'data-platform', assigneeRef: 'ds-supplier-credit', createdAt: timestamp, updatedAt: timestamp,
+     },
+     {
+       code: 'req-005', requirementType: 'COMPREHENSIVE', title: '门户运营看板', description: '门户自办的运营指标汇总。', requester: '李工',
+       status: 'COMPLETED', assigneeSystem: 'portal', closedNote: '看板已上线', createdAt: timestamp, updatedAt: timestamp,
+     },
    ]
+  const iamUsers: RecordValue[] = [
+    { id: 'u-chen', name: '陈晓', username: 'chenxiao', tenantId: 'default', roles: ['operator', 'user'], status: 'ACTIVE' },
+    { id: 'u-alice', name: 'alice', username: 'alice', tenantId: 'default', roles: ['user'], status: 'ACTIVE' },
+    { id: 'u-bob', name: 'bob', username: 'bob', tenantId: 'default', roles: ['user'], status: 'ACTIVE' },
+    { id: 'u-wang', name: '王工', username: 'wanggong', tenantId: 'default', roles: ['user'], status: 'ACTIVE' },
+    { id: 'u-li', name: '李工', username: 'ligong', tenantId: 'default', roles: ['portal-admin', 'operator'], status: 'ACTIVE' },
+  ]
+  const abacPolicies: RecordValue[] = [
+    { id: 'p-workbench', name: '工作台访问', resource: '/assistant|/data-workbench|/algorithm-workbench|/personal', action: 'access', effect: 'PERMIT', roles: ['user', 'operator', 'admin'] },
+    { id: 'p-admin', name: '管理端访问', resource: '/admin/**', action: 'access', effect: 'PERMIT', roles: ['portal-operator', 'portal-admin', 'operator', 'admin'] },
+    { id: 'p-approval', name: '审批决策', resource: '/approvals/*/decision', action: 'decide', effect: 'PERMIT', roles: ['named-approver'] },
+  ]
   const notices: RecordValue[] = [
     { code: 'ntc-001', title: '本周质量分析批次已开放', content: '客户质量分析-周批已对制造业数据团队开放，可在算法工作台提交。', section: '公告', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
     { code: 'ntc-002', title: '数据服务目录更新', content: '新增设备遥测-日增量，支持申请后审批投递。', section: '服务动态', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
@@ -161,7 +202,7 @@ export function createPortalMockApi(): PortalMockApi {
       createdAt: timestamp, updatedAt: timestamp,
     },
   ]
-  let sequence = 3
+  let sequence = 20
 
   const find = (items: RecordValue[], key: string, value: string, path: string) => {
     const item = items.find((candidate) => String(candidate[key]) === value)
@@ -199,6 +240,24 @@ export function createPortalMockApi(): PortalMockApi {
       })
       return { decision, succeeded, failed }
     }
+    const nudgeMatch = path.match(/^\/admin\/approvals\/([^/]+)\/nudge$/)
+    if (normalizedMethod === 'post' && nudgeMatch) {
+      const item = find(approvals, 'code', nudgeMatch[1], path)
+      if (item.status !== 'PENDING') throw error(409, 'STATE_CONFLICT', '仅待审批单可以催办', path)
+      const notification = {
+        id: nextCode('ntf'),
+        type: 'APPROVAL_NUDGE',
+        title: `催办：${item.title}`,
+        body: `审批单 ${item.code} 待处理，请尽快办理。`,
+        resourceRef: item.code,
+        createdAt: timestamp,
+      }
+      notifications.unshift(notification)
+      return { ok: true, code: item.code }
+    }
+    if (normalizedMethod === 'get' && path === '/admin/iam/users') return page(iamUsers, params)
+    if (normalizedMethod === 'get' && path === '/admin/abac-policies') return { items: abacPolicies.map(clone) }
+
     const decisionMatch = path.match(/^\/approvals\/([^/]+)\/decision$/)
     if (normalizedMethod === 'post' && decisionMatch) {
       const item = find(approvals, 'code', decisionMatch[1], path)
@@ -322,12 +381,14 @@ export function createPortalMockApi(): PortalMockApi {
     if (normalizedMethod === 'get' && path.startsWith('/scenarios/')) return clone(find(scenarios, 'code', path.slice('/scenarios/'.length), path))
 
     if (normalizedMethod === 'get' && path === '/personal/me') return { ...demoIdentity }
-    if (normalizedMethod === 'get' && path === '/personal/requirements') return page(requirements.filter((item) => item.requester === '当前用户'), params)
+    if (normalizedMethod === 'get' && path === '/personal/requirements') {
+      return page(requirements.filter((item) => item.requester === '当前用户' || item.requester === demoIdentity.name), params)
+    }
     if (normalizedMethod === 'get' && path === '/personal/approvals') return page(approvals.filter((item) => item.requester === '当前用户'), params)
     if (normalizedMethod === 'get' && path === '/personal/todos') return {
       pendingApprovalCount: approvals.filter((item) => item.status === 'PENDING').length,
-      myOpenRequirementCount: requirements.filter((item) => item.requester === '当前用户' && !['COMPLETED', 'CANCELED'].includes(String(item.status))).length,
-      myRequirementCount: requirements.filter((item) => item.requester === '当前用户').length,
+      myOpenRequirementCount: requirements.filter((item) => (item.requester === '当前用户' || item.requester === demoIdentity.name) && !['COMPLETED', 'CANCELED'].includes(String(item.status))).length,
+      myRequirementCount: requirements.filter((item) => item.requester === '当前用户' || item.requester === demoIdentity.name).length,
       myApprovalCount: approvals.filter((item) => item.requester === '当前用户').length,
     }
     if (normalizedMethod === 'get' && path === '/personal/notifications') return page(notifications, params)

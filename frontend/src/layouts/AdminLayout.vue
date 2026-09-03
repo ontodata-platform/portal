@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { ArrowLeftOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import {
+  ArrowLeftOutlined,
+  AuditOutlined,
+  FileSearchOutlined,
+  SettingOutlined,
+  TeamOutlined,
+} from '@ant-design/icons-vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -8,8 +14,10 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
-// v5 裁剪：应用上架/平台运维入口下线，仅保留内容运营
 const items = [
+  { key: '/admin/requirements', labelKey: 'menu.adminRequirements', icon: FileSearchOutlined },
+  { key: '/admin/approvals', labelKey: 'menu.adminApprovals', icon: AuditOutlined },
+  { key: '/admin/iam', labelKey: 'menu.adminIam', icon: TeamOutlined },
   { key: '/admin/operations', labelKey: 'menu.adminOperations', icon: SettingOutlined },
 ]
 

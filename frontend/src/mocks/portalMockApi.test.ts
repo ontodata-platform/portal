@@ -32,6 +32,39 @@ describe('portal local mock API', () => {
     expect((await api.request('get', '/personal/notifications/unread-count') as MockUnread).unread).toBe(unread.unread - 1)
   })
 
+  it('exposes diversified requirement requesters and SLA-aware approvals for admin consoles', async () => {
+    const api = createPortalMockApi()
+    const requirements = await api.request('get', '/requirements') as MockPage
+    const requesters = (requirements.items as { requester: string }[]).map((item) => item.requester)
+    expect(new Set(requesters).size).toBeGreaterThanOrEqual(4)
+    expect(requesters).toEqual(expect.arrayContaining(['陈晓', 'alice', 'bob', '王工']))
+
+    const overdue = await api.request('get', '/approvals', { sla: 'OVERDUE' }) as MockPage
+    expect((overdue.items[0] as { slaStatus: string; status: string }).slaStatus).toBe('OVERDUE')
+    expect((overdue.items[0] as { status: string }).status).toBe('PENDING')
+
+    const dueSoon = await api.request('get', '/approvals', { sla: 'DUE_SOON' }) as MockPage
+    expect((dueSoon.items[0] as { slaStatus: string }).slaStatus).toBe('DUE_SOON')
+  })
+
+  it('nudges a pending approval into the notification inbox', async () => {
+    const api = createPortalMockApi()
+    const before = await api.request('get', '/personal/notifications') as MockPage
+    const result = await api.request('post', '/admin/approvals/apr-overdue-003/nudge') as { ok: boolean; code: string }
+    expect(result).toEqual({ ok: true, code: 'apr-overdue-003' })
+    const after = await api.request('get', '/personal/notifications') as MockPage
+    expect(after.items.length).toBe(before.items.length + 1)
+    expect((after.items[0] as { type: string; resourceRef: string }).type).toBe('APPROVAL_NUDGE')
+  })
+
+  it('serves IAM user seeds and ABAC policy snapshots', async () => {
+    const api = createPortalMockApi()
+    const users = await api.request('get', '/admin/iam/users') as { items: { name: string }[] }
+    expect(users.items.map((item) => item.name)).toEqual(expect.arrayContaining(['陈晓', 'alice', 'bob', '王工', '李工']))
+    const policies = await api.request('get', '/admin/abac-policies') as { items: { id: string }[] }
+    expect(policies.items.length).toBeGreaterThan(0)
+  })
+
   it('rejects a duplicate decision with the same 409-shaped error used by real integration', async () => {
     const api = createPortalMockApi()
     const pending = await api.request('get', '/approvals', { status: 'PENDING' }) as MockPage

@@ -6,9 +6,12 @@ import { client } from './client'
 
 import type {
   ApplyDataServiceRequest,
+  AbacPolicy,
+  ApprovalNudgeResult,
   ApprovalRequest,
   BatchDecideResult,
   Feedback,
+  IamUser,
   MarketplaceApplyResponse,
   Notice,
   OperationsStatistics,
@@ -38,6 +41,7 @@ export interface ListParams {
   status?: string
   type?: string
   domain?: string
+  sla?: string
 }
 
 /** 统一任务中心：聚合副本（PUT 幂等 upsert，权威归产生它的软件）。 */
@@ -68,6 +72,8 @@ export const approvalApi = {
     decision: 'APPROVED' | 'REJECTED'
     decisionNote?: string
   }) => client.post<BatchDecideResult>('/approvals/batch-decision', body).then((r) => r.data),
+  nudge: (code: string) =>
+    client.post<ApprovalNudgeResult>(`/admin/approvals/${code}/nudge`).then((r) => r.data),
 }
 
 /** 结果中心：结果引用登记（来源系统与结果标识在路径上，可追踪率 100%）。 */
@@ -182,6 +188,13 @@ export const personalApi = {
   markRead: (id: string) =>
     client.post<PortalNotification>(`/personal/notifications/${id}/read`).then((r) => r.data),
   markAllRead: () => client.post<{ unread: number }>('/personal/notifications/read-all').then((r) => r.data),
+}
+
+/** 管理端用户与权限（Phase A：只读 mock）。 */
+export const adminIamApi = {
+  users: (params: Partial<ListParams> = {}) =>
+    client.get<PageResponse<IamUser>>('/admin/iam/users', { params }).then((r) => r.data),
+  policies: () => client.get<{ items: AbacPolicy[] }>('/admin/abac-policies').then((r) => r.data),
 }
 
 /** 平台管理：投影重建与数据保留（原运维接口迁入 /admin/platform）。 */

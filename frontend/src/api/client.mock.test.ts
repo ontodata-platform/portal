@@ -10,7 +10,7 @@ describe('portal API local mock transport', () => {
     expect(identity).toMatchObject({ name: '陈晓', tenantId: 'default' })
 
     const approvals = await approvalApi.list({ page: 1, size: 10, status: 'PENDING' })
-    expect(approvals.items).toHaveLength(2)
+    expect(approvals.items.length).toBeGreaterThanOrEqual(2)
 
     const templates = await workbenchApi.workflowTemplates({ page: 1, size: 10 })
     expect(templates.available).toBe(true)

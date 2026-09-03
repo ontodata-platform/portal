@@ -192,6 +192,24 @@ export const routes: RouteRecordRaw[] = [
           children: [
             { path: '', redirect: '/admin/operations' },
             {
+              path: 'requirements',
+              name: 'admin-requirements',
+              component: () => import('@/views/admin/RequirementAdminView.vue'),
+              meta: { titleKey: 'menu.adminRequirements', roles: ADMIN_ROLES },
+            },
+            {
+              path: 'approvals',
+              name: 'admin-approvals',
+              component: () => import('@/views/admin/ApprovalAdminView.vue'),
+              meta: { titleKey: 'menu.adminApprovals', roles: ADMIN_ROLES },
+            },
+            {
+              path: 'iam',
+              name: 'admin-iam',
+              component: () => import('@/views/admin/IamAdminView.vue'),
+              meta: { titleKey: 'menu.adminIam', roles: ADMIN_ROLES },
+            },
+            {
               path: 'operations',
               name: 'admin-operations',
               component: () => import('@/views/admin/OperationsAdminView.vue'),

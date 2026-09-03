@@ -23,7 +23,11 @@ describe('AdminLayout', () => {
     const wrapper = mount(AdminLayout, { global: { plugins: [i18n], stubs } })
 
     expect(wrapper.text()).toContain('管理端')
-    expect(wrapper.text()).toContain('运营')
+    expect(wrapper.text()).toContain('需求管理')
+    expect(wrapper.text()).toContain('审批监管')
+    expect(wrapper.text()).toContain('用户与权限')
+    expect(wrapper.text()).toContain('内容运营')
+    expect(wrapper.findAll('.admin-item')).toHaveLength(4)
     expect(wrapper.text()).toContain('返回用户视图')
 
     await wrapper.find('.admin-back').trigger('click')
