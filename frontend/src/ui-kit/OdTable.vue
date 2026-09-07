@@ -67,7 +67,7 @@ const slotNames = Object.keys(slots)
   />
   <a-table v-else v-bind="tableProps" size="small">
     <template v-for="name in slotNames" :key="name" #[name]="slotProps">
-      <slot :name="name" v-bind="slotProps ?? {}" />
+      <slot :name="name" v-bind="slotProps ?? {}"></slot>
     </template>
   </a-table>
 </template>

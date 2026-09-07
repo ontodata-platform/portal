@@ -336,7 +336,13 @@ onMounted(load)
           <a-button v-if="current?.status === 'ASSIGNED' || current?.status === 'IN_PROGRESS'" type="primary" :loading="acting" @click="progress">
             {{ t('admin.requirements.progress') }}
           </a-button>
-          <a-button v-if="current?.status === 'IN_PROGRESS'" type="primary" :loading="acting" :disabled="!closeForm.closedNote.trim()" @click="complete">
+          <a-button
+            v-if="current?.status === 'IN_PROGRESS'"
+            type="primary"
+            :loading="acting"
+            :disabled="!closeForm.closedNote.trim()"
+            @click="complete"
+          >
             {{ t('requirements.complete') }}
           </a-button>
           <a-button

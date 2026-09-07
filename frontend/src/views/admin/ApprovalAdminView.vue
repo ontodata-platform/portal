@@ -259,7 +259,14 @@ onMounted(load)
             </template>
             <template v-else-if="column.key === 'action'">
               <a-space size="small">
-                <a-button v-if="record.status === 'PENDING'" size="small" type="primary" ghost :loading="nudging" @click="nudge(record)">
+                <a-button
+                  v-if="record.status === 'PENDING'"
+                  size="small"
+                  type="primary"
+                  ghost
+                  :loading="nudging"
+                  @click="nudge(record)"
+                >
                   {{ t('admin.approvals.nudge') }}
                 </a-button>
                 <a-button size="small" @click="openDetail(record)">

@@ -107,7 +107,14 @@ onMounted(load)
         </div>
 
         <EmptyState v-if="!loading && users.length === 0" :title="t('admin.iam.users')" />
-        <a-table v-else :columns="userColumns" :data-source="users" :loading="loading" row-key="id" :pagination="false">
+        <a-table
+          v-else
+          :columns="userColumns"
+          :data-source="users"
+          :loading="loading"
+          row-key="id"
+          :pagination="false"
+        >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'name'">
               {{ record.name }}
