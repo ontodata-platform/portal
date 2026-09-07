@@ -1,21 +1,35 @@
 <script setup lang="ts">
-import { InboxOutlined } from '@ant-design/icons-vue'
+import { computed } from 'vue'
+import { InboxOutlined, SearchOutlined, LockOutlined, CloudServerOutlined, DatabaseOutlined } from '@ant-design/icons-vue'
 
-defineProps<{
+const props = defineProps<{
   title: string
   description?: string
   actionLabel?: string
+  /** 空态场景：决定插画图标（UX-1 §10.1） */
+  kind?: 'search' | 'list' | 'lock' | 'cloud' | 'data' | 'generic'
 }>()
 
 defineEmits<{
   action: []
 }>()
+
+const icon = computed(() => {
+  switch (props.kind) {
+    case 'search': return SearchOutlined
+    case 'lock': return LockOutlined
+    case 'cloud': return CloudServerOutlined
+    case 'data': return DatabaseOutlined
+    case 'list': return InboxOutlined
+    default: return InboxOutlined
+  }
+})
 </script>
 
 <template>
   <div class="od-empty" role="status">
-    <div class="od-empty__icon-wrap">
-      <InboxOutlined class="od-empty__icon" />
+    <div class="od-empty__icon-wrap" :data-kind="kind ?? 'generic'">
+      <component :is="icon" class="od-empty__icon" />
     </div>
     <h2>{{ title }}</h2>
     <p v-if="description">{{ description }}</p>

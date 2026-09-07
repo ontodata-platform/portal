@@ -1,17 +1,39 @@
 <script setup lang="ts">
+import { LeftOutlined } from '@ant-design/icons-vue'
+import { useRouter } from 'vue-router'
+
 defineProps<{
   eyebrow?: string
   title: string
   titleId?: string
+  /** v5 已全局移除描述行；属性保留仅为兼容，渲染层不再输出 */
   description?: string
   status?: 'success' | 'running' | 'warning' | 'blocked' | 'archived'
   statusLabel?: string
+  /** v2 新增：详情页统一返回路径（渲染左缘返回箭头） */
+  backTo?: string
+  /** v2 新增：面包屑父级（显示于 eyebrow 之上） */
+  parents?: string[]
 }>()
+
+const router = useRouter()
+
+function goBack() {
+  if (window.history.length > 1) {
+    router.back()
+  }
+}
 </script>
 
 <template>
   <header class="od-page-header">
+    <button v-if="backTo" class="od-page-header__back" :aria-label="'返回'" @click="goBack">
+      <LeftOutlined />
+    </button>
     <div class="od-page-header__text">
+      <a-breadcrumb v-if="parents && parents.length" class="od-page-header__crumbs">
+        <a-breadcrumb-item v-for="parent in parents" :key="parent">{{ parent }}</a-breadcrumb-item>
+      </a-breadcrumb>
       <p v-if="eyebrow" class="od-page-header__eyebrow">
         <span class="eyebrow-dot"></span>
         {{ eyebrow }}
@@ -20,7 +42,6 @@ defineProps<{
         <h1 :id="titleId">{{ title }}</h1>
         <span v-if="status && statusLabel" class="od-status" :data-status="status">{{ statusLabel }}</span>
       </div>
-      <p v-if="description" class="od-page-header__desc">{{ description }}</p>
     </div>
     <div v-if="$slots.extra" class="od-page-header__extra">
       <slot name="extra"></slot>
@@ -126,5 +147,26 @@ defineProps<{
   .od-page-header {
     flex-direction: column;
   }
+}
+.od-page-header__back {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--od-gray-700, #334155);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.od-page-header__back:hover {
+  border-color: var(--od-primary-500, #3b82f6);
+  color: var(--od-primary-500, #3b82f6);
+}
+
+.od-page-header__crumbs {
+  margin-bottom: 6px;
+  font-size: 12px;
 }
 </style>
