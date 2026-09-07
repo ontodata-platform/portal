@@ -42,18 +42,17 @@ const assignForm = reactive({ assigneeSystem: 'data-platform', assigneeRef: '' }
 const closeForm = reactive({ closedNote: '' })
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
-  { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
-  { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 120, odEllipsis: true, odSortable: true },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 130, odEllipsis: true, odSortable: true },
+  { title: t('common.title'), dataIndex: 'title', key: 'title', width: 220, odEllipsis: true, odSortable: true },
+  { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 110, odEllipsis: true, odSortable: true },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110, odSortable: true },
-  { title: t('common.requester'), dataIndex: 'requester', key: 'requester', width: 110, odEllipsis: true, odSortable: true },
-  { title: t('requirements.assigneeTarget'), dataIndex: 'assigneeSystem', key: 'assigneeSystem', width: 160, odEllipsis: true, odSortable: true },
-  { title: t('admin.requirements.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 170, odSortable: true },
+  { title: t('common.requester'), dataIndex: 'requester', key: 'requester', width: 100, odEllipsis: true, odSortable: true },
+  { title: t('admin.requirements.updatedAt'), dataIndex: 'updatedAtText', key: 'updatedAtText', width: 130, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 90 },
 ])
 
 const statusColor: Record<string, string> = {
-  OPEN: 'default',
+  OPEN: 'cyan',
   ANALYZING: 'processing',
   ASSIGNED: 'geekblue',
   IN_PROGRESS: 'processing',
@@ -124,7 +123,7 @@ async function load() {
       type: query.type || undefined,
       keyword: query.keyword || undefined,
     })
-    rows.value = page.items
+    rows.value = page.items.map((item) => ({ ...item, updatedAtText: formatDateTime(item.updatedAt) }))
     total.value = page.total
     if (current.value) {
       current.value = page.items.find((item) => item.code === current.value?.code) ?? current.value

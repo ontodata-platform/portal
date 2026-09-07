@@ -112,13 +112,6 @@ const handleLogout = () => {
   void router.push('/login')
 }
 
-function goSearch() {
-  void router.push({
-    path: '/assistant',
-    query: searchKeyword.value.trim() ? { q: searchKeyword.value.trim() } : {},
-  })
-}
-
 function openCommandPalette() {
   commandQuery.value = searchKeyword.value
   commandOpen.value = true
@@ -239,15 +232,14 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
         </div>
 
         <div class="header-right">
-          <!-- 快捷智能搜索栏 -->
+          <!-- 快捷智能搜索栏：点击/CTRL+K 就地展开命令面板（不再聚焦跳转） -->
           <div class="search-wrap">
             <a-input
               v-model:value="searchKeyword"
               class="global-search"
               :placeholder="t('layout.searchPlaceholder')"
-              allow-clear
-              @focus="goSearch"
-              @press-enter="goSearch"
+              readonly
+              @click="openCommandPalette"
             >
               <template #prefix>
                 <SearchOutlined style="color: #94a3b8" />

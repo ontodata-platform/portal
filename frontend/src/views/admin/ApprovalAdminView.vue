@@ -35,9 +35,8 @@ const nudging = ref(false)
 const columns = computed(() => [
   { title: t('common.code'), dataIndex: 'code', key: 'code', width: 150, odEllipsis: true, odSortable: true },
   { title: t('common.type'), dataIndex: 'approvalType', key: 'approvalType', width: 130, odEllipsis: true, odSortable: true },
-  { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
+  { title: t('common.title'), dataIndex: 'title', key: 'title', width: 220, odEllipsis: true, odSortable: true },
   { title: t('common.applicant'), dataIndex: 'requester', key: 'requester', width: 110, odEllipsis: true, odSortable: true },
-  { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 150, odEllipsis: true, odSortable: true },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110, odSortable: true },
   { title: t('approvals.slaStatus'), dataIndex: 'slaStatus', key: 'slaStatus', width: 110, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 160 },

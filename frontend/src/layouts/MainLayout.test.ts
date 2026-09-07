@@ -119,13 +119,14 @@ describe('MainLayout v2', () => {
     expect(pushMock).toHaveBeenCalledWith('/personal/notifications')
   })
 
-  it('聚焦搜索跳转到智能服务并带入关键词', async () => {
+  it('聚焦搜索不再跳转，改为就地展开命令面板并带入关键词', async () => {
     const wrapper = mountLayout()
     await flushPromises()
     const input = wrapper.find('input.global-search')
     await input.setValue('客户主数据')
     await input.trigger('focus')
-    expect(pushMock).toHaveBeenCalledWith({ path: '/assistant', query: { q: '客户主数据' } })
+    expect(pushMock).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('快速命令')
   })
 
   it('切换语言即时生效并持久化（M5 国际化）', async () => {

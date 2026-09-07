@@ -59,7 +59,7 @@ const columns = computed(() => [
 ])
 
 const statusColor: Record<string, string> = {
-  OPEN: 'default',
+  OPEN: 'cyan',
   ANALYZING: 'processing',
   ASSIGNED: 'geekblue',
   IN_PROGRESS: 'processing',
