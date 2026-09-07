@@ -22,6 +22,8 @@ const loadError = ref('')
 const rows = ref<PortalNotification[]>([])
 const total = ref(0)
 const query = reactive({ page: 1, size: 20 })
+const markingAll = ref(false)
+const markingId = ref('')
 
 const columns = computed(() => [
   { title: t('common.type'), dataIndex: 'type', key: 'type', width: 160, odEllipsis: true, odSortable: true },
@@ -54,22 +56,30 @@ async function load() {
 }
 
 async function markRead(id: string) {
+  if (markingAll.value) return
+  markingId.value = id
   try {
     await personalApi.markRead(id)
     messageStore.success(t('notifications.marked'))
     await load()
   } catch (error) {
     messageStore.reportError(error)
+  } finally {
+    markingId.value = ''
   }
 }
 
 async function markAllRead() {
+  if (markingId.value) return
+  markingAll.value = true
   try {
     await personalApi.markAllRead()
     messageStore.success(t('notifications.marked'))
     await load()
   } catch (error) {
     messageStore.reportError(error)
+  } finally {
+    markingAll.value = false
   }
 }
 
@@ -93,7 +103,13 @@ onMounted(load)
       :title="t('menu.notifications')"
     >
       <template #extra>
-        <a-button type="primary" ghost @click="markAllRead">
+        <a-button
+          type="primary"
+          ghost
+          :loading="markingAll"
+          :disabled="Boolean(markingId)"
+          @click="markAllRead"
+        >
           <template #icon><CheckOutlined /></template>
           {{ t('notifications.markAllRead') }}
         </a-button>
@@ -152,7 +168,13 @@ onMounted(load)
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space>
-              <a-button v-if="!record.readAt" size="small" @click="markRead(record.id)">
+              <a-button
+                v-if="!record.readAt"
+                size="small"
+                :loading="markingId === record.id"
+                :disabled="markingAll"
+                @click="markRead(record.id)"
+              >
                 {{ t('notifications.markRead') }}
               </a-button>
               <a-button size="small" type="link" @click="openResource(record)">{{ t('common.detail') }}</a-button>

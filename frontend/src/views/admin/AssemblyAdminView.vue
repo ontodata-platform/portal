@@ -37,6 +37,7 @@ const query = reactive({ page: 1, size: 20, status: '', keyword: '' })
 const editing = ref<PortalScenario | null>(null)
 const editOpen = ref(false)
 const saving = ref(false)
+const transitioningKey = ref('')
 /** 钉扎/装配校验错误（前端预检或后端 400），弹窗内联展示。 */
 const formError = ref('')
 
@@ -363,13 +364,16 @@ async function save() {
   }
 }
 
-async function transition(action: () => Promise<unknown>, successText: string) {
+async function transition(transitionKey: string, action: () => Promise<unknown>, successText: string) {
+  transitioningKey.value = transitionKey
   try {
     await action()
     messageStore.success(successText)
     await load()
   } catch (error) {
     messageStore.reportError(error)
+  } finally {
+    transitioningKey.value = ''
   }
 }
 
@@ -464,7 +468,8 @@ onMounted(load)
                 v-if="record.status === 'DRAFT'"
                 size="small"
                 type="primary"
-                @click="transition(() => scenarioApi.publish(record.code, record.version), t('scenarios.publishedMessage', { code: record.code, version: record.version }))"
+                :loading="transitioningKey === `${record.code}@${record.version}`"
+                @click="transition(`${record.code}@${record.version}`, () => scenarioApi.publish(record.code, record.version), t('scenarios.publishedMessage', { code: record.code, version: record.version }))"
               >
                 {{ t('scenarios.publish') }}
               </a-button>
@@ -472,14 +477,16 @@ onMounted(load)
                 v-if="record.status === 'PUBLISHED'"
                 size="small"
                 danger
-                @click="transition(() => scenarioApi.deprecate(record.code, record.version), t('scenarios.deprecatedMessage', { code: record.code, version: record.version }))"
+                :loading="transitioningKey === `${record.code}@${record.version}`"
+                @click="transition(`${record.code}@${record.version}`, () => scenarioApi.deprecate(record.code, record.version), t('scenarios.deprecatedMessage', { code: record.code, version: record.version }))"
               >
                 {{ t('scenarios.deprecate') }}
               </a-button>
               <a-button
                 v-if="record.status === 'PUBLISHED' || record.status === 'DEPRECATED'"
                 size="small"
-                @click="transition(() => scenarioApi.createDraft(record.code), t('scenarios.draftCreated', { code: record.code }))"
+                :loading="transitioningKey === `${record.code}@${record.version}`"
+                @click="transition(`${record.code}@${record.version}`, () => scenarioApi.createDraft(record.code), t('scenarios.draftCreated', { code: record.code }))"
               >
                 {{ t('scenarios.newDraft') }}
               </a-button>

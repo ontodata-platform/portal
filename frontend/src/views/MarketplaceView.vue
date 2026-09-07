@@ -154,20 +154,20 @@ function onTabChange(tab: string | number) {
 }
 
 const applicationColumns = [
-  { title: t('dataWorkbench.applicationCode'), dataIndex: 'code', key: 'code', width: 140 },
-  { title: t('common.name'), dataIndex: 'serviceName', key: 'serviceName' },
-  { title: t('common.status'), key: 'status', width: 120 },
-  { title: t('common.submittedAt'), dataIndex: 'submittedAt', key: 'submittedAt', width: 180 },
-  { title: t('common.remark'), dataIndex: 'remark', key: 'remark' },
+  { title: t('dataWorkbench.applicationCode'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.name'), dataIndex: 'serviceName', key: 'serviceName', odEllipsis: true, odSortable: true },
+  { title: t('common.status'), key: 'status', width: 120, odSortable: true },
+  { title: t('common.submittedAt'), dataIndex: 'submittedAt', key: 'submittedAt', width: 180, odSortable: true },
+  { title: t('common.remark'), dataIndex: 'remark', key: 'remark', odEllipsis: true },
   { title: t('common.action'), key: 'action', width: 130 },
 ]
 
 const subscriptionColumns = [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 120 },
-  { title: t('common.name'), key: 'serviceName' },
-  { title: t('dataWorkbench.deliveryType'), key: 'deliveryType', width: 120 },
-  { title: t('dataWorkbench.expiresAt'), key: 'expiresAt', width: 220 },
-  { title: t('dataWorkbench.rowsCount'), key: 'rowsCount', width: 110 },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 120, odEllipsis: true, odSortable: true },
+  { title: t('common.name'), dataIndex: 'serviceName', key: 'serviceName', odEllipsis: true, odSortable: true },
+  { title: t('dataWorkbench.deliveryType'), dataIndex: 'deliveryType', key: 'deliveryType', width: 120, odSortable: true },
+  { title: t('dataWorkbench.expiresAt'), dataIndex: 'expiresAt', key: 'expiresAt', width: 220, odSortable: true },
+  { title: t('dataWorkbench.rowsCount'), dataIndex: 'rowsCount', key: 'rowsCount', width: 110, odSortable: true },
   { title: t('common.action'), key: 'action', width: 160 },
 ]
 
