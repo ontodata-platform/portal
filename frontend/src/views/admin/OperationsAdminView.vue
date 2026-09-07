@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { BellOutlined, CheckCircleOutlined, FormOutlined, MessageOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import { Modal } from 'ant-design-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -8,6 +9,7 @@ import { useMessageStore } from '@/stores/message'
 import type { Feedback, Notice, OperationsStatistics } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
@@ -21,15 +23,16 @@ const notices = ref<Notice[]>([])
 const noticeTotal = ref(0)
 const noticeQuery = reactive({ page: 1, size: 20, status: '', section: '' })
 const noticeColumns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
-  { title: t('common.title'), dataIndex: 'title', key: 'title' },
-  { title: t('common.section'), dataIndex: 'section', key: 'section', width: 150 },
-  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
+  { title: t('common.section'), dataIndex: 'section', key: 'section', width: 150, odEllipsis: true, odSortable: true },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 150 },
 ])
 
 const noticeOpen = ref(false)
 const noticeCreating = ref(false)
+const noticeActionCode = ref('')
 const noticeForm = reactive({ title: '', content: '', section: 'announcement' })
 
 const feedbackLoading = ref(false)
@@ -37,10 +40,10 @@ const feedbacks = ref<Feedback[]>([])
 const feedbackTotal = ref(0)
 const feedbackQuery = reactive({ page: 1, size: 20, status: '' })
 const feedbackColumns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
-  { title: t('common.title'), dataIndex: 'title', key: 'title' },
-  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
-  { title: t('common.handleNote'), dataIndex: 'handleNote', key: 'handleNote' },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110, odSortable: true },
+  { title: t('common.handleNote'), dataIndex: 'handleNote', key: 'handleNote', odEllipsis: true, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 110 },
 ])
 
@@ -151,23 +154,40 @@ async function createNotice() {
 }
 
 async function publishNotice(record: Notice) {
+  noticeActionCode.value = record.code
   try {
     await operationsApi.publishNotice(record.code)
     messageStore.success(t('operations.noticePublished', { code: record.code }))
     await Promise.all([loadNotices(), loadStatistics()])
   } catch (error) {
     messageStore.reportError(error)
+  } finally {
+    noticeActionCode.value = ''
   }
 }
 
 async function archiveNotice(record: Notice) {
+  noticeActionCode.value = record.code
   try {
     await operationsApi.archiveNotice(record.code)
     messageStore.success(t('operations.noticeArchived', { code: record.code }))
     await Promise.all([loadNotices(), loadStatistics()])
   } catch (error) {
     messageStore.reportError(error)
+  } finally {
+    noticeActionCode.value = ''
   }
+}
+
+function confirmArchiveNotice(record: Notice) {
+  Modal.confirm({
+    title: '确认归档此公告？',
+    content: '归档后公告不再对门户用户可见；需要重新发布时请新建公告。',
+    okText: '确认归档',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    onOk: () => archiveNotice(record),
+  })
 }
 
 async function createFeedback() {
@@ -295,7 +315,7 @@ onMounted(() => {
           :action-label="t('operations.publishNotice')"
           @action="noticeOpen = true"
         />
-        <a-table
+        <OdTable
           v-else
           :columns="noticeColumns"
           :data-source="notices"
@@ -318,16 +338,28 @@ onMounted(() => {
             </template>
             <template v-else-if="column.key === 'action'">
               <a-space size="small">
-                <a-button v-if="record.status === 'DRAFT'" size="small" type="primary" @click="publishNotice(record)">
+                <a-button
+                  v-if="record.status === 'DRAFT'"
+                  size="small"
+                  type="primary"
+                  :loading="noticeActionCode === record.code"
+                  @click="publishNotice(record)"
+                >
                   {{ t('operations.publish') }}
                 </a-button>
-                <a-button v-if="record.status === 'PUBLISHED'" size="small" @click="archiveNotice(record)">
+                <a-button
+                  v-if="record.status === 'PUBLISHED'"
+                  size="small"
+                  danger
+                  :loading="noticeActionCode === record.code"
+                  @click="confirmArchiveNotice(record)"
+                >
                   {{ t('operations.archive') }}
                 </a-button>
               </a-space>
             </template>
           </template>
-        </a-table>
+        </OdTable>
       </a-card>
 
       <!-- 用户反馈 -->
@@ -356,7 +388,7 @@ onMounted(() => {
           :action-label="t('operations.submitFeedback')"
           @action="feedbackOpen = true"
         />
-        <a-table
+        <OdTable
           v-else
           :columns="feedbackColumns"
           :data-source="feedbacks"
@@ -383,19 +415,19 @@ onMounted(() => {
               </a-button>
             </template>
           </template>
-        </a-table>
+        </OdTable>
       </a-card>
 
       <!-- 新建公告弹窗 -->
       <a-modal v-model:open="noticeOpen" :title="t('operations.noticeModalTitle')" :confirm-loading="noticeCreating" @ok="createNotice">
         <a-form layout="vertical">
-          <a-form-item :label="t('operations.formTitle')" required>
+          <a-form-item name="title" :label="t('operations.formTitle')" required>
             <a-input v-model:value="noticeForm.title" :placeholder="t('operations.noticeTitlePlaceholder')" />
           </a-form-item>
-          <a-form-item :label="t('operations.formContent')" required>
+          <a-form-item name="content" :label="t('operations.formContent')" required>
             <a-textarea v-model:value="noticeForm.content" :placeholder="t('operations.noticeContentPlaceholder')" :rows="4" />
           </a-form-item>
-          <a-form-item :label="t('operations.formSection')" required>
+          <a-form-item name="section" :label="t('operations.formSection')" required>
             <a-input v-model:value="noticeForm.section" :placeholder="t('operations.sectionExample')" />
           </a-form-item>
         </a-form>
@@ -404,13 +436,13 @@ onMounted(() => {
       <!-- 提交反馈弹窗 -->
       <a-modal v-model:open="feedbackOpen" :title="t('operations.feedbackModalTitle')" :confirm-loading="feedbackCreating" @ok="createFeedback">
         <a-form layout="vertical">
-          <a-form-item :label="t('operations.formTitle')" required>
+          <a-form-item name="title" :label="t('operations.formTitle')" required>
             <a-input v-model:value="feedbackForm.title" :placeholder="t('operations.feedbackTitlePlaceholder')" />
           </a-form-item>
-          <a-form-item :label="t('operations.formContent')" required>
+          <a-form-item name="content" :label="t('operations.formContent')" required>
             <a-textarea v-model:value="feedbackForm.content" :placeholder="t('operations.feedbackContentPlaceholder')" :rows="4" />
           </a-form-item>
-          <a-form-item :label="t('operations.formContact')">
+          <a-form-item name="contact" :label="t('operations.formContact')">
             <a-input v-model:value="feedbackForm.contact" :placeholder="t('operations.contactPlaceholder')" />
           </a-form-item>
         </a-form>
@@ -419,7 +451,7 @@ onMounted(() => {
       <!-- 办理反馈弹窗 -->
       <a-modal v-model:open="handleOpen" :title="t('operations.handleModalTitle')" :confirm-loading="handling" @ok="handleFeedback">
         <a-form layout="vertical">
-          <a-form-item :label="t('operations.handleNoteLabel')" required>
+          <a-form-item name="handleNote" :label="t('operations.handleNoteLabel')" required>
             <a-textarea v-model:value="handleForm.handleNote" :placeholder="t('operations.handleNotePlaceholder')" :rows="3" />
           </a-form-item>
         </a-form>

@@ -34,6 +34,8 @@ export function useAssistantEngine() {
   const pendingConfirm = ref<ConfirmRequiredEvent | null>(null)
   const pendingApproval = ref<string>('')
   const remoteSessionId = ref('')
+  const activeController = ref<AbortController | null>(null)
+  const lastSentText = ref('')
 
   const current = computed(() => sessions.value.find((item) => item.id === currentId.value) ?? null)
   const messages = computed(() => current.value?.messages ?? [])
@@ -97,13 +99,18 @@ export function useAssistantEngine() {
     return message
   }
 
-  async function sendMock(text: string) {
+  async function sendMock(text: string, signal: AbortSignal) {
     pushMessage({ role: 'user', text })
     const turn = routeAssistantIntent(text)
     const assistant = pushMessage({ role: 'assistant', text: '', streaming: true })
     await streamAssistantText(turn.text, (chunk) => {
       assistant.text = `${assistant.text ?? ''}${chunk}`
-    })
+    }, signal)
+    if (signal.aborted) {
+      assistant.streaming = false
+      save()
+      return
+    }
     const finished: AssistantMessage = {
       ...assistant,
       text: turn.text,
@@ -126,7 +133,7 @@ export function useAssistantEngine() {
     save()
   }
 
-  async function sendRemote(text: string) {
+  async function sendRemote(text: string, signal: AbortSignal) {
     try {
       if (!remoteSessionId.value) {
         const agents = await agentApi.listDefs()
@@ -140,7 +147,6 @@ export function useAssistantEngine() {
       }
       pushMessage({ role: 'user', text })
       const assistant = pushMessage({ role: 'assistant', text: '', streaming: true })
-      const controller = new AbortController()
       await agentApi.postMessage(remoteSessionId.value, text)
       await streamSession(
         remoteSessionId.value,
@@ -161,11 +167,13 @@ export function useAssistantEngine() {
             if (payload.answer && !assistant.text) assistant.text = payload.answer
           },
         },
-        controller.signal,
+        signal,
       )
+      if (signal.aborted) return
       assistant.streaming = false
       save()
     } catch {
+      if (signal.aborted) return
       degraded.value = true
     }
   }
@@ -174,16 +182,45 @@ export function useAssistantEngine() {
     const content = text.trim()
     if (!content || sending.value) return
     sending.value = true
+    lastSentText.value = content
+    const controller = new AbortController()
+    activeController.value = controller
     try {
       if (useLocalMock) {
         degraded.value = false
-        await sendMock(content)
+        await sendMock(content, controller.signal)
       } else {
-        await sendRemote(content)
+        await sendRemote(content, controller.signal)
       }
     } finally {
+      if (activeController.value === controller) activeController.value = null
       sending.value = false
     }
+  }
+
+  function stop() {
+    activeController.value?.abort()
+    const session = current.value
+    if (!session) return
+    session.messages = session.messages.map((item) => (item.streaming ? { ...item, streaming: false } : item))
+    sessions.value = sessions.value.map((item) => (item.id === session.id ? { ...session, messages: [...session.messages] } : item))
+    save()
+  }
+
+  async function regenerate() {
+    const session = current.value
+    if (!session || sending.value) return
+    const lastUserIndex = [...session.messages].map((item) => item.role).lastIndexOf('user')
+    const user = lastUserIndex >= 0 ? session.messages[lastUserIndex] : undefined
+    if (!user?.text) return
+    session.messages = session.messages.slice(0, lastUserIndex)
+    sessions.value = sessions.value.map((item) => (item.id === session.id ? { ...session, messages: [...session.messages] } : item))
+    save()
+    await send(user.text)
+  }
+
+  async function retryLast() {
+    if (lastSentText.value && !sending.value) await send(lastSentText.value)
   }
 
   return {
@@ -198,11 +235,15 @@ export function useAssistantEngine() {
     pendingConfirm,
     pendingApproval,
     remoteSessionId,
+    lastSentText,
     createSession,
     selectSession,
     renameSession,
     deleteSession,
     resumeSession,
+    stop,
+    regenerate,
+    retryLast,
     send,
   }
 }

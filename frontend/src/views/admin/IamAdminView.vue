@@ -8,6 +8,7 @@ import { useMessageStore } from '@/stores/message'
 import type { AbacPolicy, IamUser } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const KEYCLOAK_CONSOLE = 'http://localhost:8180/admin/master/console/'
@@ -29,23 +30,23 @@ const matrixRows = computed(() => [
 ])
 
 const userColumns = computed(() => [
-  { title: t('common.name'), dataIndex: 'name', key: 'name', width: 120 },
-  { title: t('admin.iam.username'), dataIndex: 'username', key: 'username', width: 140 },
-  { title: t('admin.iam.tenant'), dataIndex: 'tenantId', key: 'tenantId', width: 120 },
-  { title: t('admin.iam.roles'), dataIndex: 'roles', key: 'roles' },
-  { title: t('admin.iam.userStatus'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('common.name'), dataIndex: 'name', key: 'name', width: 120, odEllipsis: true, odSortable: true },
+  { title: t('admin.iam.username'), dataIndex: 'username', key: 'username', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('admin.iam.tenant'), dataIndex: 'tenantId', key: 'tenantId', width: 120, odEllipsis: true, odSortable: true },
+  { title: t('admin.iam.roles'), dataIndex: 'roles', key: 'roles', odEllipsis: true },
+  { title: t('admin.iam.userStatus'), dataIndex: 'status', key: 'status', width: 100, odSortable: true },
 ])
 
 const matrixColumns = computed(() => [
-  { title: t('admin.iam.entry'), dataIndex: 'entry', key: 'entry' },
-  { title: t('admin.iam.requiredRoles'), dataIndex: 'roles', key: 'roles' },
+  { title: t('admin.iam.entry'), dataIndex: 'entry', key: 'entry', odEllipsis: true, odSortable: true },
+  { title: t('admin.iam.requiredRoles'), dataIndex: 'roles', key: 'roles', odEllipsis: true },
 ])
 
 const policyColumns = computed(() => [
-  { title: t('common.name'), dataIndex: 'name', key: 'name', width: 160 },
-  { title: t('common.code'), dataIndex: 'resource', key: 'resource' },
-  { title: t('common.action'), dataIndex: 'action', key: 'action', width: 110 },
-  { title: t('admin.iam.roles'), dataIndex: 'roles', key: 'roles' },
+  { title: t('common.name'), dataIndex: 'name', key: 'name', width: 160, odEllipsis: true, odSortable: true },
+  { title: t('common.code'), dataIndex: 'resource', key: 'resource', odEllipsis: true, odSortable: true },
+  { title: t('common.action'), dataIndex: 'action', key: 'action', width: 110, odEllipsis: true, odSortable: true },
+  { title: t('admin.iam.roles'), dataIndex: 'roles', key: 'roles', odEllipsis: true },
 ])
 
 function describeLoadError(error: unknown): string {
@@ -107,7 +108,7 @@ onMounted(load)
         </div>
 
         <EmptyState v-if="!loading && users.length === 0" :title="t('admin.iam.users')" />
-        <a-table
+        <OdTable
           v-else
           :columns="userColumns"
           :data-source="users"
@@ -130,13 +131,13 @@ onMounted(load)
               </a-tag>
             </template>
           </template>
-        </a-table>
+        </OdTable>
       </a-card>
 
       <a-card :bordered="false" class="admin-card" :title="t('admin.iam.roleMatrix')">
-        <a-table :columns="matrixColumns" :data-source="matrixRows" row-key="entry" :pagination="false" />
+        <OdTable :columns="matrixColumns" :data-source="matrixRows" row-key="entry" :pagination="false" />
         <h3 class="sub-title">{{ t('admin.iam.policies') }}</h3>
-        <a-table :columns="policyColumns" :data-source="policies" row-key="id" :pagination="false">
+        <OdTable :columns="policyColumns" :data-source="policies" row-key="id" :pagination="false">
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'roles'">
               <a-space size="small" wrap>
@@ -144,7 +145,7 @@ onMounted(load)
               </a-space>
             </template>
           </template>
-        </a-table>
+        </OdTable>
       </a-card>
 
       <a-card :bordered="false" class="admin-card keycloak-card" :title="t('admin.iam.keycloakTitle')">

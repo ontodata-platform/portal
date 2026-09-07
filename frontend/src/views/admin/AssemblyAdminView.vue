@@ -10,6 +10,7 @@ import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, PortalScenario, ScenarioBinding, ScenarioOntologyRef } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 import {
   WIDGET_KINDS,
@@ -429,7 +430,7 @@ onMounted(load)
         :action-label="t('scenarios.createButton')"
         @action="openCreate"
       />
-      <a-table
+      <OdTable
         v-else
         :columns="columns"
         :data-source="rows"
@@ -485,7 +486,7 @@ onMounted(load)
             </a-space>
           </template>
         </template>
-      </a-table>
+      </OdTable>
 
       <!-- 场景编辑/创建弹窗（动态行选择器） -->
       <a-modal

@@ -22,9 +22,11 @@ import { useMessageStore } from '@/stores/message'
 import type { ApprovalRequest, Notice, PersonalTodo, RequirementRequest } from '@/types/portal'
 import AsyncTaskPanel from '@/ui-kit/AsyncTaskPanel.vue'
 import EmptyState from '@/ui-kit/EmptyState.vue'
+import { formatDate } from '@/ui-kit/format'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const router = useRouter()
 const messageStore = useMessageStore()
 const identityStore = useIdentityStore()
@@ -96,8 +98,7 @@ const statusColor: Record<string, string> = {
 }
 
 function formatTime(value?: string): string {
-  if (!value) return '-'
-  return new Date(value).toLocaleDateString(locale.value)
+  return formatDate(value)
 }
 
 async function loadAll() {
@@ -302,7 +303,7 @@ onMounted(loadAll)
               {{ t('personal.viewAllApprovals') }}
             </a-button>
           </template>
-          <a-table
+          <OdTable
             :columns="pendingColumns"
             :data-source="pendingApprovals"
             :loading="pendingLoading"
@@ -328,12 +329,12 @@ onMounted(loadAll)
                 </a-button>
               </template>
             </template>
-          </a-table>
+          </OdTable>
         </a-card>
 
         <!-- 我的申请与订阅投递 -->
         <a-card :title="t('personal.myApprovals')" size="small" class="section-card">
-          <a-table
+          <OdTable
             :columns="myApprovalColumns"
             :data-source="approvals"
             :loading="approvalLoading"
@@ -374,7 +375,7 @@ onMounted(loadAll)
                 <span v-else class="text-muted">-</span>
               </template>
             </template>
-          </a-table>
+          </OdTable>
         </a-card>
       </a-col>
 
@@ -409,7 +410,7 @@ onMounted(loadAll)
               {{ t('personal.viewAllRequirements') }}
             </a-button>
           </template>
-          <a-table
+          <OdTable
             :columns="requirementColumns"
             :data-source="requirements"
             :loading="requirementLoading"
@@ -425,7 +426,7 @@ onMounted(loadAll)
                 <a-tag :color="statusColor[record.status]">{{ record.status }}</a-tag>
               </template>
             </template>
-          </a-table>
+          </OdTable>
         </a-card>
       </a-col>
     </a-row>

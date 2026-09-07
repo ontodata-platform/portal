@@ -9,6 +9,8 @@ import { useMessageStore } from '@/stores/message'
 import type { PortalNotification } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import { formatDateTime } from '@/ui-kit/format'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
@@ -22,10 +24,10 @@ const total = ref(0)
 const query = reactive({ page: 1, size: 20 })
 
 const columns = computed(() => [
-  { title: t('common.type'), dataIndex: 'type', key: 'type', width: 160 },
-  { title: t('common.title'), dataIndex: 'title', key: 'title' },
-  { title: t('common.updatedAt'), dataIndex: 'createdAt', key: 'createdAt', width: 200 },
-  { title: t('common.status'), dataIndex: 'readAt', key: 'readAt', width: 100 },
+  { title: t('common.type'), dataIndex: 'type', key: 'type', width: 160, odEllipsis: true, odSortable: true },
+  { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
+  { title: t('common.updatedAt'), dataIndex: 'createdAt', key: 'createdAt', width: 200, odSortable: true },
+  { title: t('common.status'), dataIndex: 'readAt', key: 'readAt', width: 100, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 120 },
 ])
 
@@ -112,7 +114,7 @@ onMounted(load)
         :title="t('notifications.empty')"
         :description="t('notifications.emptyDesc')"
       />
-      <a-table
+      <OdTable
         v-else
         :columns="columns"
         :data-source="rows"
@@ -140,6 +142,9 @@ onMounted(load)
           <template v-else-if="column.key === 'title'">
             <span class="notice-title-text" :class="{ unread: !record.readAt }">{{ record.title }}</span>
           </template>
+          <template v-else-if="column.key === 'createdAt'">
+            {{ formatDateTime(record.createdAt) }}
+          </template>
           <template v-else-if="column.key === 'readAt'">
             <a-tag :color="record.readAt ? 'default' : 'orange'">
               {{ record.readAt ? t('notifications.all') : t('notifications.unread') }}
@@ -154,7 +159,7 @@ onMounted(load)
             </a-space>
           </template>
         </template>
-      </a-table>
+      </OdTable>
     </a-card>
   </div>
 </template>

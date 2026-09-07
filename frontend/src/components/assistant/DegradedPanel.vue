@@ -7,6 +7,7 @@ import { agentApi } from '@/api/agent'
 import type { CatalogSearchHit } from '@/types/agent'
 
 const props = defineProps<{ keyword?: string }>()
+const emit = defineEmits<{ retry: [] }>()
 const { t } = useI18n()
 const router = useRouter()
 const query = reactive({ q: props.keyword ?? '' })
@@ -25,7 +26,9 @@ void search()
 
 <template>
   <div class="degraded">
-    <a-alert type="warning" show-icon :message="t('assistant.degradedBanner')" />
+    <a-alert type="warning" show-icon :message="t('assistant.degradedBanner')">
+      <template #action><a-button size="small" @click="emit('retry')">重试</a-button></template>
+    </a-alert>
     <a-input-search
       v-model:value="query.q"
       :placeholder="t('assistant.searchPlaceholder')"

@@ -34,6 +34,10 @@ export const zhCn = {
     submittedAt: '提交时间',
     remark: '备注/用途',
   },
+  odTable: {
+    emptyTitle: '暂无记录',
+    total: '共 {total} 项',
+  },
   dataWorkbench: {
     tabServices: '数据服务',
     tabDatasets: '数据集',
@@ -733,6 +737,10 @@ export const enUs: MessageSchema = {
     description: 'Description',
     submittedAt: 'Submitted At',
     remark: 'Remark',
+  },
+  odTable: {
+    emptyTitle: 'No records',
+    total: '{total} items',
   },
   dataWorkbench: {
     tabServices: 'Data services',

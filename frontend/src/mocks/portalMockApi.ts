@@ -21,7 +21,8 @@ export interface PortalMockApi {
   request: (method: string, path: string, params?: RecordValue, body?: unknown) => Promise<unknown>
 }
 
-const timestamp = '2026-08-31T09:30:00.000Z'
+/** 所有演示时间相对当前会话生成，避免过期的固定日期混入界面。 */
+const timestamp = relativeIso(1)
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
@@ -77,12 +78,12 @@ export function createPortalMockApi(): PortalMockApi {
     },
     {
       code: 'apr-r4-sample', approvalType: 'R4_TOOL_CALL', sourceSystem: 'mcp-gateway', sourceCode: 'cfm-sample',
-      title: '调用工具 workflow.submit_execution 需要审批', requester: '当前用户', status: 'PENDING', slaStatus: 'ON_TIME',
+      title: '调用工具 workflow.submit_execution 需要审批', requester: demoIdentity.name, status: 'PENDING', slaStatus: 'ON_TIME',
       detail: { tool: 'workflow.submit_execution', riskLevel: 'R4' }, createdAt: timestamp, updatedAt: timestamp,
     },
     {
       code: 'apr-delivery-002', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-device-daily',
-      title: '设备遥测服务订阅', requester: '当前用户', status: 'APPROVED', slaStatus: 'MET',
+      title: '设备遥测服务订阅', requester: demoIdentity.name, status: 'APPROVED', slaStatus: 'MET',
       detail: { serviceCode: 'ds-device-daily', deliveryStatus: 'FAILED', deliveryError: '等待管理平台重新投递' },
       createdAt: timestamp, updatedAt: timestamp, decisionAt: timestamp, decisionBy: '陈晓',
     },
@@ -196,7 +197,7 @@ export function createPortalMockApi(): PortalMockApi {
   const feedbacks: RecordValue[] = []
   const scenarios: RecordValue[] = [
     {
-      code: 'scn-risk-001', version: '1.0.0', name: '供应链风险分析', description: '已发布的风险分析场景。', status: 'PUBLISHED', tenantId: 'default', createdBy: '当前用户',
+      code: 'scn-risk-001', version: '1.0.0', name: '供应链风险分析', description: '已发布的风险分析场景。', status: 'PUBLISHED', tenantId: 'default', createdBy: demoIdentity.name,
       ontologyRefs: [{ packageCode: 'pkg-supply-chain', version: '1.0.0' }],
       bindings: [{ type: 'WORKFLOW_TEMPLATE', ref: 'tpl-risk-flow', version: '2.0.0', alias: 'riskFlow', sourceSystem: 'ALGORITHM_RECOMBINE' }],
       createdAt: timestamp, updatedAt: timestamp,
@@ -224,7 +225,7 @@ export function createPortalMockApi(): PortalMockApi {
     if (normalizedMethod === 'post' && path === '/approvals') {
       const title = stringValue(body.title)
       if (!title) throw error(422, 'VALIDATION_FAILED', '审批标题不能为空', path, { title: '请输入审批标题' })
-      const approval = { code: nextCode('apr'), approvalType: body.approvalType ?? 'R4_TOOL_CALL', sourceSystem: body.sourceSystem ?? 'portal', sourceCode: body.sourceCode, title, requester: '当前用户', status: 'PENDING', slaStatus: 'NONE', detail: body.detail, createdAt: timestamp, updatedAt: timestamp }
+      const approval = { code: nextCode('apr'), approvalType: body.approvalType ?? 'R4_TOOL_CALL', sourceSystem: body.sourceSystem ?? 'portal', sourceCode: body.sourceCode, title, requester: demoIdentity.name, status: 'PENDING', slaStatus: 'NONE', detail: body.detail, createdAt: timestamp, updatedAt: timestamp }
       approvals.unshift(approval)
       return clone(approval)
     }
@@ -236,7 +237,7 @@ export function createPortalMockApi(): PortalMockApi {
       codes.forEach((code) => {
         const item = approvals.find((candidate) => candidate.code === code)
         if (!item || item.status !== 'PENDING') failed.push({ code, message: '审批单不存在或已处理' })
-        else succeeded.push(clone(update(item, { status: decision, decisionBy: '当前用户', decisionNote: body.decisionNote, decisionAt: timestamp, slaStatus: 'MET' })))
+        else succeeded.push(clone(update(item, { status: decision, decisionBy: demoIdentity.name, decisionNote: body.decisionNote, decisionAt: timestamp, slaStatus: 'MET' })))
       })
       return { decision, succeeded, failed }
     }
@@ -263,7 +264,7 @@ export function createPortalMockApi(): PortalMockApi {
       const item = find(approvals, 'code', decisionMatch[1], path)
       if (item.status !== 'PENDING') throw error(409, 'STATE_CONFLICT', '审批单已处理，不能重复决策', path)
       const decision = body.decision === 'REJECTED' ? 'REJECTED' : 'APPROVED'
-      return clone(update(item, { status: decision, decisionBy: '当前用户', decisionNote: body.decisionNote, decisionAt: timestamp, slaStatus: 'MET' }))
+      return clone(update(item, { status: decision, decisionBy: demoIdentity.name, decisionNote: body.decisionNote, decisionAt: timestamp, slaStatus: 'MET' }))
     }
 
     if (normalizedMethod === 'get' && path === '/results') return page(results, params)
@@ -281,7 +282,7 @@ export function createPortalMockApi(): PortalMockApi {
     if (normalizedMethod === 'post' && path === '/requirements') {
       const title = stringValue(body.title)
       if (!title) throw error(422, 'VALIDATION_FAILED', '需求标题不能为空', path, { title: '请输入需求标题' })
-      const requirement = { code: nextCode('req'), requirementType: body.requirementType ?? 'COMPREHENSIVE', title, description: body.description, requester: body.requester ?? '当前用户', status: 'OPEN', createdAt: timestamp, updatedAt: timestamp }
+      const requirement = { code: nextCode('req'), requirementType: body.requirementType ?? 'COMPREHENSIVE', title, description: body.description, requester: body.requester ?? demoIdentity.name, status: 'OPEN', createdAt: timestamp, updatedAt: timestamp }
       requirements.unshift(requirement)
       return clone(requirement)
     }
@@ -322,7 +323,7 @@ export function createPortalMockApi(): PortalMockApi {
     if (serviceMatch && normalizedMethod === 'get') return { sourceSystem: 'data-platform', available: true, item: clone(find(services, 'code', serviceMatch[1], path)), body: clone(find(services, 'code', serviceMatch[1], path)) }
     if (serviceMatch && normalizedMethod === 'post' && path.endsWith('/apply')) {
       const service = find(services, 'code', serviceMatch[1], path)
-      const approval = { code: nextCode('apr'), approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: service.code, title: `申请使用 ${service.name}`, requester: '当前用户', status: 'PENDING', slaStatus: 'ON_TIME', detail: { serviceCode: service.code, grantedColumns: body.grantedColumns }, createdAt: timestamp, updatedAt: timestamp }
+      const approval = { code: nextCode('apr'), approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: service.code, title: `申请使用 ${service.name}`, requester: demoIdentity.name, status: 'PENDING', slaStatus: 'ON_TIME', detail: { serviceCode: service.code, grantedColumns: body.grantedColumns }, createdAt: timestamp, updatedAt: timestamp }
       approvals.unshift(approval)
       return { approvalCode: approval.code, status: approval.status }
     }
@@ -354,7 +355,7 @@ export function createPortalMockApi(): PortalMockApi {
       const name = stringValue(body.name)
       const bindings = Array.isArray(body.bindings) ? body.bindings : []
       if (!name || bindings.length === 0) throw error(422, 'VALIDATION_FAILED', '场景名称和至少一个装配绑定不能为空', path, { name: '请输入场景名称', bindings: '至少添加一个装配绑定' })
-      const scenario = { code: nextCode('scn'), version: '1.0.0', name, description: body.description, projectId: body.projectId, status: 'DRAFT', ontologyRefs: body.ontologyRefs ?? [], bindings, presentation: body.presentation, tenantId: 'default', createdBy: body.createdBy ?? '当前用户', createdAt: timestamp, updatedAt: timestamp }
+      const scenario = { code: nextCode('scn'), version: '1.0.0', name, description: body.description, projectId: body.projectId, status: 'DRAFT', ontologyRefs: body.ontologyRefs ?? [], bindings, presentation: body.presentation, tenantId: 'default', createdBy: body.createdBy ?? demoIdentity.name, createdAt: timestamp, updatedAt: timestamp }
       scenarios.unshift(scenario)
       return clone(scenario)
     }
@@ -382,14 +383,14 @@ export function createPortalMockApi(): PortalMockApi {
 
     if (normalizedMethod === 'get' && path === '/personal/me') return { ...demoIdentity }
     if (normalizedMethod === 'get' && path === '/personal/requirements') {
-      return page(requirements.filter((item) => item.requester === '当前用户' || item.requester === demoIdentity.name), params)
+      return page(requirements.filter((item) => item.requester === demoIdentity.name), params)
     }
-    if (normalizedMethod === 'get' && path === '/personal/approvals') return page(approvals.filter((item) => item.requester === '当前用户'), params)
+    if (normalizedMethod === 'get' && path === '/personal/approvals') return page(approvals.filter((item) => item.requester === demoIdentity.name), params)
     if (normalizedMethod === 'get' && path === '/personal/todos') return {
       pendingApprovalCount: approvals.filter((item) => item.status === 'PENDING').length,
-      myOpenRequirementCount: requirements.filter((item) => (item.requester === '当前用户' || item.requester === demoIdentity.name) && !['COMPLETED', 'CANCELED'].includes(String(item.status))).length,
-      myRequirementCount: requirements.filter((item) => item.requester === '当前用户' || item.requester === demoIdentity.name).length,
-      myApprovalCount: approvals.filter((item) => item.requester === '当前用户').length,
+      myOpenRequirementCount: requirements.filter((item) => item.requester === demoIdentity.name && !['COMPLETED', 'CANCELED'].includes(String(item.status))).length,
+      myRequirementCount: requirements.filter((item) => item.requester === demoIdentity.name).length,
+      myApprovalCount: approvals.filter((item) => item.requester === demoIdentity.name).length,
     }
     if (normalizedMethod === 'get' && path === '/personal/notifications') return page(notifications, params)
     if (normalizedMethod === 'get' && path === '/personal/notifications/unread-count') return { unread: notifications.filter((item) => !item.readAt).length }

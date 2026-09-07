@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   ClockCircleOutlined,
+  CopyOutlined,
   DownloadOutlined,
   HistoryOutlined,
   PlayCircleOutlined,
@@ -8,6 +9,7 @@ import {
   SearchOutlined,
   StopOutlined,
 } from '@ant-design/icons-vue'
+import { Modal } from 'ant-design-vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -17,6 +19,8 @@ import { useMessageStore } from '@/stores/message'
 import type { AlgorithmRun, AlgorithmServiceSummary } from '@/types/descriptor'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import { formatDateTime } from '@/ui-kit/format'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
 
@@ -43,12 +47,6 @@ function describeLoadError(error: unknown): string {
   if (message) return message
   if (error instanceof Error && error.message) return error.message
   return String(error)
-}
-
-function formatTime(iso: string): string {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return iso
-  return date.toLocaleString('zh-CN', { hour12: false, month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 // ── 发现 ────────────────────────────────────────────────
@@ -104,13 +102,14 @@ const runsLoading = ref(false)
 const runsError = ref('')
 const runs = ref<AlgorithmRun[]>([])
 const expandedTaskIds = ref<string[]>([])
+const actionTaskId = ref('')
 
 async function loadRuns() {
   runsLoading.value = true
   runsError.value = ''
   try {
     const res = await algorithmWorkbenchApi.listMyRuns({ page: 1, size: 50 })
-    runs.value = res.items.map((run) => ({ ...run, startedAtText: formatTime(run.startedAt) }))
+    runs.value = res.items.map((run) => ({ ...run, startedAtText: formatDateTime(run.startedAt) }))
   } catch (error) {
     runsError.value = describeLoadError(error)
     messageStore.reportError(error)
@@ -132,29 +131,46 @@ function statusText(status: string): string {
 }
 
 async function rerun(taskId: string) {
+  actionTaskId.value = taskId
   try {
     await algorithmWorkbenchApi.rerun(taskId)
     messageStore.success(t('algoWorkbench.rerun'))
     await loadRuns()
   } catch (error) {
     messageStore.reportError(error)
+  } finally {
+    actionTaskId.value = ''
   }
 }
 
+async function confirmCancel(taskId: string) {
+  Modal.confirm({
+    title: '确认取消本次运行？',
+    content: '取消后正在执行的节点会停止，已经产生的临时数据不会继续处理。',
+    okText: '确认取消',
+    cancelText: '返回运行列表',
+    okButtonProps: { danger: true },
+    onOk: () => cancel(taskId),
+  })
+}
+
 async function cancel(taskId: string) {
+  actionTaskId.value = taskId
   try {
     await algorithmWorkbenchApi.cancel(taskId)
     messageStore.info(t('algoWorkbench.statusCANCELLED'))
     await loadRuns()
   } catch (error) {
     messageStore.reportError(error)
+  } finally {
+    actionTaskId.value = ''
   }
 }
 
 // ── 结果 ────────────────────────────────────────────────
 const artifacts = computed(() =>
   runs.value.flatMap((run) =>
-    run.artifacts.map((artifact) => ({ ...artifact, taskId: run.taskId, serviceName: run.serviceName, startedAtText: formatTime(run.startedAt) })),
+    run.artifacts.map((artifact) => ({ ...artifact, taskId: run.taskId, serviceName: run.serviceName, startedAtText: formatDateTime(run.startedAt) })),
   ),
 )
 
@@ -163,21 +179,30 @@ function download(artifactName: string) {
   void artifactName
 }
 
+function copyContainerLog(lines: string[]) {
+  void navigator.clipboard.writeText(lines.join('\n'))
+  messageStore.success('容器日志已复制到剪贴板')
+}
+
+function scrollLogToEnd(element: unknown) {
+  if (element instanceof HTMLElement) element.scrollTop = element.scrollHeight
+}
+
 const runsColumns = computed(() => [
-  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 180 },
-  { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName', width: 180 },
-  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120 },
-  { title: t('algoWorkbench.colStage'), dataIndex: 'stage', key: 'stage', width: 160 },
-  { title: t('algoWorkbench.colStarted'), dataIndex: 'startedAtText', key: 'startedAtText', width: 130 },
-  { title: t('algoWorkbench.colDurationText'), dataIndex: 'duration', key: 'duration', width: 120 },
+  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 180, odEllipsis: true, odSortable: true },
+  { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName', width: 180, odEllipsis: true, odSortable: true },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120, odSortable: true },
+  { title: t('algoWorkbench.colStage'), dataIndex: 'stage', key: 'stage', width: 160, odEllipsis: true, odSortable: true },
+  { title: t('algoWorkbench.colStarted'), dataIndex: 'startedAtText', key: 'startedAtText', width: 130, odSortable: true },
+  { title: t('algoWorkbench.colDurationText'), dataIndex: 'duration', key: 'duration', width: 120, odSortable: true },
   { title: t('algoWorkbench.colActions'), key: 'actions', width: 120 },
 ])
 
 const artifactColumns = computed(() => [
-  { title: t('common.name'), dataIndex: 'name', key: 'name' },
-  { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName', width: 180 },
-  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 200 },
-  { title: t('common.updatedAt'), dataIndex: 'startedAtText', key: 'startedAtText', width: 200 },
+  { title: t('common.name'), dataIndex: 'name', key: 'name', odEllipsis: true, odSortable: true },
+  { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName', width: 180, odEllipsis: true, odSortable: true },
+  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 200, odEllipsis: true, odSortable: true },
+  { title: t('common.updatedAt'), dataIndex: 'startedAtText', key: 'startedAtText', width: 200, odSortable: true },
   { title: t('algoWorkbench.colActions'), key: 'actions', width: 120 },
 ])
 
@@ -307,7 +332,7 @@ onMounted(() => {
             :title="t('algoWorkbench.emptyRuns')"
             :description="t('algoWorkbench.emptyRunsDesc')"
           />
-          <a-table
+          <OdTable
             v-else
             v-model:expanded-row-keys="expandedTaskIds"
             :columns="runsColumns"
@@ -329,7 +354,8 @@ onMounted(() => {
                     v-if="record.status === 'RUNNING'"
                     size="small"
                     danger
-                    @click="cancel(record.taskId)"
+                    :loading="actionTaskId === record.taskId"
+                    @click="confirmCancel(record.taskId)"
                   >
                     <template #icon><StopOutlined /></template>
                     {{ t('algoWorkbench.cancel') }}
@@ -337,6 +363,7 @@ onMounted(() => {
                   <a-button
                     v-if="record.status === 'FAILED' || record.status === 'CANCELLED'"
                     size="small"
+                    :loading="actionTaskId === record.taskId"
                     @click="rerun(record.taskId)"
                   >
                     <template #icon><ReloadOutlined /></template>
@@ -384,11 +411,20 @@ onMounted(() => {
                     <a-descriptions-item :label="t('algoWorkbench.cpu')">{{ record.container.cpu }}</a-descriptions-item>
                     <a-descriptions-item :label="t('algoWorkbench.mem')">{{ record.container.mem }}</a-descriptions-item>
                   </a-descriptions>
-                  <pre v-if="record.container.logTail.length" class="container-log">{{ record.container.logTail.join('\n') }}</pre>
+                  <div v-if="record.container.logTail.length" class="container-log-wrap">
+                    <div class="container-log-head">
+                      <span>最近日志（自动定位到末尾）</span>
+                      <a-button size="small" type="link" @click="copyContainerLog(record.container.logTail)">
+                        <template #icon><CopyOutlined /></template>
+                        复制
+                      </a-button>
+                    </div>
+                    <pre :ref="scrollLogToEnd" class="container-log">{{ record.container.logTail.join('\n') }}</pre>
+                  </div>
                 </div>
               </div>
             </template>
-          </a-table>
+          </OdTable>
         </a-tab-pane>
 
         <a-tab-pane key="artifacts" :tab="t('algoWorkbench.tabArtifacts')">
@@ -397,7 +433,7 @@ onMounted(() => {
             :title="t('algoWorkbench.emptyArtifacts')"
             :description="t('algoWorkbench.emptyArtifactsDesc')"
           />
-          <a-table
+          <OdTable
             v-else
             :columns="artifactColumns"
             :data-source="artifacts"
@@ -415,7 +451,7 @@ onMounted(() => {
                 </a-button>
               </template>
             </template>
-          </a-table>
+          </OdTable>
         </a-tab-pane>
       </a-tabs>
     </a-card>
@@ -624,5 +660,18 @@ onMounted(() => {
   font-size: 12px;
   color: var(--od-gray-700, #334155);
   white-space: pre-wrap;
+}
+
+.container-log-wrap {
+  margin-top: 12px;
+}
+
+.container-log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--od-gray-500, #64748b);
+  font-size: 12px;
 }
 </style>

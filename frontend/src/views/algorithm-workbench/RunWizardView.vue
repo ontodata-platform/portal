@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons-vue'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -12,6 +12,7 @@ import {
 import { useMessageStore } from '@/stores/message'
 import type { DescriptorInput, MyDelivery } from '@/types/descriptor'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import { nowIso } from '@/ui-kit/format'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
@@ -30,6 +31,7 @@ const step = ref(0)
 const submitting = ref(false)
 
 const form = reactive<Record<string, string>>({})
+const inputErrors = reactive<Record<string, string>>({})
 const deliveries = ref<MyDelivery[]>([])
 
 const preflightLoading = ref(false)
@@ -45,6 +47,9 @@ const testDataTags = reactive<Record<string, string>>({})
 const testDataRefs = ref<string[]>([])
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const fileTargetKey = ref('')
+const draftReady = ref(false)
+
+const draftKey = computed(() => `od:run-wizard:${code.value}`)
 
 const inputOptions = (input: DescriptorInput) => {
   if (input.kind === 'dataset-ref') {
@@ -64,6 +69,48 @@ function fillDefaults() {
   }
 }
 
+function validateInput(input: DescriptorInput): boolean {
+  const value = form[input.key]?.trim()
+  if (input.required && !value) {
+    inputErrors[input.key] = t('common.required')
+    return false
+  }
+  delete inputErrors[input.key]
+  return true
+}
+
+function restoreDraft() {
+  const raw = localStorage.getItem(draftKey.value)
+  if (!raw) return
+  try {
+    const draft = JSON.parse(raw) as {
+      form?: Record<string, string>
+      tier?: 'standard' | 'long'
+      outputs?: Partial<typeof outputs>
+    }
+    for (const input of inputs.value) {
+      const value = draft.form?.[input.key]
+      if (typeof value === 'string') form[input.key] = value
+    }
+    if (draft.tier === 'standard' || draft.tier === 'long') tier.value = draft.tier
+    if (typeof draft.outputs?.name === 'string') outputs.name = draft.outputs.name
+    if (typeof draft.outputs?.description === 'string') outputs.description = draft.outputs.description
+    if (draft.outputs?.archiveTier === 'standard' || draft.outputs?.archiveTier === 'long') {
+      outputs.archiveTier = draft.outputs.archiveTier
+    }
+  } catch {
+    localStorage.removeItem(draftKey.value)
+  }
+}
+
+function saveDraft() {
+  if (!draftReady.value || !code.value) return
+  localStorage.setItem(
+    draftKey.value,
+    JSON.stringify({ form, tier: tier.value, outputs, savedAt: nowIso() }),
+  )
+}
+
 async function load() {
   if (!code.value) return
   loading.value = true
@@ -78,6 +125,8 @@ async function load() {
     inputs.value = detail.descriptor.sections.find((section) => section.type === 'inputs')?.inputs ?? []
     outputs.name = `${detail.name}-结果`
     fillDefaults()
+    restoreDraft()
+    draftReady.value = true
   } catch (error) {
     loadError.value = (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? String(error)
     messageStore.reportError(error)
@@ -125,10 +174,12 @@ const usedTestDataRefs = computed(() =>
 )
 
 function nextFromStep1() {
-  if (missingRequired.value.length > 0) {
+  const valid = inputs.value.map(validateInput).every(Boolean)
+  if (!valid || missingRequired.value.length > 0) {
     messageStore.warning(t('algoWorkbench.requiredMissing'))
     return
   }
+  messageStore.clear()
   step.value = 1
   void runPreflight()
 }
@@ -158,6 +209,8 @@ async function submit() {
       },
       testDataRefs: usedTestDataRefs.value.length > 0 ? usedTestDataRefs.value : undefined,
     })
+    localStorage.removeItem(draftKey.value)
+    messageStore.clear()
     messageStore.success(t('algoWorkbench.submitSuccess', { taskId: receipt.taskId }))
     void router.push('/algorithm-workbench?tab=runs')
   } catch (error) {
@@ -167,6 +220,8 @@ async function submit() {
   }
 }
 
+watch([form, tier, outputs], saveDraft, { deep: true })
+
 onMounted(load)
 </script>
 
@@ -175,6 +230,8 @@ onMounted(load)
     <PageHeader
       :eyebrow="t('menu.groupPortal')"
       :title="service?.name ?? t('menu.algorithmWorkbench')"
+      back-to="/algorithm-workbench"
+      :parents="[t('menu.algorithmWorkbench')]"
     />
 
     <ErrorState
@@ -209,9 +266,12 @@ onMounted(load)
             <a-form-item
               v-for="input in inputs"
               :key="input.key"
+              :name="input.key"
               :label="input.label"
               :required="input.required"
               :extra="input.hint"
+              :validate-status="inputErrors[input.key] ? 'error' : undefined"
+              :help="inputErrors[input.key]"
             >
               <a-select
                 v-if="input.kind === 'dataset-ref'"
@@ -222,6 +282,9 @@ onMounted(load)
                 show-search
                 option-filter-prop="label"
                 style="max-width: 520px"
+                :aria-label="input.label"
+                @blur="validateInput(input)"
+                @change="validateInput(input)"
               />
               <div v-if="input.kind === 'dataset-ref'" class="test-import-row">
                 <a-button size="small" @click="pickTestFile(input.key)">
@@ -237,34 +300,46 @@ onMounted(load)
                 :options="inputOptions(input)"
                 style="max-width: 360px"
                 allow-clear
+                :aria-label="input.label"
+                @blur="validateInput(input)"
+                @change="validateInput(input)"
               />
               <a-input-number
                 v-else-if="input.kind === 'number'"
                 v-model:value="form[input.key]"
                 style="max-width: 240px"
+                :aria-label="input.label"
+                @blur="validateInput(input)"
+                @change="validateInput(input)"
               />
               <a-date-picker
                 v-else-if="input.kind === 'date'"
                 v-model:value="form[input.key]"
                 value-format="YYYY-MM-DD"
                 style="max-width: 240px"
+                :aria-label="input.label"
+                @blur="validateInput(input)"
+                @change="validateInput(input)"
               />
               <a-input
                 v-else
                 v-model:value="form[input.key]"
                 style="max-width: 420px"
+                :aria-label="input.label"
+                @blur="validateInput(input)"
+                @update:value="validateInput(input)"
               />
             </a-form-item>
 
             <a-divider class="output-divider">{{ t('algoWorkbench.outputsTitle') }}</a-divider>
-            <a-form-item :label="t('algoWorkbench.outputName')" :extra="t('algoWorkbench.outputNameHint')">
-              <a-input v-model:value="outputs.name" style="max-width: 420px" />
+            <a-form-item name="outputName" :label="t('algoWorkbench.outputName')" :extra="t('algoWorkbench.outputNameHint')">
+              <a-input v-model:value="outputs.name" :aria-label="t('algoWorkbench.outputName')" style="max-width: 420px" />
             </a-form-item>
-            <a-form-item :label="t('algoWorkbench.outputDesc')">
-              <a-textarea v-model:value="outputs.description" :rows="2" style="max-width: 520px" />
+            <a-form-item name="outputDescription" :label="t('algoWorkbench.outputDesc')">
+              <a-textarea v-model:value="outputs.description" :aria-label="t('algoWorkbench.outputDesc')" :rows="2" style="max-width: 520px" />
             </a-form-item>
-            <a-form-item :label="t('algoWorkbench.archiveTier')">
-              <a-radio-group v-model:value="outputs.archiveTier">
+            <a-form-item name="archiveTier" :label="t('algoWorkbench.archiveTier')">
+              <a-radio-group v-model:value="outputs.archiveTier" :aria-label="t('algoWorkbench.archiveTier')">
                 <a-radio value="standard">{{ t('algoWorkbench.tierStandard') }}</a-radio>
                 <a-radio value="long">{{ t('algoWorkbench.tierLong') }}</a-radio>
               </a-radio-group>

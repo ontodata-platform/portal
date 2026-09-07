@@ -17,6 +17,8 @@ import { useMessageStore } from '@/stores/message'
 import type { ApprovalRequest } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import { toIsoDateTime } from '@/ui-kit/format'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
@@ -49,13 +51,13 @@ const decideTarget = ref<ApprovalRequest | null>(null)
 const decideForm = reactive({ decision: 'APPROVED' as 'APPROVED' | 'REJECTED', decisionNote: '' })
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
-  { title: t('common.type'), dataIndex: 'approvalType', key: 'approvalType', width: 130 },
-  { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 140 },
-  { title: t('common.title'), dataIndex: 'title', key: 'title' },
-  { title: t('common.applicant'), dataIndex: 'requester', key: 'requester', width: 120 },
-  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
-  { title: t('approvals.slaStatus'), dataIndex: 'slaStatus', key: 'slaStatus', width: 110 },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.type'), dataIndex: 'approvalType', key: 'approvalType', width: 130, odEllipsis: true, odSortable: true },
+  { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
+  { title: t('common.applicant'), dataIndex: 'requester', key: 'requester', width: 120, odEllipsis: true, odSortable: true },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110, odSortable: true },
+  { title: t('approvals.slaStatus'), dataIndex: 'slaStatus', key: 'slaStatus', width: 110, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 110 },
 ])
 
@@ -115,7 +117,7 @@ async function create() {
       sourceSystem: createForm.sourceSystem,
       sourceCode: createForm.sourceCode || undefined,
       title: createForm.title,
-      slaDeadline: createForm.slaDeadline ? new Date(createForm.slaDeadline).toISOString() : undefined,
+      slaDeadline: toIsoDateTime(createForm.slaDeadline),
     })
     messageStore.success(t('approvals.created'))
     createOpen.value = false
@@ -337,7 +339,7 @@ onMounted(async () => {
         @action="router.push('/personal')"
       />
 
-      <a-table
+      <OdTable
         v-else
         :columns="columns"
         :data-source="rows"
@@ -389,19 +391,19 @@ onMounted(async () => {
             </a-button>
           </template>
         </template>
-      </a-table>
+      </OdTable>
 
       <!-- 发起申请弹窗 -->
       <a-modal v-model:open="createOpen" :title="t('approvals.createModal')" :confirm-loading="creating" @ok="create">
         <a-form layout="vertical" class="create-form">
-          <a-form-item :label="t('approvals.approvalType')" required>
+          <a-form-item name="approvalType" :label="t('approvals.approvalType')" required>
             <a-select v-model:value="createForm.approvalType">
               <a-select-option value="R4_TOOL_CALL">{{ t('approvals.r4ToolCall') }}</a-select-option>
               <a-select-option value="DATA_GRANT">{{ t('approvals.dataGrant') }}</a-select-option>
               <a-select-option value="SYSTEM_PERMISSION">{{ t('approvals.systemPermission') }}</a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item :label="t('common.sourceSystem')" required>
+          <a-form-item name="sourceSystem" :label="t('common.sourceSystem')" required>
             <a-select v-model:value="createForm.sourceSystem">
               <a-select-option value="mcp-gateway">mcp-gateway (智能体工具调用网关)</a-select-option>
               <a-select-option value="data-platform">data-platform (数据管理平台)</a-select-option>
@@ -409,13 +411,13 @@ onMounted(async () => {
               <a-select-option value="algorithm-recombine">algorithm-recombine (算法重组平台)</a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item :label="t('approvals.sourceObjectCode')">
+          <a-form-item name="sourceCode" :label="t('approvals.sourceObjectCode')">
             <a-input v-model:value="createForm.sourceCode" :placeholder="t('approvals.sourceCodePlaceholder')" />
           </a-form-item>
-          <a-form-item :label="t('common.title')" required>
+          <a-form-item name="title" :label="t('common.title')" required>
             <a-input v-model:value="createForm.title" :placeholder="t('approvals.titlePlaceholder')" />
           </a-form-item>
-          <a-form-item :label="t('approvals.slaDeadline')" :extra="t('approvals.slaDeadlinePlaceholder')">
+          <a-form-item name="slaDeadline" :label="t('approvals.slaDeadline')" :extra="t('approvals.slaDeadlinePlaceholder')">
             <a-input v-model:value="createForm.slaDeadline" type="datetime-local" style="max-width: 280px" />
           </a-form-item>
         </a-form>
@@ -439,13 +441,13 @@ onMounted(async () => {
         </div>
 
         <a-form layout="vertical" style="margin-top: 16px">
-          <a-form-item :label="t('approvals.conclusion')" required>
+          <a-form-item name="decision" :label="t('approvals.conclusion')" required>
             <a-radio-group v-model:value="decideForm.decision" button-style="solid">
               <a-radio-button value="APPROVED">同意通过</a-radio-button>
               <a-radio-button value="REJECTED">予以驳回</a-radio-button>
             </a-radio-group>
           </a-form-item>
-          <a-form-item :label="t('approvals.decisionNote')">
+          <a-form-item name="decisionNote" :label="t('approvals.decisionNote')">
             <a-textarea v-model:value="decideForm.decisionNote" :placeholder="t('approvals.decisionNotePlaceholder')" :rows="3" />
           </a-form-item>
         </a-form>

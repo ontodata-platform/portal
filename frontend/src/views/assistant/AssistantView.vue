@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { HistoryOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { HistoryOutlined, PlusOutlined, ReloadOutlined, StopOutlined } from '@ant-design/icons-vue'
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -34,6 +34,10 @@ const {
   selectSession,
   deleteSession,
   resumeSession,
+  renameSession,
+  stop,
+  regenerate,
+  retryLast,
   send: sendMessage,
 } = useAssistantEngine()
 
@@ -58,6 +62,14 @@ function goApproval() {
     path: '/personal/approvals',
     query: { code: pendingApproval.value, from: 'agent' },
   })
+}
+
+function rerunLastAnswer() {
+  void regenerate()
+}
+
+function retryLastMessage() {
+  void retryLast()
 }
 
 onMounted(() => {
@@ -90,6 +102,7 @@ watch(
         @update:model-value="selectSession"
         @create="createSession(); historyOpen = false"
         @delete="deleteSession"
+        @rename="renameSession"
       />
     </aside>
 
@@ -104,6 +117,26 @@ watch(
         >
           <HistoryOutlined />
           <span>{{ t('assistant.sessions') }}</span>
+        </button>
+        <button
+          v-if="sending"
+          type="button"
+          class="ghost-btn"
+          aria-label="停止生成"
+          @click="stop"
+        >
+          <StopOutlined />
+          <span>停止生成</span>
+        </button>
+        <button
+          v-else-if="started"
+          type="button"
+          class="ghost-btn"
+          aria-label="重新生成"
+          @click="rerunLastAnswer"
+        >
+          <ReloadOutlined />
+          <span>重新生成</span>
         </button>
         <button
           v-if="started"
@@ -124,7 +157,11 @@ watch(
         :message="t('assistant.degradedBanner')"
         class="banner"
       />
-      <DegradedPanel v-if="degraded" :keyword="typeof route.query.q === 'string' ? route.query.q : ''" />
+      <DegradedPanel
+        v-if="degraded"
+        :keyword="typeof route.query.q === 'string' ? route.query.q : ''"
+        @retry="retryLastMessage"
+      />
 
       <template v-else>
         <div class="scroll">

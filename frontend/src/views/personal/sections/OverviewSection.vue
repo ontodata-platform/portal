@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router'
 import { personalApi, resultApi, taskApi } from '@/api/portal'
 import type { PortalNotification, PortalResult, PortalTask } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
+import { formatDate } from '@/ui-kit/format'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -40,6 +41,7 @@ const weekBars = computed(() => {
   const max = Math.max(1, ...buckets.map((bucket) => bucket.count))
   return buckets.map((bucket) => ({
     label: weekdayFormatter.format(bucket.date),
+    date: formatDate(bucket.date),
     count: bucket.count,
     heightPercent: Math.round((bucket.count / max) * 100),
     isToday: bucket.date.toDateString() === new Date().toDateString(),
@@ -47,11 +49,6 @@ const weekBars = computed(() => {
 })
 
 const weekTotal = computed(() => weekBars.value.reduce((sum, bucket) => sum + bucket.count, 0))
-
-function formatTime(value?: string): string {
-  if (!value) return '-'
-  return new Date(value).toLocaleDateString(locale.value)
-}
 
 async function load() {
   const [resultPage, noticePage, taskPage] = await Promise.allSettled([
@@ -92,8 +89,8 @@ onMounted(() => {
           :title="`${bar.label} · ${bar.count}`"
           role="button"
           tabindex="0"
-          @click="router.push('/personal/tasks')"
-          @keydown.enter="router.push('/personal/tasks')"
+          @click="router.push({ path: '/personal/tasks', query: { date: bar.date } })"
+          @keydown.enter="router.push({ path: '/personal/tasks', query: { date: bar.date } })"
         >
           <span class="week-count">{{ bar.count }}</span>
           <div class="week-bar-container">
@@ -145,7 +142,7 @@ onMounted(() => {
                 <span class="result-id">{{ item.resultId }}</span>
                 <a-tag color="blue" class="source-tag">{{ item.sourceSystem }}</a-tag>
               </div>
-              <span class="result-date">{{ formatTime(item.createdAt) }}</span>
+              <span class="result-date">{{ formatDate(item.createdAt) }}</span>
             </div>
           </div>
         </a-card>
@@ -184,7 +181,7 @@ onMounted(() => {
                 <span v-if="!item.readAt" class="notice-dot"></span>
                 <span class="notice-title">{{ item.title }}</span>
               </div>
-              <span class="notice-time">{{ formatTime(item.createdAt) }}</span>
+              <span class="notice-time">{{ formatDate(item.createdAt) }}</span>
             </div>
           </div>
         </a-card>

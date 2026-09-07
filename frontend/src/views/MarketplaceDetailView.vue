@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeftOutlined, CheckOutlined, KeyOutlined } from '@ant-design/icons-vue'
+import { CheckOutlined, KeyOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -26,6 +26,7 @@ const service = ref<CatalogEntry | null>(null)
 
 const applyOpen = ref(false)
 const applying = ref(false)
+const applyStep = ref(0)
 const applyForm = reactive({
   grantedColumns: [] as string[],
   columnInput: '',
@@ -58,6 +59,7 @@ async function loadDetail() {
 function openApplyModal() {
   applyForm.grantedColumns = []
   applyForm.columnInput = ''
+  applyStep.value = 0
   applyOpen.value = true
 }
 
@@ -99,18 +101,10 @@ onMounted(loadDetail)
       :title="service?.name ?? t('marketplace.detailTitle')"
       :status="service ? 'success' : undefined"
       :status-label="service ? service.status : undefined"
+      back-to="/data-workbench"
+      :parents="[t('menu.marketplace')]"
     />
     <a-card :bordered="false" class="detail-card">
-      <template #title>
-        <a-space>
-          <a-button type="link" @click="router.push('/data-workbench')">
-            <template #icon><ArrowLeftOutlined /></template>
-            {{ t('marketplace.backToList') }}
-          </a-button>
-          <span class="detail-title">{{ t('marketplace.detailTitle') }}</span>
-        </a-space>
-      </template>
-
       <a-spin :spinning="loading">
         <a-alert
           v-if="aggregation && !aggregation.available"
@@ -180,44 +174,64 @@ onMounted(loadDetail)
       :title="t('marketplace.applyModal')"
       :confirm-loading="applying"
       width="560px"
-      @ok="submitApply"
     >
+      <a-steps :current="applyStep" size="small" class="apply-steps">
+        <a-step title="选择字段" />
+        <a-step title="确认申请" />
+      </a-steps>
       <a-form layout="vertical">
-        <a-form-item :label="t('common.name')">
-          <a-input :value="service?.name" disabled />
-        </a-form-item>
-        <a-form-item :label="t('common.stableCode')">
-          <a-input :value="service?.code" disabled />
-        </a-form-item>
-        <a-form-item
-          :label="t('marketplace.grantedColumns')"
-          :extra="t('marketplace.grantedColumnsPlaceholder')"
-        >
-          <a-input
-            v-model:value="applyForm.columnInput"
-            placeholder="如 id, name, created_at（回车添加）"
-            @press-enter.prevent="addColumn"
+        <template v-if="applyStep === 0">
+          <a-form-item name="serviceName" :label="t('common.name')">
+            <a-input :value="service?.name" disabled />
+          </a-form-item>
+          <a-form-item name="serviceCode" :label="t('common.stableCode')">
+            <a-input :value="service?.code" disabled />
+          </a-form-item>
+          <a-form-item
+            name="grantedColumns"
+            :label="t('marketplace.grantedColumns')"
+            :extra="t('marketplace.grantedColumnsPlaceholder')"
           >
-            <template #suffix>
-              <a-button type="link" size="small" :disabled="!applyForm.columnInput.trim()" @click="addColumn">
-                <template #icon><CheckOutlined /></template>
-              </a-button>
-            </template>
-          </a-input>
-
-          <div v-if="applyForm.grantedColumns.length > 0" style="margin-top: 8px">
-            <a-tag
-              v-for="col in applyForm.grantedColumns"
-              :key="col"
-              closable
-              color="blue"
-              @close="removeColumn(col)"
+            <a-input
+              v-model:value="applyForm.columnInput"
+              aria-label="申请字段"
+              placeholder="如 id, name, created_at（回车添加）"
+              @press-enter.prevent="addColumn"
             >
-              {{ col }}
-            </a-tag>
-          </div>
-        </a-form-item>
+              <template #suffix>
+                <a-button type="link" size="small" :disabled="!applyForm.columnInput.trim()" @click="addColumn">
+                  <template #icon><CheckOutlined /></template>
+                </a-button>
+              </template>
+            </a-input>
+
+            <div v-if="applyForm.grantedColumns.length > 0" style="margin-top: 8px">
+              <a-tag
+                v-for="col in applyForm.grantedColumns"
+                :key="col"
+                closable
+                color="blue"
+                @close="removeColumn(col)"
+              >
+                {{ col }}
+              </a-tag>
+            </div>
+          </a-form-item>
+        </template>
+        <a-descriptions v-else :column="1" size="small" bordered>
+          <a-descriptions-item :label="t('common.name')">{{ service?.name }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.stableCode')">{{ service?.code }}</a-descriptions-item>
+          <a-descriptions-item :label="t('marketplace.grantedColumns')">
+            {{ applyForm.grantedColumns.join('、') || '按服务默认字段申请' }}
+          </a-descriptions-item>
+        </a-descriptions>
       </a-form>
+      <template #footer>
+        <a-button :disabled="applying" @click="applyOpen = false">取消</a-button>
+        <a-button v-if="applyStep === 0" type="primary" @click="applyStep = 1">下一步</a-button>
+        <a-button v-else @click="applyStep = 0">上一步</a-button>
+        <a-button v-if="applyStep === 1" type="primary" :loading="applying" @click="submitApply">提交申请</a-button>
+      </template>
     </a-modal>
   </div>
 </template>
@@ -226,12 +240,6 @@ onMounted(loadDetail)
 .detail-card {
   border-radius: var(--od-radius-card, 12px);
   box-shadow: var(--od-shadow-1);
-}
-
-.detail-title {
-  font-size: 16px;
-  font-weight: 650;
-  color: var(--od-gray-900, #0f172a);
 }
 
 .service-header {
@@ -269,5 +277,10 @@ onMounted(loadDetail)
   border-radius: 8px;
   font-weight: 600;
   padding: 0 24px;
+}
+
+.apply-steps {
+  max-width: 420px;
+  margin: 0 auto 24px;
 }
 </style>

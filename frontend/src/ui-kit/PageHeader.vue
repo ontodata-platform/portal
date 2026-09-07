@@ -2,7 +2,7 @@
 import { LeftOutlined } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 
-defineProps<{
+const props = defineProps<{
   eyebrow?: string
   title: string
   titleId?: string
@@ -19,9 +19,11 @@ defineProps<{
 const router = useRouter()
 
 function goBack() {
-  if (window.history.length > 1) {
-    router.back()
+  if (props.backTo && router) {
+    void router.push(props.backTo)
+    return
   }
+  if (window.history.length > 1) router.back()
 }
 </script>
 

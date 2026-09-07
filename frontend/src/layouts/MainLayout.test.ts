@@ -32,12 +32,13 @@ const stubs = {
   'a-tag': { props: ['color'], template: '<span class="tag"><slot /></span>' },
   'a-alert': { props: ['type', 'message', 'description', 'showIcon', 'closable'], emits: ['close'], template: '<div class="alert"><slot /></div>' },
   'a-input': {
-    props: ['value', 'placeholder'],
+    props: ['value', 'placeholder', 'size'],
     emits: ['update:value', 'focus', 'pressEnter'],
     template:
       '<input class="global-search" :value="value" :placeholder="placeholder" @input="$emit(\'update:value\', $event.target.value)" @focus="$emit(\'focus\')" @keydown.enter="$emit(\'pressEnter\')" />',
   },
   'a-badge': { props: ['count'], template: '<div class="badge" :data-count="count"><slot /></div>' },
+  'a-modal': { props: ['open', 'footer', 'width', 'title'], template: '<div class="modal"><slot /></div>' },
   'a-avatar': { template: '<span class="avatar"><slot /></span>' },
   'a-dropdown': { template: '<div class="dropdown"><slot /><slot name="overlay" /></div>' },
   'a-select': {

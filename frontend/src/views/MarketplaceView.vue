@@ -26,6 +26,8 @@ import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import { formatDate, formatDateTime, formatNumber } from '@/ui-kit/format'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
 
@@ -307,7 +309,7 @@ onMounted(load)
             :title="t('dataWorkbench.emptyApplications')"
             :description="t('dataWorkbench.emptyApplicationsDesc')"
           />
-          <a-table
+          <OdTable
             v-else
             :columns="applicationColumns"
             :data-source="applications"
@@ -333,6 +335,9 @@ onMounted(load)
                 </a-tag>
                 <a-tag v-else color="default">{{ record.status }}</a-tag>
               </template>
+              <template v-else-if="column.key === 'submittedAt'">
+                {{ formatDateTime(record.submittedAt) }}
+              </template>
               <template v-else-if="column.key === 'action'">
                 <a-space size="small">
                   <a-button
@@ -355,7 +360,7 @@ onMounted(load)
                 </a-space>
               </template>
             </template>
-          </a-table>
+          </OdTable>
         </a-card>
       </a-tab-pane>
 
@@ -368,7 +373,7 @@ onMounted(load)
             :title="t('dataWorkbench.emptySubscriptions')"
             :description="t('dataWorkbench.emptySubscriptionsDesc')"
           />
-          <a-table
+          <OdTable
             v-else
             :columns="subscriptionColumns"
             :data-source="subscriptions"
@@ -388,7 +393,7 @@ onMounted(load)
               </template>
               <template v-else-if="column.key === 'expiresAt'">
                 <div style="display: flex; align-items: center; gap: 6px">
-                  <span>{{ record.expiresAt }}</span>
+                  <span>{{ formatDate(record.expiresAt) }}</span>
                   <a-tag v-if="record.isExpiringSoon" color="warning">
                     <template #icon><WarningOutlined /></template>
                     {{ t('dataWorkbench.expiringSoon') }}
@@ -396,7 +401,7 @@ onMounted(load)
                 </div>
               </template>
               <template v-else-if="column.key === 'rowsCount'">
-                <span class="mono-code">{{ record.rowsCount.toLocaleString() }}</span>
+                <span class="mono-code">{{ formatNumber(record.rowsCount) }}</span>
               </template>
               <template v-else-if="column.key === 'action'">
                 <a-space size="small">
@@ -420,7 +425,7 @@ onMounted(load)
                 </a-space>
               </template>
             </template>
-          </a-table>
+          </OdTable>
         </a-card>
       </a-tab-pane>
     </a-tabs>

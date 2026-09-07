@@ -25,7 +25,13 @@ function open() {
 </script>
 
 <template>
-  <div class="market-card" role="button" tabindex="0" @click="open">
+  <div
+    class="market-card"
+    :style="{ '--classification-tone': tone }"
+    role="button"
+    tabindex="0"
+    @click="open"
+  >
     <div class="card-head">
       <div class="icon" :style="{ background: tone }">
         <DatabaseOutlined />
@@ -56,6 +62,10 @@ function open() {
         <component :is="subscribed ? ArrowRightOutlined : KeyOutlined" />
       </button>
     </div>
+    <div class="card-hover-action" aria-hidden="true">
+      <span>{{ t('marketplace.viewDetail') }}</span>
+      <ArrowRightOutlined />
+    </div>
   </div>
 </template>
 
@@ -71,12 +81,41 @@ function open() {
   cursor: pointer;
   position: relative;
   transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.market-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--classification-tone);
 }
 
 .market-card:hover {
   border-color: var(--od-primary-300, #93c5fd);
   box-shadow: var(--od-shadow-2);
   transform: translateY(-2px);
+}
+
+.card-hover-action {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  font-weight: 650;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.market-card:hover .card-hover-action,
+.market-card:focus-visible .card-hover-action {
+  opacity: 1;
 }
 
 .card-head {

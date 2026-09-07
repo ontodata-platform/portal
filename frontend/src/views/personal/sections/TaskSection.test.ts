@@ -11,6 +11,7 @@ const listMock = vi.fn()
 const findMock = vi.fn()
 
 vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: {} }),
   useRouter: () => ({ push: vi.fn() }),
 }))
 

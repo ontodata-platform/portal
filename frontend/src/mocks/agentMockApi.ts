@@ -10,6 +10,7 @@ import type {
   ConfirmResult,
   InterruptedEvent,
 } from '@/types/agent'
+import { relativeIso } from '@/mocks/seed'
 
 export interface LocalAgentStreamHandlers {
   onToken?: (text: string) => void
@@ -28,7 +29,7 @@ export interface LocalAgentStreamHandlers {
   }) => void
 }
 
-const timestamp = '2026-08-31T09:30:00.000Z'
+const timestamp = relativeIso(1)
 export const SAMPLE_R4_APPROVAL = 'apr-r4-sample'
 
 const retrievalDef: AgentDetail = {

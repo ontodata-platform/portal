@@ -10,6 +10,8 @@ import type {
 } from '@/types/descriptor'
 import { relativeIso } from '@/mocks/seed'
 
+const relativeDate = (hoursAgo: number) => relativeIso(hoursAgo).slice(0, 10)
+
 export interface AlgorithmWorkbenchMockApi {
   request: (method: string, path: string, params?: Record<string, unknown>, body?: unknown) => Promise<unknown>
 }
@@ -39,9 +41,9 @@ function page<T>(items: T[], params: Record<string, unknown> = {}) {
 }
 
 const deliveries: MyDelivery[] = [
-  { serviceCode: 'ds-customer-monthly', serviceName: '客户主数据-月度快照', version: 'v2026.08', snapshotDate: '2026-08-31', expiresAt: '2026-12-31', state: 'ACTIVE' },
-  { serviceCode: 'ds-customer-monthly', serviceName: '客户主数据-月度快照', version: 'v2026.07', snapshotDate: '2026-07-31', expiresAt: '2026-11-30', state: 'ACTIVE' },
-  { serviceCode: 'ds-device-daily', serviceName: '设备遥测-日增量', version: 'v2026.09.01', snapshotDate: '2026-09-01', expiresAt: '2026-09-15', state: 'EXPIRING' },
+  { serviceCode: 'ds-customer-monthly', serviceName: '客户主数据-月度快照', version: 'v2026.08', snapshotDate: relativeDate(24 * 7), expiresAt: relativeDate(-24 * 90), state: 'ACTIVE' },
+  { serviceCode: 'ds-customer-monthly', serviceName: '客户主数据-月度快照', version: 'v2026.07', snapshotDate: relativeDate(24 * 37), expiresAt: relativeDate(-24 * 60), state: 'ACTIVE' },
+  { serviceCode: 'ds-device-daily', serviceName: '设备遥测-日增量', version: 'v2026.09.01', snapshotDate: relativeDate(8), expiresAt: relativeDate(-8), state: 'EXPIRING' },
 ]
 
 function serviceDescriptor(code: string, name: string, description: string): ServiceDescriptor {

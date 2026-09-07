@@ -13,7 +13,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import type { MenuProps } from 'ant-design-vue'
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -32,6 +32,39 @@ const identityStore = useIdentityStore()
 const collapsed = ref(false)
 const searchKeyword = ref('')
 const unread = ref(0)
+const commandOpen = ref(false)
+const commandQuery = ref('')
+const commandInput = ref<{ focus?: () => void } | null>(null)
+
+interface PortalCommand {
+  id: string
+  label: string
+  description: string
+  path: string
+  assistantQuery?: string
+}
+
+const commonCommands: PortalCommand[] = [
+  { id: 'assistant', label: '打开智能服务', description: '对话、检索与任务协助', path: '/assistant' },
+  { id: 'todos', label: '查看我的待办', description: '进入个人工作台的审批与任务', path: '/personal' },
+  { id: 'data', label: '查找数据服务', description: '浏览可申请的数据服务与数据集', path: '/data-workbench' },
+  { id: 'algorithm', label: '运行算法服务', description: '选择算法并进入在线运行向导', path: '/algorithm-workbench' },
+]
+
+const intentCommands: PortalCommand[] = [
+  { id: 'intent-data', label: '帮我找数据服务', description: '将意图交给智能服务处理', path: '/assistant', assistantQuery: '帮我找数据服务' },
+  { id: 'intent-run', label: '帮我跑质量分析', description: '从智能服务开始配置运行', path: '/assistant', assistantQuery: '跑一遍客户质量分析' },
+  { id: 'intent-approval', label: '我有哪些待办审批', description: '查询当前需要处理的审批', path: '/assistant', assistantQuery: '我有哪些待办审批' },
+]
+
+const recentCommands = ref<PortalCommand[]>([])
+
+const commandResults = computed(() => {
+  const keyword = commandQuery.value.trim().toLowerCase()
+  const candidates = [...commonCommands, ...recentCommands.value]
+  if (!keyword) return candidates
+  return candidates.filter((item) => `${item.label}${item.description}`.toLowerCase().includes(keyword))
+})
 
 const navItems = computed(() => {
   const items = [
@@ -86,6 +119,34 @@ function goSearch() {
   })
 }
 
+function openCommandPalette() {
+  commandQuery.value = searchKeyword.value
+  commandOpen.value = true
+  void nextTick(() => commandInput.value?.focus?.())
+}
+
+function runCommand(command: PortalCommand, queryOverride?: string) {
+  const assistantQuery = queryOverride?.trim() || command.assistantQuery
+  const recent = [command, ...recentCommands.value.filter((item) => item.id !== command.id)].slice(0, 3)
+  recentCommands.value = recent
+  localStorage.setItem('od:recent-commands', JSON.stringify(recent))
+  commandOpen.value = false
+  void router.push({ path: command.path, query: assistantQuery ? { q: assistantQuery } : {} })
+}
+
+function submitCommandSearch() {
+  const query = commandQuery.value.trim()
+  if (!query) return
+  runCommand({ id: 'search', label: `智能服务：${query}`, description: '在智能服务中继续处理', path: '/assistant' }, query)
+}
+
+function handleCommandKeydown(event: KeyboardEvent) {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault()
+    openCommandPalette()
+  }
+}
+
 function goNotifications() {
   void router.push('/personal/notifications')
 }
@@ -101,7 +162,16 @@ async function loadUnread() {
 onMounted(() => {
   void identityStore.fetchIdentity()
   void loadUnread()
+  try {
+    const cached = JSON.parse(localStorage.getItem('od:recent-commands') ?? '[]')
+    if (Array.isArray(cached)) recentCommands.value = cached.filter((item): item is PortalCommand => typeof item?.id === 'string' && typeof item.path === 'string').slice(0, 3)
+  } catch {
+    localStorage.removeItem('od:recent-commands')
+  }
+  window.addEventListener('keydown', handleCommandKeydown)
 })
+
+onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
 </script>
 
 <template>
@@ -262,6 +332,67 @@ onMounted(() => {
         </transition>
         <RouterView />
       </a-layout-content>
+
+      <a-modal
+        v-model:open="commandOpen"
+        :footer="null"
+        :width="640"
+        class="command-palette"
+        :title="null"
+      >
+        <div class="command-palette__header">
+          <span class="command-palette__eyebrow">快速命令</span>
+          <span class="command-palette__hint">Esc 关闭</span>
+        </div>
+        <a-input
+          ref="commandInput"
+          v-model:value="commandQuery"
+          class="command-palette__input"
+          placeholder="搜索页面，或直接输入问题交给智能服务"
+          size="large"
+          @press-enter="submitCommandSearch"
+        >
+          <template #prefix><SearchOutlined /></template>
+        </a-input>
+
+        <button
+          v-if="commandQuery.trim()"
+          type="button"
+          class="command-item command-item--query"
+          @click="submitCommandSearch"
+        >
+          <span>
+            <strong>交给智能服务</strong>
+            <small>“{{ commandQuery.trim() }}”</small>
+          </span>
+          <span class="command-item__shortcut">Enter</span>
+        </button>
+
+        <div class="command-palette__section">
+          <span>快速进入</span>
+        </div>
+        <div class="command-list">
+          <button
+            v-for="command in commandResults"
+            :key="command.id"
+            type="button"
+            class="command-item"
+            @click="runCommand(command)"
+          >
+            <span>
+              <strong>{{ command.label }}</strong>
+              <small>{{ command.description }}</small>
+            </span>
+            <span class="command-item__arrow">↵</span>
+          </button>
+          <p v-if="commandResults.length === 0" class="command-empty">没有匹配页面，按 Enter 将问题发送给智能服务。</p>
+        </div>
+
+        <div class="command-palette__section"><span>常用意图</span></div>
+        <div class="intent-list">
+          <button v-for="command in intentCommands" :key="command.id" type="button" @click="runCommand(command)">{{ command.label }}</button>
+        </div>
+      </a-modal>
     </a-layout>
   </a-layout>
 </template>
@@ -540,5 +671,115 @@ onMounted(() => {
 .feedback-fade-leave-to {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+:deep(.command-palette .ant-modal-content) {
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: var(--od-shadow-3);
+}
+
+.command-palette__header,
+.command-palette__section,
+.command-item,
+.intent-list {
+  display: flex;
+  align-items: center;
+}
+
+.command-palette__header {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.command-palette__eyebrow {
+  color: var(--od-color-primary, #1e40af);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.command-palette__hint,
+.command-item small,
+.command-empty {
+  color: var(--od-gray-500, #64748b);
+  font-size: 12px;
+}
+
+.command-palette__input {
+  border-radius: 10px;
+}
+
+.command-palette__section {
+  margin: 18px 0 8px;
+  color: var(--od-gray-500, #64748b);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.command-list {
+  display: grid;
+  gap: 4px;
+}
+
+.command-item {
+  width: 100%;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--od-gray-800, #1e293b);
+  cursor: pointer;
+  text-align: left;
+}
+
+.command-item:hover,
+.command-item:focus-visible {
+  border-color: var(--od-primary-200, #bfdbfe);
+  background: var(--od-primary-50, #eff6ff);
+  outline: none;
+}
+
+.command-item > span:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.command-item--query {
+  margin-top: 10px;
+  border-color: var(--od-primary-200, #bfdbfe);
+  background: var(--od-primary-50, #eff6ff);
+}
+
+.command-item__shortcut,
+.command-item__arrow {
+  color: var(--od-gray-400, #94a3b8);
+  font-family: var(--od-font-mono, monospace);
+  font-size: 12px;
+}
+
+.command-empty {
+  margin: 8px 12px;
+}
+
+.intent-list {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.intent-list button {
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #fff;
+  color: var(--od-gray-700, #334155);
+  cursor: pointer;
+}
+
+.intent-list button:hover {
+  border-color: var(--od-primary-300, #93c5fd);
+  color: var(--od-color-primary, #1e40af);
 }
 </style>

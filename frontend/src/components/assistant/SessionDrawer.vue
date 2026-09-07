@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DeleteOutlined, MessageOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined, EditOutlined, MessageOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -18,6 +18,11 @@ const current = computed({
   get: () => props.modelValue,
   set: (id: string) => emit('update:modelValue', id),
 })
+
+function rename(session: AssistantSession) {
+  const title = window.prompt('请输入新的会话名称', session.title)?.trim()
+  if (title) emit('rename', session.id, title.slice(0, 30))
+}
 </script>
 
 <template>
@@ -28,27 +33,23 @@ const current = computed({
     </button>
     <div class="label">{{ t('assistant.sessions') }}</div>
     <div class="session-list">
-      <button
-        v-for="session in sessions"
-        :key="session.id"
-        type="button"
-        class="item"
-        :class="{ active: session.id === current }"
-        @click="current = session.id"
-      >
-        <MessageOutlined class="item-icon" />
-        <span class="title">{{ session.title }}</span>
-        <span
-          class="delete-btn"
-          role="button"
-          tabindex="0"
-          title="删除会话"
-          @click.stop="emit('delete', session.id)"
-          @keydown.enter.stop="emit('delete', session.id)"
+      <a-dropdown v-for="session in sessions" :key="session.id" :trigger="['contextmenu']">
+        <button
+          type="button"
+          class="item"
+          :class="{ active: session.id === current }"
+          @click="current = session.id"
         >
-          <DeleteOutlined />
-        </span>
-      </button>
+          <MessageOutlined class="item-icon" />
+          <span class="title">{{ session.title }}</span>
+        </button>
+        <template #overlay>
+          <a-menu>
+            <a-menu-item @click="rename(session)"><EditOutlined /> 重命名</a-menu-item>
+            <a-menu-item danger @click="emit('delete', session.id)"><DeleteOutlined /> 删除会话</a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
     </div>
   </aside>
 </template>
@@ -157,21 +158,4 @@ const current = computed({
   color: var(--od-gray-900, #0f172a);
 }
 
-.delete-btn {
-  font-size: 13px;
-  color: var(--od-gray-400, #94a3b8);
-  opacity: 0;
-  padding: 2px;
-  border-radius: 4px;
-}
-
-.item:hover .delete-btn,
-.item.active .delete-btn {
-  opacity: 1;
-}
-
-.delete-btn:hover {
-  color: #dc2626;
-  background: #fee2e2;
-}
 </style>

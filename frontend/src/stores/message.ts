@@ -6,6 +6,13 @@ import { defineStore } from 'pinia'
 
 import { ApiError } from '@/api/client'
 
+let feedbackTimer: ReturnType<typeof setTimeout> | undefined
+
+function resetFeedbackTimer(clear: () => void) {
+  if (feedbackTimer) clearTimeout(feedbackTimer)
+  feedbackTimer = setTimeout(clear, 4_500)
+}
+
 export interface FeedbackMessage {
   kind: 'success' | 'error' | 'info' | 'warning'
   content: string
@@ -18,24 +25,30 @@ export const useMessageStore = defineStore('message', {
     feedback: null as FeedbackMessage | null,
   }),
   actions: {
+    setFeedback(feedback: FeedbackMessage) {
+      this.feedback = feedback
+      resetFeedbackTimer(() => this.clear())
+    },
     success(content: string) {
-      this.feedback = { kind: 'success', content }
+      this.setFeedback({ kind: 'success', content })
     },
     info(content: string) {
-      this.feedback = { kind: 'info', content }
+      this.setFeedback({ kind: 'info', content })
     },
     warning(content: string) {
-      this.feedback = { kind: 'warning', content }
+      this.setFeedback({ kind: 'warning', content })
     },
     reportError(error: unknown) {
       const apiError = error instanceof ApiError ? error : ApiError.from(error)
-      this.feedback = {
+      this.setFeedback({
         kind: 'error',
         content: apiError.detail,
         traceId: apiError.traceId,
-      }
+      })
     },
     clear() {
+      if (feedbackTimer) clearTimeout(feedbackTimer)
+      feedbackTimer = undefined
       this.feedback = null
     },
   },

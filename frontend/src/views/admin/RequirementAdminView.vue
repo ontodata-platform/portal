@@ -14,6 +14,8 @@ import { useMessageStore } from '@/stores/message'
 import type { RequirementRequest } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import { formatDateTime } from '@/ui-kit/format'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const ASSIGN_TARGETS = [
@@ -40,13 +42,13 @@ const assignForm = reactive({ assigneeSystem: 'data-platform', assigneeRef: '' }
 const closeForm = reactive({ closedNote: '' })
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
-  { title: t('common.title'), dataIndex: 'title', key: 'title' },
-  { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 120 },
-  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
-  { title: t('common.requester'), dataIndex: 'requester', key: 'requester', width: 110 },
-  { title: t('requirements.assigneeTarget'), dataIndex: 'assigneeSystem', key: 'assigneeSystem', width: 160 },
-  { title: t('admin.requirements.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 170 },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
+  { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 120, odEllipsis: true, odSortable: true },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110, odSortable: true },
+  { title: t('common.requester'), dataIndex: 'requester', key: 'requester', width: 110, odEllipsis: true, odSortable: true },
+  { title: t('requirements.assigneeTarget'), dataIndex: 'assigneeSystem', key: 'assigneeSystem', width: 160, odEllipsis: true, odSortable: true },
+  { title: t('admin.requirements.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 170, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 90 },
 ])
 
@@ -246,7 +248,7 @@ onMounted(load)
         :description="t('admin.requirements.emptyDesc')"
       />
 
-      <a-table
+      <OdTable
         v-else
         :columns="columns"
         :data-source="rows"
@@ -280,13 +282,16 @@ onMounted(load)
               {{ statusText[record.status] ?? record.status }}
             </a-tag>
           </template>
+          <template v-else-if="column.key === 'updatedAt'">
+            {{ formatDateTime(record.updatedAt) }}
+          </template>
           <template v-else-if="column.key === 'action'">
             <a-button size="small" type="primary" ghost @click="openHandle(record)">
               {{ t('admin.requirements.handle') }}
             </a-button>
           </template>
         </template>
-      </a-table>
+      </OdTable>
     </a-card>
 
     <a-drawer v-model:open="drawerOpen" :title="current ? `${t('admin.requirements.handle')} ${current.code}` : ''" width="480">
@@ -306,20 +311,20 @@ onMounted(load)
         </a-timeline>
 
         <a-form v-if="current.status === 'ANALYZING'" layout="vertical">
-          <a-form-item :label="t('requirements.assignTargetLabel')" required>
+          <a-form-item name="assigneeSystem" :label="t('requirements.assignTargetLabel')" required>
             <a-select v-model:value="assignForm.assigneeSystem">
               <a-select-option v-for="target in ASSIGN_TARGETS" :key="target.value" :value="target.value">
                 {{ t(target.labelKey) }}
               </a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item :label="t('admin.requirements.assignNote')">
+          <a-form-item name="assigneeRef" :label="t('admin.requirements.assignNote')">
             <a-input v-model:value="assignForm.assigneeRef" :placeholder="t('admin.requirements.assignNotePlaceholder')" />
           </a-form-item>
         </a-form>
 
         <a-form v-if="current.status === 'IN_PROGRESS' || current.status === 'OPEN' || current.status === 'ANALYZING'" layout="vertical">
-          <a-form-item v-if="current.status === 'IN_PROGRESS'" :label="t('requirements.closedNoteLabel')" required>
+          <a-form-item v-if="current.status === 'IN_PROGRESS'" name="closedNote" :label="t('requirements.closedNoteLabel')" required>
             <a-textarea v-model:value="closeForm.closedNote" :placeholder="t('requirements.closedNotePlaceholder')" :rows="3" />
           </a-form-item>
         </a-form>

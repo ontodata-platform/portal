@@ -8,6 +8,7 @@ import {
   SearchOutlined,
   SyncOutlined,
 } from '@ant-design/icons-vue'
+import { Modal } from 'ant-design-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -16,6 +17,7 @@ import { useMessageStore } from '@/stores/message'
 import type { RequirementRequest } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
@@ -44,14 +46,15 @@ const closeOpen = ref(false)
 const closing = ref(false)
 const closeTarget = ref<RequirementRequest | null>(null)
 const closeForm = reactive({ closedNote: '' })
+const transitioning = ref(false)
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
-  { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 130 },
-  { title: t('common.title'), dataIndex: 'title', key: 'title' },
-  { title: t('common.requester'), dataIndex: 'requester', key: 'requester', width: 120 },
-  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120 },
-  { title: t('requirements.assigneeTarget'), dataIndex: 'assigneeSystem', key: 'assigneeSystem', width: 150 },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 130, odEllipsis: true, odSortable: true },
+  { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
+  { title: t('common.requester'), dataIndex: 'requester', key: 'requester', width: 120, odEllipsis: true, odSortable: true },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120, odSortable: true },
+  { title: t('requirements.assigneeTarget'), dataIndex: 'assigneeSystem', key: 'assigneeSystem', width: 150, odEllipsis: true, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 180 },
 ])
 
@@ -134,6 +137,7 @@ async function create() {
 }
 
 async function transition(action: () => Promise<unknown>, successText: string) {
+  transitioning.value = true
   try {
     await action()
     messageStore.success(successText)
@@ -142,6 +146,8 @@ async function transition(action: () => Promise<unknown>, successText: string) {
     await load()
   } catch (error) {
     messageStore.reportError(error)
+  } finally {
+    transitioning.value = false
   }
 }
 
@@ -214,6 +220,17 @@ async function cancel(record: RequirementRequest) {
   )
 }
 
+function confirmCancel(record: RequirementRequest) {
+  Modal.confirm({
+    title: '确认撤回此需求？',
+    content: '撤回后将终止当前协同处理流程，且不能恢复为进行中状态。',
+    okText: '确认撤回',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    onOk: () => cancel(record),
+  })
+}
+
 onMounted(load)
 </script>
 
@@ -275,7 +292,7 @@ onMounted(load)
         @action="createOpen = true"
       />
 
-      <a-table
+      <OdTable
         v-else
         :columns="columns"
         :data-source="rows"
@@ -320,6 +337,7 @@ onMounted(load)
                 size="small"
                 type="primary"
                 ghost
+                :loading="transitioning"
                 @click="analyze(record)"
               >
                 {{ t('requirements.analyze') }}
@@ -328,6 +346,7 @@ onMounted(load)
                 v-if="record.status === 'ANALYZING'"
                 size="small"
                 type="primary"
+                :loading="transitioning"
                 @click="openAssign(record)"
               >
                 {{ t('requirements.assign') }}
@@ -336,6 +355,7 @@ onMounted(load)
                 v-if="record.status === 'ASSIGNED'"
                 size="small"
                 type="primary"
+                :loading="transitioning"
                 @click="transition(() => requirementApi.progress(record.code), t('requirements.progressed', { code: record.code }))"
               >
                 <template #icon><PlayCircleOutlined /></template>
@@ -345,6 +365,7 @@ onMounted(load)
                 v-if="record.status === 'IN_PROGRESS'"
                 size="small"
                 type="primary"
+                :loading="transitioning"
                 @click="openComplete(record)"
               >
                 {{ t('requirements.complete') }}
@@ -354,14 +375,15 @@ onMounted(load)
                 size="small"
                 danger
                 type="text"
-                @click="cancel(record)"
+                :loading="transitioning"
+                @click="confirmCancel(record)"
               >
                 {{ t('requirements.cancel') }}
               </a-button>
             </a-space>
           </template>
         </template>
-      </a-table>
+      </OdTable>
 
       <!-- 创建需求弹窗 -->
       <a-modal
@@ -372,17 +394,17 @@ onMounted(load)
         @ok="create"
       >
         <a-form layout="vertical">
-          <a-form-item :label="t('requirements.requirementType')" required>
+          <a-form-item name="requirementType" :label="t('requirements.requirementType')" required>
             <a-radio-group v-model:value="createForm.requirementType" button-style="solid">
               <a-radio-button value="DATA">{{ t('requirements.dataRequirement') }}</a-radio-button>
               <a-radio-button value="ALGORITHM">{{ t('requirements.algorithmRequirement') }}</a-radio-button>
               <a-radio-button value="COMPREHENSIVE">{{ t('requirements.comprehensiveRequirement') }}</a-radio-button>
             </a-radio-group>
           </a-form-item>
-          <a-form-item :label="t('common.title')" required>
+          <a-form-item name="title" :label="t('common.title')" required>
             <a-input v-model:value="createForm.title" :placeholder="t('requirements.titlePlaceholder')" />
           </a-form-item>
-          <a-form-item :label="t('requirements.description')">
+          <a-form-item name="description" :label="t('requirements.description')">
             <a-textarea v-model:value="createForm.description" :placeholder="t('requirements.descriptionPlaceholder')" :rows="3" />
           </a-form-item>
         </a-form>
@@ -391,7 +413,7 @@ onMounted(load)
       <!-- 分派协同系统弹窗 -->
       <a-modal v-model:open="assignOpen" :title="t('requirements.assignModal')" :confirm-loading="assigning" @ok="assign">
         <a-form layout="vertical">
-          <a-form-item :label="t('requirements.assignTargetLabel')" required>
+          <a-form-item name="assigneeSystem" :label="t('requirements.assignTargetLabel')" required>
             <a-select v-model:value="assignForm.assigneeSystem">
               <a-select-option value="data-platform">data-platform (数据管理平台)</a-select-option>
               <a-select-option value="algorithm-transform">algorithm-transform (算法转换工具)</a-select-option>
@@ -400,7 +422,7 @@ onMounted(load)
               <a-select-option value="mcp-gateway">mcp-gateway (智能体网关)</a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item :label="t('requirements.assigneeRefLabel')">
+          <a-form-item name="assigneeRef" :label="t('requirements.assigneeRefLabel')">
             <a-input v-model:value="assignForm.assigneeRef" :placeholder="t('requirements.assigneeRefPlaceholder')" />
           </a-form-item>
         </a-form>
@@ -409,7 +431,7 @@ onMounted(load)
       <!-- 办结需求弹窗 -->
       <a-modal v-model:open="closeOpen" :title="t('requirements.completeModal')" :confirm-loading="closing" @ok="complete">
         <a-form layout="vertical">
-          <a-form-item :label="t('requirements.closedNoteLabel')" required>
+          <a-form-item name="closedNote" :label="t('requirements.closedNoteLabel')" required>
             <a-textarea v-model:value="closeForm.closedNote" :placeholder="t('requirements.closedNotePlaceholder')" :rows="3" />
           </a-form-item>
         </a-form>

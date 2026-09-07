@@ -139,6 +139,25 @@
   --focus-ring: var(--od-focus-ring);
 }
 
+/* 键盘操作应始终获得与鼠标悬停同等清晰的反馈。 */
+:where(button, a, input, textarea, select, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--od-color-accent);
+  outline-offset: 2px;
+  box-shadow: var(--od-focus-ring);
+}
+
+/* 尊重系统的减弱动态效果偏好，避免无必要的运动干扰。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @media (max-width: 900px) {
   :root {
     --od-topbar-height: 56px;

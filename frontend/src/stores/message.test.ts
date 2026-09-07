@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/api/client'
 import { useMessageStore } from '@/stores/message'
@@ -34,5 +34,14 @@ describe('useMessageStore', () => {
     store.success('x')
     store.clear()
     expect(store.feedback).toBeNull()
+  })
+
+  it('反馈在 4.5 秒后自动消失，避免跨页面滞留', () => {
+    vi.useFakeTimers()
+    const store = useMessageStore()
+    store.warning('请补充必填项')
+    vi.advanceTimersByTime(4_500)
+    expect(store.feedback).toBeNull()
+    vi.useRealTimers()
   })
 })

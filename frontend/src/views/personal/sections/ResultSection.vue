@@ -9,9 +9,11 @@ import { useMessageStore } from '@/stores/message'
 import type { PortalResult } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import { formatDateTime } from '@/ui-kit/format'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const router = useRouter()
 const messageStore = useMessageStore()
 
@@ -34,17 +36,16 @@ const detailOpen = ref(false)
 const detail = ref<PortalResult | null>(null)
 
 const columns = computed(() => [
-  { title: t('results.resultId'), dataIndex: 'resultId', key: 'resultId', width: 220 },
-  { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 160 },
-  { title: t('common.type'), dataIndex: 'resultType', key: 'resultType', width: 140 },
-  { title: t('results.relatedTask'), dataIndex: 'sourceTaskId', key: 'sourceTaskId', width: 200 },
-  { title: t('common.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 180 },
+  { title: t('results.resultId'), dataIndex: 'resultId', key: 'resultId', width: 220, odEllipsis: true, odSortable: true },
+  { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 160, odEllipsis: true, odSortable: true },
+  { title: t('common.type'), dataIndex: 'resultType', key: 'resultType', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('results.relatedTask'), dataIndex: 'sourceTaskId', key: 'sourceTaskId', width: 200, odEllipsis: true, odSortable: true },
+  { title: t('common.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 180, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 100 },
 ])
 
 function formatTime(value: string): string {
-  if (!value) return '-'
-  return new Date(value).toLocaleString(locale.value)
+  return formatDateTime(value)
 }
 
 function copyText(text: string, label: string) {
@@ -169,7 +170,7 @@ onMounted(load)
         @action="router.push('/personal/tasks')"
       />
 
-      <a-table
+      <OdTable
         v-else
         :columns="columns"
         :data-source="rows"
@@ -221,7 +222,7 @@ onMounted(load)
             </a-button>
           </template>
         </template>
-      </a-table>
+      </OdTable>
 
       <!-- 登记结果集弹窗 -->
       <a-modal
@@ -232,7 +233,7 @@ onMounted(load)
         @ok="register"
       >
         <a-form layout="vertical">
-          <a-form-item :label="t('common.sourceSystem')" required>
+          <a-form-item name="sourceSystem" :label="t('common.sourceSystem')" required>
             <a-select v-model:value="registerForm.sourceSystem">
               <a-select-option value="data-platform">data-platform (数据管理平台)</a-select-option>
               <a-select-option value="algorithm-transform">algorithm-transform (算法转换工具)</a-select-option>
@@ -240,17 +241,17 @@ onMounted(load)
               <a-select-option value="ontology-platform">ontology-platform (本体平台)</a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item :label="t('results.resultId')" required>
+          <a-form-item name="resultId" :label="t('results.resultId')" required>
             <a-input v-model:value="registerForm.resultId" :placeholder="t('results.resultIdPlaceholder')" />
           </a-form-item>
-          <a-form-item :label="t('common.type')" required>
+          <a-form-item name="resultType" :label="t('common.type')" required>
             <a-select v-model:value="registerForm.resultType">
               <a-select-option value="DATASET">DATASET (结构化数据集)</a-select-option>
               <a-select-option value="REPORT">REPORT (分析报告)</a-select-option>
               <a-select-option value="EXECUTION_OUTPUT">EXECUTION_OUTPUT (执行产出物)</a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item :label="t('results.sourceTaskIdLabel')">
+          <a-form-item name="sourceTaskId" :label="t('results.sourceTaskIdLabel')">
             <a-input v-model:value="registerForm.sourceTaskId" :placeholder="t('results.sourceTaskIdPlaceholder')" />
           </a-form-item>
         </a-form>

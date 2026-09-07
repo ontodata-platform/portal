@@ -1,7 +1,9 @@
 <script setup lang="ts">
 /**
  * 统一表格（UX-1 §10.1）：内置空态、分页规格、列默认溢出省略。
- * 列定义扩展：{ odEllipsis?: boolean } —— 开启后单元格超出省略并带原生 title 提示。
+ * 列定义扩展：
+ * - { odEllipsis?: boolean }：开启后单元格超出省略并带原生 title 提示；
+ * - { odSortable?: boolean }：按 dataIndex 的显示值进行本地排序。
  * 其余 props/attrs/slots/事件全部透传 a-table（bodyCell 等插槽照常使用）。
  */
 import { computed, useAttrs, useSlots } from 'vue'
@@ -14,9 +16,16 @@ defineOptions({ name: 'OdTable', inheritAttrs: false })
 const props = defineProps<{
   columns: Array<Record<string, unknown>>
   dataSource: unknown[]
-  rowKey?: string
+  /** 同时兼容 Ant Design Vue 的字段型和函数型行键。 */
+  rowKey?: string | ((record: never, index?: number) => string | number)
   loading?: boolean
-  pagination?: false | { current?: number; pageSize?: number; total?: number; hideOnSinglePage?: boolean }
+  pagination?: false | {
+    current?: number
+    pageSize?: number
+    total?: number
+    hideOnSinglePage?: boolean
+    showTotal?: (total: number, range?: [number, number]) => string
+  }
   emptyTitle?: string
   emptyDescription?: string
 }>()
@@ -30,11 +39,24 @@ const hasData = computed(() => props.dataSource.length > 0)
 /** 列默认补 odEllipsis（antd column.ellipsis 显示原生 title） */
 const normalizedColumns = computed(() =>
   props.columns.map((column) => {
-    const col = column as { odEllipsis?: boolean; ellipsis?: boolean | object; [key: string]: unknown }
-    if (col.odEllipsis && !col.ellipsis) {
-      return { ...col, ellipsis: { showTitle: true } }
+    const col = column as {
+      odEllipsis?: boolean
+      odSortable?: boolean
+      ellipsis?: boolean | object
+      sorter?: unknown
+      dataIndex?: string
+      [key: string]: unknown
     }
-    return col
+    const next = { ...col }
+    if (col.odEllipsis && !col.ellipsis) next.ellipsis = { showTitle: true }
+    if (col.odSortable && !col.sorter && col.dataIndex) {
+      next.sorter = (left: Record<string, unknown>, right: Record<string, unknown>) =>
+        String(left[col.dataIndex!] ?? '').localeCompare(String(right[col.dataIndex!] ?? ''), 'zh-CN', {
+          numeric: true,
+          sensitivity: 'base',
+        })
+    }
+    return next
   }),
 )
 

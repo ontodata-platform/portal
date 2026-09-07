@@ -2,16 +2,19 @@
 import { CheckCircleOutlined, CloseCircleOutlined, CopyOutlined, EyeOutlined, SyncOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { taskApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { PortalTask } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
+import { formatDate, formatDateTime } from '@/ui-kit/format'
+import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const messageStore = useMessageStore()
 
@@ -20,17 +23,18 @@ const loadError = ref('')
 const rows = ref<PortalTask[]>([])
 const total = ref(0)
 const query = reactive({ page: 1, size: 20, status: '', domain: '', type: '' })
+const dateFilter = computed(() => (typeof route.query.date === 'string' ? route.query.date : ''))
 
 const detailOpen = ref(false)
 const detail = ref<PortalTask | null>(null)
 
 const columns = computed(() => [
-  { title: t('tasks.taskId'), dataIndex: 'taskId', key: 'taskId', width: 200 },
-  { title: t('common.type'), dataIndex: 'taskType', key: 'taskType', width: 140 },
-  { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 150 },
-  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120 },
-  { title: t('common.progress'), dataIndex: 'progress', key: 'progress', width: 180 },
-  { title: t('common.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 180 },
+  { title: t('tasks.taskId'), dataIndex: 'taskId', key: 'taskId', width: 200, odEllipsis: true, odSortable: true },
+  { title: t('common.type'), dataIndex: 'taskType', key: 'taskType', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 150, odEllipsis: true, odSortable: true },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120, odSortable: true },
+  { title: t('common.progress'), dataIndex: 'progress', key: 'progress', width: 180, odSortable: true },
+  { title: t('common.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 180, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 100 },
 ])
 
@@ -46,8 +50,7 @@ const statusColor = computed(
 )
 
 function formatTime(value: string): string {
-  if (!value) return '-'
-  return new Date(value).toLocaleString(locale.value)
+  return formatDateTime(value)
 }
 
 function describeLoadError(error: unknown): string {
@@ -68,8 +71,9 @@ async function load() {
       domain: query.domain || undefined,
       type: query.type || undefined,
     })
-    rows.value = page.items
-    total.value = page.total
+    const items = dateFilter.value ? page.items.filter((item) => formatDate(item.updatedAt) === dateFilter.value) : page.items
+    rows.value = items
+    total.value = dateFilter.value ? items.length : page.total
   } catch (error) {
     loadError.value = describeLoadError(error)
     messageStore.reportError(error)
@@ -184,6 +188,16 @@ onMounted(load)
         </a-space>
       </div>
 
+      <a-alert
+        v-if="dateFilter"
+        type="info"
+        show-icon
+        class="date-filter-hint"
+        :message="`正在查看 ${dateFilter} 更新的任务`"
+        closable
+        @close="router.push('/personal/tasks')"
+      />
+
       <EmptyState
         v-if="!loading && rows.length === 0"
         :title="t('tasks.emptyTitle')"
@@ -192,7 +206,7 @@ onMounted(load)
         @action="router.push('/personal')"
       />
 
-      <a-table
+      <OdTable
         v-else
         :columns="columns"
         :data-source="rows"
@@ -255,7 +269,7 @@ onMounted(load)
             </a-button>
           </template>
         </template>
-      </a-table>
+      </OdTable>
 
       <!-- 任务详情抽屉/弹窗 -->
       <a-modal v-model:open="detailOpen" :title="t('tasks.detailModal')" :footer="null" width="680px">

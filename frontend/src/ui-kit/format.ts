@@ -53,3 +53,21 @@ export function toTimeValue(iso: string | Date | undefined | null): number {
   const date = iso instanceof Date ? iso : new Date(iso)
   return Number.isNaN(date.getTime()) ? 0 : date.getTime()
 }
+
+/** 数值展示统一加千分位；非法值用占位符，避免视图层自行格式化。 */
+export function formatNumber(value: number | undefined | null): string {
+  if (value === undefined || value === null || Number.isNaN(value)) return '—'
+  return new Intl.NumberFormat('zh-CN').format(value)
+}
+
+/** 表单值转接口 ISO 时间；无效时间返回 undefined。 */
+export function toIsoDateTime(value: string | Date | undefined | null): string | undefined {
+  if (!value) return undefined
+  const date = value instanceof Date ? value : new Date(value)
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+}
+
+/** 当前时刻的 ISO 值，供本地草稿等元数据写入。 */
+export function nowIso(): string {
+  return new Date().toISOString()
+}
