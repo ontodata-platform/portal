@@ -314,7 +314,7 @@ onMounted(load)
   border: 0;
   background: transparent;
   padding: 2px 4px;
-  color: var(--od-gray-400, #94a3b8);
+  color: var(--od-gray-500, #64748b);
   cursor: pointer;
   border-radius: 4px;
 }
@@ -330,7 +330,7 @@ onMounted(load)
 }
 
 .text-muted {
-  color: var(--od-gray-400, #94a3b8);
+  color: var(--od-gray-500, #64748b);
 }
 
 .meta-code {

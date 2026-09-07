@@ -98,4 +98,8 @@ const slotNames = Object.keys(slots)
 :deep(.ant-table) {
   border-radius: 8px;
 }
+/* 数据列等宽数字：编码/时间/数值列防抖动（number-tabular, UX-1） */
+:deep(.ant-table-tbody > tr > td) {
+  font-variant-numeric: tabular-nums;
+}
 </style>

@@ -124,7 +124,7 @@ function rename(session: AssistantSession) {
 
 .item-icon {
   font-size: 13px;
-  color: var(--od-gray-400, #94a3b8);
+  color: var(--od-gray-500, #64748b);
   flex-shrink: 0;
 }
 

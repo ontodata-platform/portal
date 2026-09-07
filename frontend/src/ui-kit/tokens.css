@@ -165,3 +165,28 @@
     --topbar-height: 56px;
   }
 }
+
+/* ── UX-1 补充（ui-ux-pro-max/frontend-design 方法论，2026-09-08）── */
+
+/* 等宽数字：数据列/统计值/时间防抖动（number-tabular） */
+.od-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 签名元素：工程蓝图网格——呼应制造业数据平台的工程语境（frontend-design: 签名元素只花一处） */
+.od-blueprint {
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* 可点击卡片/自定义控件的指针与键盘焦点环（cursor-pointer / focus-states） */
+.od-clickable {
+  cursor: pointer;
+}
+
+.od-clickable:focus-visible {
+  outline: var(--od-focus-ring, 2px solid #2563eb);
+  outline-offset: 2px;
+}

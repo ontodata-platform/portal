@@ -94,7 +94,7 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 .hero-input::placeholder {
-  color: var(--od-gray-400, #94a3b8);
+  color: var(--od-gray-500, #64748b);
 }
 
 .bar {
@@ -109,7 +109,7 @@ function onKeydown(event: KeyboardEvent) {
 
 .hint {
   font-size: 12px;
-  color: var(--od-gray-400, #94a3b8);
+  color: var(--od-gray-500, #64748b);
 }
 
 .send-btn {

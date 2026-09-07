@@ -101,7 +101,7 @@ onMounted(() => {
 <template>
   <div class="personal-workspace">
     <!-- 顶部工作台欢迎与快捷操作横幅 -->
-    <div class="hero-banner">
+    <div class="hero-banner od-blueprint">
       <div class="hero-left">
         <div class="greeting-row">
           <span class="greeting-text">{{ greeting }}，{{ identityStore.name }}</span>
@@ -240,6 +240,8 @@ onMounted(() => {
 }
 
 .hero-banner {
+  background-color: rgba(255,255,255,0.6);
+  background-blend-mode: overlay;
   display: flex;
   align-items: center;
   justify-content: space-between;

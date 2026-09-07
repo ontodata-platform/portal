@@ -519,6 +519,6 @@ onMounted(load)
 
 .text-muted {
   font-size: 12px;
-  color: var(--od-gray-400, #94a3b8);
+  color: var(--od-gray-500, #64748b);
 }
 </style>

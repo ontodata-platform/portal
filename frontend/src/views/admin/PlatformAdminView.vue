@@ -144,7 +144,7 @@ void loadStatus()
 
 .status-box dt {
   font-size: 12px;
-  color: var(--od-gray-400, #94a3b8);
+  color: var(--od-gray-500, #64748b);
   margin-bottom: 4px;
 }
 

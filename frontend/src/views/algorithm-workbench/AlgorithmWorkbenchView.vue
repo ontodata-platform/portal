@@ -567,7 +567,7 @@ onMounted(() => {
 
 .meta-label {
   font-size: 11px;
-  color: var(--od-gray-400, #94a3b8);
+  color: var(--od-gray-500, #64748b);
 }
 
 .meta-val {

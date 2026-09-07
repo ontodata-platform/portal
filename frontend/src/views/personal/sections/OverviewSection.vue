@@ -353,7 +353,7 @@ onMounted(() => {
 .result-date,
 .notice-time {
   font-size: 12px;
-  color: var(--od-gray-400, #94a3b8);
+  color: var(--od-gray-500, #64748b);
 }
 
 .notice-title-row {
