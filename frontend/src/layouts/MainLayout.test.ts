@@ -61,7 +61,7 @@ describe('MainLayout v2', () => {
     vi.mocked(personalApi.me).mockResolvedValue({
       name: 'dev-user',
       tenantId: 'default',
-      roles: [],
+      roles: ['operator'],
       devMode: true,
     })
     vi.mocked(personalApi.unreadCount).mockResolvedValue({ unread: 3 })
@@ -79,7 +79,7 @@ describe('MainLayout v2', () => {
     expect(wrapper.text()).not.toContain('统一任务中心')
     expect(wrapper.text()).not.toContain('开发模式')
     expect(wrapper.text()).toContain('dev-user')
-    expect(wrapper.text()).toContain('默认租户')
+    expect(wrapper.text()).toContain('运营人员')
     expect(wrapper.text()).not.toContain('default')
   })
 

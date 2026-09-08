@@ -262,8 +262,12 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
             </a-badge>
           </div>
 
-          <!-- 租户标签 -->
-          <a-tag color="blue" class="tenant-tag">{{ 中文展示(identityStore.tenantId) }}</a-tag>
+          <!-- 当前登录角色由身份服务返回，并与路由访问控制保持一致。 -->
+          <div v-if="identityStore.roles.length > 0" class="header-role-tags" aria-label="当前角色">
+            <a-tag v-for="role in identityStore.roles" :key="role" color="blue" class="header-role-tag">
+              {{ 中文展示(role) }}
+            </a-tag>
+          </div>
 
           <!-- 个人头像与操作下拉 -->
           <a-dropdown placement="bottomRight" :trigger="['click']">
@@ -278,10 +282,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
                 <div class="user-dropdown-header">
                   <div class="user-dropdown-name">{{ identityStore.name }}</div>
                   <div class="user-dropdown-meta">
-                    {{ 中文展示(identityStore.tenantId) }}
-                    <template v-if="identityStore.identity.roles.length > 0">
-                      · {{ identityStore.identity.roles.map(中文展示).join('、') }}
-                    </template>
+                    {{ identityStore.identity.roles.map(中文展示).join('、') || '未分配角色' }}
                   </div>
                 </div>
                 <a-menu-item key="locale">
@@ -589,7 +590,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
   color: var(--od-color-accent, #2563eb);
 }
 
-.tenant-tag {
+.header-role-tags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-role-tag {
   font-weight: 600;
   border-radius: 6px;
   padding: 2px 8px;

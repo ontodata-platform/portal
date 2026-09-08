@@ -106,10 +106,12 @@ onMounted(() => {
       <div class="hero-left">
         <div class="greeting-row">
           <span class="greeting-text">{{ greeting }}，{{ identityStore.name }}</span>
-          <a-tag color="blue" class="tenant-badge">{{ 中文展示(identityStore.tenantId) }}</a-tag>
-          <a-tag v-if="identityStore.identity.projectId" color="purple" class="project-badge">
-            {{ 中文展示(identityStore.identity.projectId) }}
-          </a-tag>
+          <span v-if="identityStore.roles.length > 0" class="role-summary" aria-label="当前角色">
+            <span class="role-summary-label">当前角色</span>
+            <a-tag v-for="role in identityStore.roles" :key="role" color="blue" class="role-badge">
+              {{ 中文展示(role) }}
+            </a-tag>
+          </span>
         </div>
         <p class="hero-subtitle">
           <span class="conclusion-badge">{{ conclusion }}</span>
@@ -275,8 +277,18 @@ onMounted(() => {
   letter-spacing: -0.01em;
 }
 
-.tenant-badge,
-.project-badge {
+.role-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.role-summary-label {
+  color: var(--od-gray-500, #64748b);
+  font-size: 12px;
+}
+
+.role-badge {
   font-size: 12px;
   font-weight: 600;
   border-radius: 6px;

@@ -62,7 +62,7 @@ describe('PersonalWorkspaceView', () => {
       name: '陈晓',
       tenantId: 'default',
       projectId: 'proj-quality',
-      roles: ['user'],
+      roles: ['user', 'operator'],
       devMode: true,
     })
     todosMock.mockResolvedValue({
@@ -86,8 +86,10 @@ describe('PersonalWorkspaceView', () => {
     expect(bar.text()).toContain('8')
     expect(bar.text()).toContain('5')
     expect(wrapper.text()).toContain('陈晓')
-    expect(wrapper.text()).toContain('默认租户')
-    expect(wrapper.text()).toContain('质量分析项目')
+    expect(wrapper.text()).toContain('当前角色')
+    expect(wrapper.text()).toContain('普通用户')
+    expect(wrapper.text()).toContain('运营人员')
+    expect(wrapper.text()).not.toContain('default')
     expect(wrapper.text()).not.toContain('proj-quality')
   })
 

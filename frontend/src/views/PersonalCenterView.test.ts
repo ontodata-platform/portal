@@ -107,7 +107,8 @@ describe('PersonalCenterView', () => {
     expect(noticesMock).toHaveBeenCalledWith({ page: 1, size: 5, status: 'PUBLISHED' })
 
     expect(wrapper.text()).toContain('tester-user')
-    expect(wrapper.text()).toContain('tenant-a')
+    expect(wrapper.text()).toContain('门户用户')
+    expect(wrapper.text()).not.toContain('tenant-a')
     expect(wrapper.text()).toContain('待我审批')
   })
 
