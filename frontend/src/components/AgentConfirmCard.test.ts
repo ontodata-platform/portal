@@ -62,7 +62,7 @@ describe('AgentConfirmCard', () => {
   it('展示工具名/风险级/计划/影响/参数摘要与倒计时', () => {
     const wrapper = mountCard()
 
-    expect(wrapper.text()).toContain('data.update_dataset')
+    expect(wrapper.text()).toContain('更新数据集')
     expect(wrapper.text()).toContain('R3')
     expect(wrapper.text()).toContain('更新数据集')
     expect(wrapper.text()).toContain('覆盖写目标表')

@@ -8,6 +8,7 @@ import { personalApi, resultApi, taskApi } from '@/api/portal'
 import type { PortalNotification, PortalResult, PortalTask } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import { formatDate } from '@/ui-kit/format'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -140,7 +141,7 @@ onMounted(() => {
             >
               <div class="result-main">
                 <span class="result-id">{{ item.resultId }}</span>
-                <a-tag color="blue" class="source-tag">{{ item.sourceSystem }}</a-tag>
+                <a-tag color="blue" class="source-tag">{{ 中文展示(item.sourceSystem) }}</a-tag>
               </div>
               <span class="result-date">{{ formatDate(item.createdAt) }}</span>
             </div>

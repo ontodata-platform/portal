@@ -22,6 +22,7 @@ import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -241,7 +242,7 @@ onMounted(() => {
               :aria-pressed="selectedCategory === cat"
               @click="pickCategory(cat)"
             >
-              {{ cat }}
+              {{ 中文展示(cat) }}
             </button>
           </div>
           <div class="toolbar">
@@ -276,8 +277,8 @@ onMounted(() => {
             <div v-for="service in services" :key="service.code" class="service-card">
               <div class="service-head">
                 <h3 class="service-name" :title="service.name">{{ service.name }}</h3>
-                <a-tag class="cat-badge">{{ service.category }}</a-tag>
-                <a-tag color="blue" class="status-badge">{{ service.status }}</a-tag>
+                <a-tag class="cat-badge">{{ 中文展示(service.category) }}</a-tag>
+                <a-tag color="blue" class="status-badge">{{ 中文展示(service.status) }}</a-tag>
               </div>
               <p class="service-desc">{{ service.description }}</p>
 
@@ -403,7 +404,7 @@ onMounted(() => {
                     <a-descriptions-item :label="t('algoWorkbench.node')">{{ record.container.node }}</a-descriptions-item>
                     <a-descriptions-item :label="t('common.status')">
                       <a-tag :color="record.container.state === 'RUNNING' ? 'processing' : record.container.state === 'FAILED' ? 'error' : 'default'">
-                        {{ record.container.state }}
+                        {{ 中文展示(record.container.state) }}
                       </a-tag>
                     </a-descriptions-item>
                     <a-descriptions-item :label="t('algoWorkbench.cpu')">{{ record.container.cpu }}</a-descriptions-item>

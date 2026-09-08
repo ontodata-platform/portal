@@ -20,6 +20,7 @@ import ErrorState from '@/ui-kit/ErrorState.vue'
 import { toIsoDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -380,6 +381,14 @@ onMounted(async () => {
             </a-tag>
           </template>
 
+          <template v-else-if="column.key === 'approvalType'">
+            {{ 中文展示(record.approvalType) }}
+          </template>
+
+          <template v-else-if="column.key === 'sourceSystem'">
+            {{ 中文展示(record.sourceSystem) }}
+          </template>
+
           <template v-else-if="column.key === 'action'">
             <a-button
               size="small"
@@ -405,10 +414,10 @@ onMounted(async () => {
           </a-form-item>
           <a-form-item name="sourceSystem" :label="t('common.sourceSystem')" required>
             <a-select v-model:value="createForm.sourceSystem">
-              <a-select-option value="mcp-gateway">mcp-gateway (智能体工具调用网关)</a-select-option>
-              <a-select-option value="data-platform">data-platform (数据管理平台)</a-select-option>
-              <a-select-option value="algorithm-transform">algorithm-transform (算法转换工具)</a-select-option>
-              <a-select-option value="algorithm-recombine">algorithm-recombine (算法重组平台)</a-select-option>
+              <a-select-option value="mcp-gateway">智能体工具调用网关</a-select-option>
+              <a-select-option value="data-platform">数据管理平台</a-select-option>
+              <a-select-option value="algorithm-transform">算法转换工具</a-select-option>
+              <a-select-option value="algorithm-recombine">算法重组平台</a-select-option>
             </a-select>
           </a-form-item>
           <a-form-item name="sourceCode" :label="t('approvals.sourceObjectCode')">
@@ -436,7 +445,7 @@ onMounted(async () => {
           </div>
           <div class="target-row">
             <span class="target-label">申请人:</span>
-            <span>{{ decideTarget.requester }} ({{ decideTarget.sourceSystem }})</span>
+            <span>{{ decideTarget.requester }}（{{ 中文展示(decideTarget.sourceSystem) }}）</span>
           </div>
         </div>
 

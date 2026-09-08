@@ -9,6 +9,7 @@ import AgentConfirmCard from '@/components/AgentConfirmCard.vue'
 import { localAgentMockApi } from '@/mocks/agentMockApi'
 import { useLocalMock } from '@/mocks/localMode'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 import { useMessageStore } from '@/stores/message'
 import type {
   AgentDef,
@@ -100,7 +101,7 @@ function tryParseRecord(content: string): Record<string, unknown> | null {
 function displayContent(item: ChatItem): string {
   const parsed = tryParseRecord(item.content)
   if (parsed?.audit === 'confirm') {
-    return t('agentChat.auditConfirm', { decision: String(parsed.decision ?? ''), tool: String(parsed.tool ?? '') })
+    return t('agentChat.auditConfirm', { decision: 中文展示(String(parsed.decision ?? '')), tool: 中文展示(String(parsed.tool ?? '')) })
   }
   if (parsed?.audit === 'approval') {
     return t('agentChat.auditApproval', { code: String(parsed.approvalCode ?? '') })
@@ -346,7 +347,7 @@ onUnmounted(stopStream)
         show-icon
         class="approval-bar"
         :message="t('agentChat.approvalTitle')"
-        :description="t('agentChat.approvalWaiting', { code: pendingApproval.ref, tool: pendingApproval.tool || '' })"
+        :description="t('agentChat.approvalWaiting', { code: pendingApproval.ref, tool: 中文展示(pendingApproval.tool) })"
       >
         <template #action>
           <a-button type="primary" size="small" @click="goApproval">{{ t('agentChat.goApproval') }}</a-button>

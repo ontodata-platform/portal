@@ -2,6 +2,8 @@
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import { 中文展示 } from '@/ui-kit/展示文本'
+
 const props = defineProps<{
   payload: {
     code: string
@@ -25,7 +27,7 @@ function open() {
 <template>
   <a-card size="small" class="card" @click="open">
     <div class="name">{{ payload.name }}</div>
-    <div class="meta">{{ payload.code }} · {{ payload.version }} · {{ payload.classification }}</div>
+    <div class="meta">{{ payload.code }} · {{ payload.version }} · {{ 中文展示(payload.classification) }}</div>
     <a-tag :color="payload.subscribed ? 'green' : 'default'">
       {{ payload.subscribed ? t('assistant.card.subscribed') : t('assistant.card.unsubscribed') }}
     </a-tag>

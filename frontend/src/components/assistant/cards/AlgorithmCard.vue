@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 
+import { 中文展示 } from '@/ui-kit/展示文本'
+
 const props = defineProps<{
   payload: { code: string; name: string; kind: 'capability' | 'template'; version: string; status: string }
 }>()
@@ -19,7 +21,7 @@ function open() {
 <template>
   <a-card size="small" class="card" @click="open">
     <div class="name">{{ payload.name }}</div>
-    <div class="meta">{{ payload.kind }} · {{ payload.version }} · {{ payload.status }}</div>
+    <div class="meta">{{ 中文展示(payload.kind) }} · {{ payload.version }} · {{ 中文展示(payload.status) }}</div>
   </a-card>
 </template>
 

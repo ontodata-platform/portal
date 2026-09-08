@@ -185,7 +185,7 @@ describe('AssemblyAdminView', () => {
     await flushPromises()
 
     expect(createMock).not.toHaveBeenCalled()
-    expect(wrapper.find('.alert').text()).toContain('latest')
+    expect(wrapper.find('.alert').text()).toContain('非精确版本标记')
   })
 
   it('后端 400 钉扎校验错误在弹窗内联展示且不关窗', async () => {

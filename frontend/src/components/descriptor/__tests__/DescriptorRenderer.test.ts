@@ -57,7 +57,7 @@ describe('DescriptorRenderer', () => {
     const wrapper = mountRenderer()
     expect(wrapper.text()).toContain('客户质量分析-周批')
     expect(wrapper.text()).toContain('1.2.0')
-    expect(wrapper.text()).toContain('准入：APPROVED')
+    expect(wrapper.text()).toContain('准入：已通过')
   })
 
   it('按描述符区块序列渲染已知类型', () => {

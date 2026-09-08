@@ -78,7 +78,7 @@ export function createPortalMockApi(): PortalMockApi {
     },
     {
       code: 'apr-r4-sample', approvalType: 'R4_TOOL_CALL', sourceSystem: 'mcp-gateway', sourceCode: 'cfm-sample',
-      title: '调用工具 workflow.submit_execution 需要审批', requester: demoIdentity.name, status: 'PENDING', slaStatus: 'ON_TIME',
+      title: '调用工作流提交工具需要审批', requester: demoIdentity.name, status: 'PENDING', slaStatus: 'ON_TIME',
       detail: { tool: 'workflow.submit_execution', riskLevel: 'R4' }, createdAt: timestamp, updatedAt: timestamp,
     },
     {

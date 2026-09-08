@@ -56,7 +56,7 @@ onMounted(async () => {
 <template>
   <div class="auth-transition">
     <div class="auth-panel">
-      <p class="auth-brand">ontodata 管理门户</p>
+      <p class="auth-brand">本体数据管理门户</p>
       <p class="auth-message">正在完成身份认证……</p>
       <span class="auth-spinner" aria-hidden="true"></span>
     </div>

@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 
 import type { AssistantMessage } from '@/types/assistant'
+import { 中文展示 } from '@/ui-kit/展示文本'
 import MessageCardGroup from './MessageCardGroup.vue'
 
 defineProps<{ messages: AssistantMessage[] }>()
@@ -16,7 +17,7 @@ const router = useRouter()
         <MessageCardGroup v-if="item.cards?.length" :cards="item.cards" />
         <div v-if="item.citations?.length" class="citations">
           <span v-for="cite in item.citations" :key="cite.source" class="cite">
-            {{ cite.source }}{{ cite.version ? ` · ${cite.version}` : '' }}
+            {{ 中文展示(cite.source) }}{{ cite.version ? ` · ${cite.version}` : '' }}
           </span>
         </div>
         <div v-if="item.actions?.length" class="actions">

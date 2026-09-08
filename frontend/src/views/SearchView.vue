@@ -10,6 +10,7 @@ import type { CatalogSearchHit, CatalogSearchKind } from '@/types/agent'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -133,8 +134,8 @@ function openHit(hit: Pick<CatalogSearchHit, 'kind' | 'id'>) {
             </a-list-item-meta>
             <template #extra>
               <a-space>
-                <a-tag>{{ item.classification }}</a-tag>
-                <span class="source">{{ item.source }}</span>
+                <a-tag>{{ 中文展示(item.classification) }}</a-tag>
+                <span class="source">{{ 中文展示(item.source) }}</span>
               </a-space>
             </template>
           </a-list-item>

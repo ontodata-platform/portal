@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { agentApi } from '@/api/agent'
 import { ApiError } from '@/api/client'
 import type { ConfirmRequiredEvent } from '@/types/agent'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 /**
  * R2/R3 工具调用确认卡（M2 A5）：SSE confirm_required 事件触发展示；
@@ -80,7 +81,7 @@ async function decide(decision: 'approve' | 'reject') {
       </span>
     </div>
     <a-descriptions :column="1" size="small" bordered>
-      <a-descriptions-item :label="t('agentChat.confirmTool')">{{ payload.tool }}</a-descriptions-item>
+      <a-descriptions-item :label="t('agentChat.confirmTool')">{{ 中文展示(payload.tool) }}</a-descriptions-item>
       <a-descriptions-item v-if="payload.summary.code" :label="t('agentChat.confirmCode')">
         {{ payload.summary.code }}
       </a-descriptions-item>

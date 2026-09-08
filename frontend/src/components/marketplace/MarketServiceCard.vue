@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import type { CatalogEntry } from '@/types/portal'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const props = defineProps<{ item: CatalogEntry }>()
 const { t } = useI18n()
@@ -56,7 +57,7 @@ function open() {
     <p v-if="item.description" class="desc">{{ item.description }}</p>
 
     <div class="card-footer">
-      <a-tag class="status-tag">{{ item.status }}</a-tag>
+      <a-tag class="status-tag">{{ 中文展示(item.status) }}</a-tag>
       <button type="button" class="quick-btn" @click.stop="open">
         <span>{{ subscribed ? t('marketplace.viewDetail') : t('marketplace.applyButton') }}</span>
         <component :is="subscribed ? ArrowRightOutlined : KeyOutlined" />

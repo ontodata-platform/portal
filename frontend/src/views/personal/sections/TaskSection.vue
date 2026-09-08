@@ -12,6 +12,7 @@ import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDate, formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -243,8 +244,16 @@ onMounted(load)
                 <CheckCircleOutlined v-else-if="record.status === 'SUCCESS'" />
                 <CloseCircleOutlined v-else-if="record.status === 'FAILED'" />
               </template>
-              {{ record.status }}
+              {{ 中文展示(record.status) }}
             </a-tag>
+          </template>
+
+          <template v-else-if="column.key === 'taskType'">
+            {{ 中文展示(record.taskType) }}
+          </template>
+
+          <template v-else-if="column.key === 'sourceSystem'">
+            {{ 中文展示(record.sourceSystem) }}
           </template>
 
           <template v-else-if="column.key === 'progress'">
@@ -283,10 +292,10 @@ onMounted(load)
           <a-descriptions-item :label="t('tasks.taskId')" :span="2">
             <span class="mono-text">{{ detail.taskId }}</span>
           </a-descriptions-item>
-          <a-descriptions-item :label="t('common.type')">{{ detail.taskType }}</a-descriptions-item>
-          <a-descriptions-item :label="t('common.sourceSystem')">{{ detail.sourceSystem }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.type')">{{ 中文展示(detail.taskType) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.sourceSystem')">{{ 中文展示(detail.sourceSystem) }}</a-descriptions-item>
           <a-descriptions-item :label="t('common.status')">
-            <a-tag :color="statusColor[detail.status]">{{ detail.status }}</a-tag>
+            <a-tag :color="statusColor[detail.status]">{{ 中文展示(detail.status) }}</a-tag>
           </a-descriptions-item>
           <a-descriptions-item :label="t('tasks.stage')">{{ detail.stage ?? '-' }}</a-descriptions-item>
           <a-descriptions-item :label="t('common.progress')" :span="2">

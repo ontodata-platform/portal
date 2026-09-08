@@ -53,13 +53,13 @@ function serviceDescriptor(code: string, name: string, description: string): Ser
     provider: 'algorithm-recombine',
     code,
     name,
-    summary: { version: '1.2.0', status: 'PUBLISHED', badges: ['准入：APPROVED', '语义依赖：客户主题'] },
+    summary: { version: '1.2.0', status: 'PUBLISHED', badges: ['准入：已通过', '语义依赖：客户主题'] },
     sections: [
       { type: 'summary', title: '基本信息', fields: [
         { label: '服务编码', value: code },
         { label: '当前版本', value: '1.2.0' },
         { label: '提供方', value: '算法重组平台' },
-        { label: '能力准入', value: 'APPROVED' },
+        { label: '能力准入', value: '已通过' },
       ] },
       { type: 'richtext', title: '服务说明', text: description },
       { type: 'inputs', title: '输入要求', inputs: [
@@ -86,11 +86,11 @@ function serviceDescriptor(code: string, name: string, description: string): Ser
 }
 
 const services: ServiceRecord[] = [
-  { summary: { code: 'tpl-quality-weekly', name: '客户质量分析-周批', category: '质量分析', description: '按客户主题口径对客户主数据做字段级质量核查并输出报告。', inputHint: '需要：客户主数据', typicalDuration: '6~9 分钟', runCount: 128, status: 'PUBLISHED', badges: ['准入：APPROVED'] }, descriptor: serviceDescriptor('tpl-quality-weekly', '客户质量分析-周批', '按客户主题口径对客户主数据做字段级质量核查：完整性、唯一性、格式合规，输出报告与证据归档。') },
-  { summary: { code: 'cap-anomaly-detect', name: '设备异常检测', category: '异常检测', description: '基于设备遥测数据的时序异常检测，标记疑似异常时段。', inputHint: '需要：设备遥测', typicalDuration: '3~5 分钟', runCount: 86, status: 'PUBLISHED', badges: ['准入：APPROVED'] }, descriptor: serviceDescriptor('cap-anomaly-detect', '设备异常检测', '基于设备遥测时序数据检测异常波动，输出疑似异常时段与置信度，供人工复核。') },
-  { summary: { code: 'tpl-churn-train', name: '流失预测-训练', category: '预测', description: '以客户主数据与历史行为训练流失预测模型。', inputHint: '需要：客户主数据', typicalDuration: '20~40 分钟', runCount: 12, status: 'PUBLISHED', badges: ['准入：APPROVED'] }, descriptor: serviceDescriptor('tpl-churn-train', '流失预测-训练', '训练客户流失预测模型；训练完成生成模型版本与评估报告，推理服务另行订阅。') },
-  { summary: { code: 'cap-sales-forecast', name: '销量预测-月度', category: '预测', description: '按月度销量序列生成下月预测区间。', inputHint: '需要：销量历史', typicalDuration: '4~6 分钟', runCount: 34, status: 'PUBLISHED', badges: ['准入：APPROVED'] }, descriptor: serviceDescriptor('cap-sales-forecast', '销量预测-月度', '按历史月度销量生成下月预测区间，输出预测表与置信区间图。') },
-  { summary: { code: 'cap-complaint-classify', name: '文本投诉分类', category: '文本处理', description: '对投诉文本做主题分类与紧急度评级。', inputHint: '需要：投诉记录', typicalDuration: '2~4 分钟', runCount: 57, status: 'PUBLISHED', badges: ['准入：APPROVED'] }, descriptor: serviceDescriptor('cap-complaint-classify', '文本投诉分类', '对投诉文本做主题分类与紧急度评级，输出分类明细表。') },
+  { summary: { code: 'tpl-quality-weekly', name: '客户质量分析-周批', category: '质量分析', description: '按客户主题口径对客户主数据做字段级质量核查并输出报告。', inputHint: '需要：客户主数据', typicalDuration: '6~9 分钟', runCount: 128, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('tpl-quality-weekly', '客户质量分析-周批', '按客户主题口径对客户主数据做字段级质量核查：完整性、唯一性、格式合规，输出报告与证据归档。') },
+  { summary: { code: 'cap-anomaly-detect', name: '设备异常检测', category: '异常检测', description: '基于设备遥测数据的时序异常检测，标记疑似异常时段。', inputHint: '需要：设备遥测', typicalDuration: '3~5 分钟', runCount: 86, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-anomaly-detect', '设备异常检测', '基于设备遥测时序数据检测异常波动，输出疑似异常时段与置信度，供人工复核。') },
+  { summary: { code: 'tpl-churn-train', name: '流失预测-训练', category: '预测', description: '以客户主数据与历史行为训练流失预测模型。', inputHint: '需要：客户主数据', typicalDuration: '20~40 分钟', runCount: 12, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('tpl-churn-train', '流失预测-训练', '训练客户流失预测模型；训练完成生成模型版本与评估报告，推理服务另行订阅。') },
+  { summary: { code: 'cap-sales-forecast', name: '销量预测-月度', category: '预测', description: '按月度销量序列生成下月预测区间。', inputHint: '需要：销量历史', typicalDuration: '4~6 分钟', runCount: 34, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-sales-forecast', '销量预测-月度', '按历史月度销量生成下月预测区间，输出预测表与置信区间图。') },
+  { summary: { code: 'cap-complaint-classify', name: '文本投诉分类', category: '文本处理', description: '对投诉文本做主题分类与紧急度评级。', inputHint: '需要：投诉记录', typicalDuration: '2~4 分钟', runCount: 57, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-complaint-classify', '文本投诉分类', '对投诉文本做主题分类与紧急度评级，输出分类明细表。') },
 ]
 
 const categories = [...new Set(services.map((item) => item.summary.category))]
@@ -150,7 +150,7 @@ export function createAlgorithmWorkbenchMockApi(): AlgorithmWorkbenchMockApi {
       const bodyRecord = (body ?? {}) as { fileName?: string }
       const fileName = bodyRecord.fileName ?? 'test-data.csv'
       if (!/\.(csv|json)$/i.test(fileName)) {
-        throw error(422, 'VALIDATION_FAILED', '测试数据仅支持 CSV / JSON 文件', path)
+        throw error(422, 'VALIDATION_FAILED', '测试数据仅支持标准表格或结构化数据文件', path)
       }
       sequence += 1
       const receipt = { ref: `test:td-${String(sequence).padStart(3, '0')}`, fileName, note: '仅本次运行有效，随证据归档' }

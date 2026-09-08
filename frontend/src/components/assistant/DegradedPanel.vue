@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 
 import { agentApi } from '@/api/agent'
 import type { CatalogSearchHit } from '@/types/agent'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const props = defineProps<{ keyword?: string }>()
 const emit = defineEmits<{ retry: [] }>()
@@ -38,7 +39,7 @@ void search()
     />
     <a-list v-if="searched" :data-source="hits">
       <template #renderItem="{ item }">
-        <a-list-item>{{ item.kind }} · {{ item.id }}</a-list-item>
+        <a-list-item>{{ 中文展示(item.kind) }} · {{ item.id }}</a-list-item>
       </template>
     </a-list>
     <a-row :gutter="12" class="shortcuts">

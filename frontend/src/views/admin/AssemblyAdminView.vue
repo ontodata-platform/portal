@@ -576,7 +576,7 @@ onMounted(load)
                 <a-input
                   v-else
                   v-model:value="item.ref"
-                  :placeholder="item.type === 'DATA_SNAPSHOT' ? 'snap-*' : t('scenarios.bindingRef')"
+                  :placeholder="item.type === 'DATA_SNAPSHOT' ? '填写数据快照编码' : t('scenarios.bindingRef')"
                 />
               </a-col>
               <a-col :span="5">

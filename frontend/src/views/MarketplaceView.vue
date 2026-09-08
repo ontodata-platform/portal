@@ -29,6 +29,7 @@ import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDate, formatDateTime, formatNumber } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -327,7 +328,7 @@ onMounted(load)
                   <template #icon><CloseCircleOutlined /></template>
                   已驳回
                 </a-tag>
-                <a-tag v-else color="default">{{ record.status }}</a-tag>
+                <a-tag v-else color="default">{{ 中文展示(record.status) }}</a-tag>
               </template>
               <template v-else-if="column.key === 'submittedAt'">
                 {{ formatDateTime(record.submittedAt) }}
@@ -383,7 +384,7 @@ onMounted(load)
                 </div>
               </template>
               <template v-else-if="column.key === 'deliveryType'">
-                <a-tag color="blue">{{ record.deliveryType }}</a-tag>
+                <a-tag color="blue">{{ 中文展示(record.deliveryType) }}</a-tag>
               </template>
               <template v-else-if="column.key === 'expiresAt'">
                 <div style="display: flex; align-items: center; gap: 6px">

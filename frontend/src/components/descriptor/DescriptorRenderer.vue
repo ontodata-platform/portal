@@ -7,6 +7,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { DescriptorAction, DescriptorSection, ServiceDescriptor } from '@/types/descriptor'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const props = defineProps<{ descriptor: ServiceDescriptor }>()
 const emit = defineEmits<{ action: [action: DescriptorAction] }>()
@@ -47,8 +48,8 @@ function onAction(action: DescriptorAction) {
         <a-tag v-if="descriptor.summary.version" color="purple">
           {{ descriptor.summary.version }}
         </a-tag>
-        <a-tag v-if="descriptor.summary.status" color="blue">{{ descriptor.summary.status }}</a-tag>
-        <a-tag v-for="badge in descriptor.summary.badges ?? []" :key="badge">{{ badge }}</a-tag>
+        <a-tag v-if="descriptor.summary.status" color="blue">{{ 中文展示(descriptor.summary.status) }}</a-tag>
+        <a-tag v-for="badge in descriptor.summary.badges ?? []" :key="badge">{{ 中文展示(badge) }}</a-tag>
       </a-space>
     </div>
 

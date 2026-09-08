@@ -10,6 +10,7 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const KEYCLOAK_CONSOLE = 'http://localhost:8180/admin/master/console/'
 
@@ -122,7 +123,7 @@ onMounted(load)
             </template>
             <template v-else-if="column.key === 'roles'">
               <a-space size="small" wrap>
-                <a-tag v-for="role in record.roles" :key="role" color="blue">{{ role }}</a-tag>
+                <a-tag v-for="role in record.roles" :key="role" color="blue">{{ 中文展示(role) }}</a-tag>
               </a-space>
             </template>
             <template v-else-if="column.key === 'status'">
@@ -141,8 +142,11 @@ onMounted(load)
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'roles'">
               <a-space size="small" wrap>
-                <a-tag v-for="role in record.roles" :key="role">{{ role }}</a-tag>
+                <a-tag v-for="role in record.roles" :key="role">{{ 中文展示(role) }}</a-tag>
               </a-space>
+            </template>
+            <template v-else-if="column.key === 'action'">
+              {{ 中文展示(record.action) }}
             </template>
           </template>
         </OdTable>

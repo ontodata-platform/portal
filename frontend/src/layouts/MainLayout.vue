@@ -22,6 +22,7 @@ import { authState, clearSession } from '@/auth/session'
 import { setLocale } from '@/i18n'
 import { useIdentityStore } from '@/stores/identity'
 import { useMessageStore } from '@/stores/message'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -95,7 +96,7 @@ const pageTitle = computed(() =>
 
 const localeOptions = [
   { value: 'zh-CN', label: '简体中文' },
-  { value: 'en-US', label: 'English' },
+  { value: 'en-US', label: '英文' },
 ]
 
 const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
@@ -247,7 +248,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
                 <SearchOutlined style="color: #94a3b8" />
               </template>
               <template #suffix>
-                <span class="kbd-badge">Ctrl K</span>
+                <span class="kbd-badge">快捷键</span>
               </template>
             </a-input>
           </div>
@@ -255,7 +256,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
           <!-- 待办/通知铃铛 -->
           <div class="bell">
             <a-badge :count="unread" :offset="[-4, 4]" class="bell-badge">
-              <button type="button" class="icon-action-btn" aria-label="Notifications" @click="goNotifications">
+              <button type="button" class="icon-action-btn" aria-label="通知中心" @click="goNotifications">
                 <BellOutlined />
               </button>
             </a-badge>
@@ -279,7 +280,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
                   <div class="user-dropdown-meta">
                     {{ identityStore.tenantId }}
                     <template v-if="identityStore.identity.roles.length > 0">
-                      · {{ identityStore.identity.roles.join(', ') }}
+                      · {{ identityStore.identity.roles.map(中文展示).join('、') }}
                     </template>
                   </div>
                 </div>
@@ -336,7 +337,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
       >
         <div class="command-palette__header">
           <span class="command-palette__eyebrow">快速命令</span>
-          <span class="command-palette__hint">Esc 关闭</span>
+          <span class="command-palette__hint">按退出键关闭</span>
         </div>
         <a-input
           ref="commandInput"
@@ -359,7 +360,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
             <strong>交给智能服务</strong>
             <small>“{{ commandQuery.trim() }}”</small>
           </span>
-          <span class="command-item__shortcut">Enter</span>
+          <span class="command-item__shortcut">回车</span>
         </button>
 
         <div class="command-palette__section">
@@ -379,7 +380,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
             </span>
             <span class="command-item__arrow">↵</span>
           </button>
-          <p v-if="commandResults.length === 0" class="command-empty">没有匹配页面，按 Enter 将问题发送给智能服务。</p>
+          <p v-if="commandResults.length === 0" class="command-empty">没有匹配页面，按回车将问题发送给智能服务。</p>
         </div>
 
         <div class="command-palette__section"><span>常用意图</span></div>

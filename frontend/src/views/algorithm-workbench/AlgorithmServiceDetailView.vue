@@ -7,6 +7,7 @@ import { algorithmWorkbenchApi, type AlgorithmServiceDetail } from '@/api/algori
 import DescriptorRenderer from '@/components/descriptor/DescriptorRenderer.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 import { useMessageStore } from '@/stores/message'
 import type { DescriptorAction } from '@/types/descriptor'
 
@@ -64,7 +65,7 @@ onMounted(load)
       <SkeletonList v-if="loading" variant="list" :rows="6" />
       <template v-else-if="service">
         <div class="detail-category">
-          <a-tag color="geekblue" class="category-badge">{{ service.category }}</a-tag>
+          <a-tag color="geekblue" class="category-badge">{{ 中文展示(service.category) }}</a-tag>
         </div>
         <DescriptorRenderer :descriptor="service.descriptor" @action="onAction" />
       </template>

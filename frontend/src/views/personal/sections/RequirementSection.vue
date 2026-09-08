@@ -19,6 +19,7 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const messageStore = useMessageStore()
@@ -330,6 +331,10 @@ onMounted(load)
             </a-tag>
           </template>
 
+          <template v-else-if="column.key === 'assigneeSystem'">
+            {{ 中文展示(record.assigneeSystem) }}
+          </template>
+
           <template v-else-if="column.key === 'action'">
             <a-space size="small">
               <a-button
@@ -415,11 +420,11 @@ onMounted(load)
         <a-form layout="vertical">
           <a-form-item name="assigneeSystem" :label="t('requirements.assignTargetLabel')" required>
             <a-select v-model:value="assignForm.assigneeSystem">
-              <a-select-option value="data-platform">data-platform (数据管理平台)</a-select-option>
-              <a-select-option value="algorithm-transform">algorithm-transform (算法转换工具)</a-select-option>
-              <a-select-option value="algorithm-recombine">algorithm-recombine (算法重组平台)</a-select-option>
-              <a-select-option value="ontology-platform">ontology-platform (本体平台)</a-select-option>
-              <a-select-option value="mcp-gateway">mcp-gateway (智能体网关)</a-select-option>
+              <a-select-option value="data-platform">数据管理平台</a-select-option>
+              <a-select-option value="algorithm-transform">算法转换工具</a-select-option>
+              <a-select-option value="algorithm-recombine">算法重组平台</a-select-option>
+              <a-select-option value="ontology-platform">本体平台</a-select-option>
+              <a-select-option value="mcp-gateway">智能体网关</a-select-option>
             </a-select>
           </a-form-item>
           <a-form-item name="assigneeRef" :label="t('requirements.assigneeRefLabel')">

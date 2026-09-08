@@ -11,6 +11,7 @@ import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -99,7 +100,7 @@ onMounted(loadDetail)
     <PageHeader
       :title="service?.name ?? t('marketplace.detailTitle')"
       :status="service ? 'success' : undefined"
-      :status-label="service ? service.status : undefined"
+      :status-label="service ? 中文展示(service.status) : undefined"
       back-to="/data-workbench"
     />
     <a-card :bordered="false" class="detail-card">
@@ -119,10 +120,10 @@ onMounted(loadDetail)
               <a-space wrap>
                 <span class="mono-badge">{{ service.code }}</span>
                 <a-tag :color="service.status === 'PUBLISHED' || service.status === 'ONLINE' ? 'success' : 'default'">
-                  {{ service.status }}
+                  {{ 中文展示(service.status) }}
                 </a-tag>
                 <a-tag color="blue">v{{ service.currentVersion }}</a-tag>
-                <a-tag v-if="service.classification" color="orange">{{ service.classification }}</a-tag>
+                <a-tag v-if="service.classification" color="orange">{{ 中文展示(service.classification) }}</a-tag>
               </a-space>
             </div>
 
@@ -148,7 +149,7 @@ onMounted(loadDetail)
             </a-descriptions-item>
             <a-descriptions-item :label="t('common.name')">{{ service.name }}</a-descriptions-item>
             <a-descriptions-item :label="t('common.currentVersion')">v{{ service.currentVersion }}</a-descriptions-item>
-            <a-descriptions-item :label="t('common.status')">{{ service.status }}</a-descriptions-item>
+            <a-descriptions-item :label="t('common.status')">{{ 中文展示(service.status) }}</a-descriptions-item>
             <a-descriptions-item v-if="service.description" :label="t('scenarios.description')" :span="2">
               {{ service.description }}
             </a-descriptions-item>
@@ -192,7 +193,7 @@ onMounted(loadDetail)
             <a-input
               v-model:value="applyForm.columnInput"
               aria-label="申请字段"
-              placeholder="如 id, name, created_at（回车添加）"
+              placeholder="例如：客户编号、客户名称、创建时间（回车添加）"
               @press-enter.prevent="addColumn"
             >
               <template #suffix>

@@ -25,6 +25,7 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import { formatDate } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -233,7 +234,7 @@ onMounted(loadAll)
             <div class="user-sub">
               <span>{{ t('layout.tenant') }}: <strong>{{ identityStore.tenantId }}</strong></span>
               <span v-if="identityStore.roles.length > 0" class="role-list">
-                {{ t('layout.roles') }}: {{ identityStore.roles.join(', ') }}
+                {{ t('layout.roles') }}: {{ identityStore.roles.map(中文展示).join('、') }}
               </span>
             </div>
           </div>
@@ -321,7 +322,7 @@ onMounted(loadAll)
             </template>
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'status'">
-                <a-tag :color="statusColor[record.status]">{{ record.status }}</a-tag>
+                <a-tag :color="statusColor[record.status]">{{ 中文展示(record.status) }}</a-tag>
               </template>
               <template v-else-if="column.key === 'action'">
                 <a-button size="small" type="primary" @click="router.push('/approvals')">
@@ -347,7 +348,10 @@ onMounted(loadAll)
             </template>
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'status'">
-                <a-tag :color="statusColor[record.status]">{{ record.status }}</a-tag>
+                <a-tag :color="statusColor[record.status]">{{ 中文展示(record.status) }}</a-tag>
+              </template>
+              <template v-else-if="column.key === 'approvalType'">
+                {{ 中文展示(record.approvalType) }}
               </template>
               <template v-else-if="column.key === 'deliveryStatus'">
                 <span v-if="record.detail?.deliveryStatus === 'SUCCEEDED'">
@@ -423,7 +427,10 @@ onMounted(loadAll)
             </template>
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'status'">
-                <a-tag :color="statusColor[record.status]">{{ record.status }}</a-tag>
+                <a-tag :color="statusColor[record.status]">{{ 中文展示(record.status) }}</a-tag>
+              </template>
+              <template v-else-if="column.key === 'requirementType'">
+                {{ 中文展示(record.requirementType) }}
               </template>
             </template>
           </OdTable>

@@ -12,6 +12,7 @@ import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -202,8 +203,12 @@ onMounted(load)
 
           <template v-else-if="column.key === 'resultType'">
             <a-tag :color="record.resultType === 'DATASET' ? 'blue' : record.resultType === 'REPORT' ? 'green' : 'purple'">
-              {{ record.resultType }}
+              {{ 中文展示(record.resultType) }}
             </a-tag>
+          </template>
+
+          <template v-else-if="column.key === 'sourceSystem'">
+            {{ 中文展示(record.sourceSystem) }}
           </template>
 
           <template v-else-if="column.key === 'sourceTaskId'">
@@ -235,10 +240,10 @@ onMounted(load)
         <a-form layout="vertical">
           <a-form-item name="sourceSystem" :label="t('common.sourceSystem')" required>
             <a-select v-model:value="registerForm.sourceSystem">
-              <a-select-option value="data-platform">data-platform (数据管理平台)</a-select-option>
-              <a-select-option value="algorithm-transform">algorithm-transform (算法转换工具)</a-select-option>
-              <a-select-option value="algorithm-recombine">algorithm-recombine (算法重组平台)</a-select-option>
-              <a-select-option value="ontology-platform">ontology-platform (本体平台)</a-select-option>
+              <a-select-option value="data-platform">数据管理平台</a-select-option>
+              <a-select-option value="algorithm-transform">算法转换工具</a-select-option>
+              <a-select-option value="algorithm-recombine">算法重组平台</a-select-option>
+              <a-select-option value="ontology-platform">本体平台</a-select-option>
             </a-select>
           </a-form-item>
           <a-form-item name="resultId" :label="t('results.resultId')" required>
@@ -246,9 +251,9 @@ onMounted(load)
           </a-form-item>
           <a-form-item name="resultType" :label="t('common.type')" required>
             <a-select v-model:value="registerForm.resultType">
-              <a-select-option value="DATASET">DATASET (结构化数据集)</a-select-option>
-              <a-select-option value="REPORT">REPORT (分析报告)</a-select-option>
-              <a-select-option value="EXECUTION_OUTPUT">EXECUTION_OUTPUT (执行产出物)</a-select-option>
+              <a-select-option value="DATASET">结构化数据集</a-select-option>
+              <a-select-option value="REPORT">分析报告</a-select-option>
+              <a-select-option value="EXECUTION_OUTPUT">执行产出物</a-select-option>
             </a-select>
           </a-form-item>
           <a-form-item name="sourceTaskId" :label="t('results.sourceTaskIdLabel')">
@@ -263,8 +268,8 @@ onMounted(load)
           <a-descriptions-item :label="t('results.resultId')" :span="2">
             <span class="mono-text">{{ detail.resultId }}</span>
           </a-descriptions-item>
-          <a-descriptions-item :label="t('common.sourceSystem')">{{ detail.sourceSystem }}</a-descriptions-item>
-          <a-descriptions-item :label="t('common.type')">{{ detail.resultType }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.sourceSystem')">{{ 中文展示(detail.sourceSystem) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.type')">{{ 中文展示(detail.resultType) }}</a-descriptions-item>
           <a-descriptions-item :label="t('results.relatedTask')" :span="2">
             <span class="mono-text">{{ detail.sourceTaskId ?? '-' }}</span>
           </a-descriptions-item>

@@ -203,7 +203,7 @@ describe('AgentChatView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('apr-r4-sample')
-    expect(wrapper.text()).toContain('workflow.submit_execution')
+    expect(wrapper.text()).toContain('提交工作流执行')
   })
 
   it('R4 质量助手发送消息走 /runs', async () => {

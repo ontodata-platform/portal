@@ -16,6 +16,7 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -244,6 +245,9 @@ onMounted(load)
             <template v-else-if="column.key === 'approvalType'">
               {{ typeLabel[record.approvalType] ?? record.approvalType }}
             </template>
+            <template v-else-if="column.key === 'sourceSystem'">
+              {{ 中文展示(record.sourceSystem) }}
+            </template>
             <template v-else-if="column.key === 'status'">
               <a-tag :color="statusColor[record.status]" class="status-tag">
                 <template #icon>
@@ -285,7 +289,7 @@ onMounted(load)
           <a-descriptions-item :label="t('common.title')">{{ current.title }}</a-descriptions-item>
           <a-descriptions-item :label="t('common.type')">{{ typeLabel[current.approvalType] ?? current.approvalType }}</a-descriptions-item>
           <a-descriptions-item :label="t('common.applicant')">{{ current.requester }}</a-descriptions-item>
-          <a-descriptions-item :label="t('common.sourceSystem')">{{ current.sourceSystem }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.sourceSystem')">{{ 中文展示(current.sourceSystem) }}</a-descriptions-item>
           <a-descriptions-item :label="t('common.status')">{{ statusText[current.status] ?? current.status }}</a-descriptions-item>
           <a-descriptions-item :label="t('approvals.slaStatus')">{{ slaText(current.slaStatus) }}</a-descriptions-item>
           <a-descriptions-item :label="t('approvals.decisionBy')">{{ current.decisionBy || '—' }}</a-descriptions-item>

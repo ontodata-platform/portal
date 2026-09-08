@@ -17,6 +17,7 @@ import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const ASSIGN_TARGETS = [
   { value: 'data-platform', labelKey: 'admin.requirements.targetData' },
@@ -299,7 +300,7 @@ onMounted(load)
           <a-descriptions-item :label="t('common.title')">{{ current.title }}</a-descriptions-item>
           <a-descriptions-item :label="t('common.requester')">{{ current.requester }}</a-descriptions-item>
           <a-descriptions-item :label="t('common.status')">{{ statusText[current.status] ?? current.status }}</a-descriptions-item>
-          <a-descriptions-item :label="t('requirements.assigneeTarget')">{{ current.assigneeSystem || '—' }}</a-descriptions-item>
+          <a-descriptions-item :label="t('requirements.assigneeTarget')">{{ 中文展示(current.assigneeSystem) }}</a-descriptions-item>
         </a-descriptions>
 
         <h3 class="drawer-section">{{ t('admin.requirements.timeline') }}</h3>
