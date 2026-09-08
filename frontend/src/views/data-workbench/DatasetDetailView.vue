@@ -47,6 +47,7 @@ onMounted(load)
   <div>
     <PageHeader
       :title="dataset?.name ?? t('menu.marketplace')"
+      back-to="/data-workbench"
     />
 
     <ErrorState
