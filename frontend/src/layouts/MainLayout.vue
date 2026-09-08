@@ -93,11 +93,6 @@ const pageTitle = computed(() =>
   route.meta.titleKey ? t(route.meta.titleKey as string) : t('layout.appName'),
 )
 
-/** 算法页的内容已由服务卡、服务名称和运行步骤表达，不重复展示模块名称。 */
-const showPageTitle = computed(
-  () => !route.path.startsWith('/algorithm-workbench') && !route.path.startsWith('/workbench'),
-)
-
 const localeOptions = [
   { value: 'zh-CN', label: '简体中文' },
   { value: 'en-US', label: 'English' },
@@ -233,7 +228,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
           >
             <component :is="collapsed ? MenuUnfoldOutlined : MenuFoldOutlined" />
           </div>
-          <span v-if="showPageTitle" class="title">{{ pageTitle }}</span>
+          <span class="title">{{ pageTitle }}</span>
         </div>
 
         <div class="header-right">
