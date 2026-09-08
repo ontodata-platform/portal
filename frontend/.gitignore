@@ -9,3 +9,4 @@ dist-ssr
 dev.log*
 playwright-report
 test-results
+.playwright-cli

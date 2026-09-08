@@ -107,6 +107,6 @@ function submit() {
 }
 
 :deep(.composer.hero) {
-  width: min(720px, 100%);
+  width: min(860px, 100%);
 }
 </style>

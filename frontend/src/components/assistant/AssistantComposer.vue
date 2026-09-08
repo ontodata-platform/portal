@@ -75,7 +75,45 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 .composer.hero {
-  max-width: 720px;
+  position: relative;
+  max-width: 860px;
+  min-height: 148px;
+  padding: 0;
+  overflow: hidden;
+  border-color: transparent;
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+}
+
+.composer.hero:focus-within {
+  border-color: transparent;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08), 0 14px 36px rgba(37, 99, 235, 0.14);
+}
+
+.composer.hero .hero-input {
+  min-height: 148px;
+  padding: 20px 22px 60px;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.composer.hero .bar {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  left: 20px;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.composer.hero .hint {
+  font-size: 13px;
+}
+
+.composer.hero .send-btn {
+  width: 42px;
+  height: 42px;
 }
 
 .hero-input {
