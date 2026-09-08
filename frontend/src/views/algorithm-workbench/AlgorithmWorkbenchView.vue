@@ -21,7 +21,6 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
 
 const { t } = useI18n()
@@ -220,11 +219,6 @@ onMounted(() => {
 
 <template>
   <div class="algorithm-workbench-view">
-    <PageHeader
-      :eyebrow="t('menu.groupPortal')"
-      :title="t('menu.algorithmWorkbench')"
-    />
-
     <a-card :bordered="false" class="wb-card">
       <a-tabs v-model:active-key="activeTab" @change="onTabChange">
         <a-tab-pane key="discover" :tab="t('algoWorkbench.tabDiscover')">

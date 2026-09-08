@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircleOutlined, CloseCircleOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -14,7 +14,6 @@ import { useMessageStore } from '@/stores/message'
 import type { DescriptorInput, MyDelivery } from '@/types/descriptor'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import { nowIso } from '@/ui-kit/format'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -226,11 +225,12 @@ onMounted(load)
 
 <template>
   <div class="run-wizard-view">
-    <PageHeader
-      :title="service?.name ?? t('menu.algorithmWorkbench')"
-      back-to="/algorithm-workbench"
-      :parents="[t('menu.algorithmWorkbench')]"
-    />
+    <div class="wizard-context">
+      <a-button type="text" class="wizard-back" aria-label="返回" @click="router.push('/algorithm-workbench')">
+        <template #icon><ArrowLeftOutlined /></template>
+      </a-button>
+      <h1 v-if="service" class="wizard-service-title">{{ service.name }}</h1>
+    </div>
 
     <ErrorState
       v-if="loadError"
@@ -432,6 +432,26 @@ onMounted(load)
 .wizard-card {
   border-radius: var(--od-radius-card, 12px);
   box-shadow: var(--od-shadow-1);
+}
+
+.wizard-context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  margin-bottom: 12px;
+}
+
+.wizard-back {
+  color: var(--od-gray-600, #475569);
+}
+
+.wizard-service-title {
+  margin: 0;
+  color: var(--od-gray-900, #0f172a);
+  font-size: var(--od-title-section, 18px);
+  font-weight: 650;
+  line-height: 32px;
 }
 
 .wizard-steps {

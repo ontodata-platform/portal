@@ -6,7 +6,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { algorithmWorkbenchApi, type AlgorithmServiceDetail } from '@/api/algorithm-workbench'
 import DescriptorRenderer from '@/components/descriptor/DescriptorRenderer.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
 import { useMessageStore } from '@/stores/message'
 import type { DescriptorAction } from '@/types/descriptor'
@@ -53,11 +52,6 @@ onMounted(load)
 
 <template>
   <div>
-    <PageHeader
-      :eyebrow="t('menu.groupPortal')"
-      :title="service?.name ?? t('menu.algorithmWorkbench')"
-    />
-
     <ErrorState
       v-if="loadError"
       :reason="loadError"
