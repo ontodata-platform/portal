@@ -69,7 +69,7 @@ function backToUser() {
 
 <style scoped>
 .admin-shell {
-  min-height: calc(100vh - 110px);
+  min-height: 100%;
   border-radius: var(--od-radius-card, 12px);
   overflow: hidden;
   box-shadow: var(--od-shadow-2);

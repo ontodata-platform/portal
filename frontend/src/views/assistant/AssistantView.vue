@@ -213,7 +213,7 @@ watch(
 <style scoped>
 .assistant-page {
   margin: -24px;
-  min-height: calc(100vh - 60px);
+  height: calc(100vh - var(--od-topbar-height, 60px));
   background: #ffffff;
   display: flex;
   position: relative;
@@ -222,7 +222,6 @@ watch(
 .history-rail {
   flex: 0 0 260px;
   max-width: 260px;
-  min-height: calc(100vh - 60px);
   z-index: 2;
   box-shadow: 2px 0 8px rgba(15, 23, 42, 0.04);
 }

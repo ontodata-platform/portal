@@ -391,11 +391,15 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
 
 <style scoped>
 .portal-root-layout {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--od-gray-50, #f8fafc);
 }
 
 .portal-sider {
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 2px 0 8px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-direction: column;
@@ -479,6 +483,8 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
 }
 
 .portal-main-area {
+  height: 100vh;
+  overflow: hidden;
   background: var(--od-gray-50, #f8fafc);
 }
 
@@ -646,7 +652,8 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
 .content {
   padding: 24px;
   background: var(--od-gray-50, #f8fafc);
-  min-height: calc(100vh - 60px);
+  height: calc(100vh - var(--od-topbar-height, 60px));
+  overflow-y: auto;
 }
 
 .feedback-banner {
