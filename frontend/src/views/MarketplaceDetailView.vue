@@ -97,12 +97,10 @@ onMounted(loadDetail)
 <template>
   <div class="marketplace-detail-view">
     <PageHeader
-      :eyebrow="t('menu.marketplace')"
       :title="service?.name ?? t('marketplace.detailTitle')"
       :status="service ? 'success' : undefined"
       :status-label="service ? service.status : undefined"
       back-to="/data-workbench"
-      :parents="[t('menu.marketplace')]"
     />
     <a-card :bordered="false" class="detail-card">
       <a-spin :spinning="loading">
@@ -118,7 +116,6 @@ onMounted(loadDetail)
         <template v-if="service">
           <div class="service-header">
             <div class="service-title-area">
-              <h2 class="service-name">{{ service.name }}</h2>
               <a-space wrap>
                 <span class="mono-badge">{{ service.code }}</span>
                 <a-tag :color="service.status === 'PUBLISHED' || service.status === 'ONLINE' ? 'success' : 'default'">
@@ -249,14 +246,6 @@ onMounted(loadDetail)
   flex-wrap: wrap;
   gap: 16px;
   padding: 8px 0;
-}
-
-.service-name {
-  margin: 0 0 8px 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--od-gray-900, #0f172a);
-  letter-spacing: -0.01em;
 }
 
 .mono-badge {

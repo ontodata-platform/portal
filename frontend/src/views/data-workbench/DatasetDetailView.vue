@@ -46,7 +46,6 @@ onMounted(load)
 <template>
   <div>
     <PageHeader
-      :eyebrow="t('menu.groupPortal')"
       :title="dataset?.name ?? t('menu.marketplace')"
     />
 

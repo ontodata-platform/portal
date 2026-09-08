@@ -28,7 +28,6 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDate, formatDateTime, formatNumber } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
 
 const { t } = useI18n()
@@ -176,11 +175,6 @@ onMounted(load)
 
 <template>
   <div class="marketplace-page">
-    <PageHeader
-      :eyebrow="t('menu.groupPortal')"
-      :title="t('menu.marketplace')"
-    />
-
     <ErrorState
       v-if="loadError"
       :reason="loadError"
