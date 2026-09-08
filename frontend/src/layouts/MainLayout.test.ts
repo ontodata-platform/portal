@@ -119,6 +119,15 @@ describe('MainLayout v2', () => {
     expect(pushMock).toHaveBeenCalledWith('/personal/notifications')
   })
 
+  it('折叠导航控件是带状态说明的原生按钮', async () => {
+    const wrapper = mountLayout()
+    await flushPromises()
+
+    const toggle = wrapper.find('button.collapse-trigger')
+    expect(toggle.exists()).toBe(true)
+    expect(toggle.attributes('aria-label')).toBe('折叠导航')
+  })
+
   it('聚焦搜索不再跳转，改为就地展开命令面板并带入关键词', async () => {
     const wrapper = mountLayout()
     await flushPromises()

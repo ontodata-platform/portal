@@ -44,6 +44,7 @@ const stubs = {
       '<div class="tabs" :data-active="activeKey"><button class="goto-tasks" @click="$emit(\'change\', \'/personal/tasks\')">go-tasks</button><slot /></div>',
   },
   'a-tab-pane': { props: ['tab'], template: '<div class="tab">{{ tab }}</div>' },
+  'a-tag': { template: '<span><slot /></span>' },
 }
 
 function mountView() {
@@ -85,6 +86,20 @@ describe('PersonalWorkspaceView', () => {
     expect(bar.text()).toContain('8')
     expect(bar.text()).toContain('5')
     expect(wrapper.text()).toContain('陈晓')
+  })
+
+  it('四个摘要卡片以原生按钮提供键盘可达的跳转入口', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    const cards = wrapper.findAll('button.metric-card')
+    expect(cards).toHaveLength(4)
+    expect(cards.map((card) => card.attributes('aria-label'))).toEqual([
+      '查看待我审批',
+      '查看进行中任务',
+      '查看生成结果集',
+      '查看未读通知',
+    ])
   })
 
   it('签页由路由驱动，点击任务签页 push 子路由', async () => {

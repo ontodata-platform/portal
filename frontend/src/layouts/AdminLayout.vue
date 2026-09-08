@@ -60,9 +60,9 @@ function backToUser() {
           </a-button>
         </div>
       </aside>
-      <main class="admin-content">
+      <section class="admin-content" aria-label="管理端内容">
         <RouterView />
-      </main>
+      </section>
     </div>
   </div>
 </template>

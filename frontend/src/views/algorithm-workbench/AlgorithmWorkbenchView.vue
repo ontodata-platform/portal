@@ -223,22 +223,26 @@ onMounted(() => {
       <a-tabs v-model:active-key="activeTab" @change="onTabChange">
         <a-tab-pane key="discover" :tab="t('algoWorkbench.tabDiscover')">
           <div class="category-row">
-            <a-tag
-              :color="selectedCategory === '' ? 'blue' : 'default'"
-              class="cat-chip"
+            <button
+              type="button"
+              class="category-filter"
+              :class="{ active: selectedCategory === '' }"
+              :aria-pressed="selectedCategory === ''"
               @click="pickCategory('')"
             >
               {{ t('algoWorkbench.allCategories') }}
-            </a-tag>
-            <a-tag
+            </button>
+            <button
               v-for="cat in categories"
               :key="cat"
-              :color="selectedCategory === cat ? 'blue' : 'default'"
-              class="cat-chip"
+              type="button"
+              class="category-filter"
+              :class="{ active: selectedCategory === cat }"
+              :aria-pressed="selectedCategory === cat"
               @click="pickCategory(cat)"
             >
               {{ cat }}
-            </a-tag>
+            </button>
           </div>
           <div class="toolbar">
             <a-input
@@ -473,11 +477,34 @@ onMounted(() => {
   margin-bottom: 14px;
 }
 
-.cat-chip {
+.category-filter {
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 6px;
+  padding: 3px 10px;
+  background: #fff;
+  color: var(--od-gray-700, #334155);
   cursor: pointer;
   font-size: 12px;
-  padding: 2px 10px;
   user-select: none;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.category-filter:hover,
+.category-filter:focus-visible {
+  border-color: var(--od-primary-300, #93c5fd);
+  color: var(--od-color-primary, #1e40af);
+  outline: none;
+}
+
+.category-filter:focus-visible {
+  box-shadow: var(--od-focus-ring);
+}
+
+.category-filter.active {
+  border-color: var(--od-primary-300, #93c5fd);
+  background: var(--od-primary-50, #eff6ff);
+  color: var(--od-color-primary, #1e40af);
+  font-weight: 600;
 }
 
 .cat-badge {

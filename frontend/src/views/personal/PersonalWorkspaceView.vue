@@ -139,11 +139,11 @@ onMounted(() => {
 
     <!-- 4 个关键指标卡片 (可点击直接穿透) -->
     <div class="metrics-grid">
-      <div
+      <button
+        type="button"
         class="metric-card"
         :class="{ urgent: todos.pendingApprovalCount > 0 }"
-        role="button"
-        tabindex="0"
+        aria-label="查看待我审批"
         @click="quickNavigate('/personal/approvals')"
       >
         <div class="metric-icon-wrap approval">
@@ -154,12 +154,12 @@ onMounted(() => {
           <div class="metric-value">{{ todos.pendingApprovalCount }}</div>
         </div>
         <div v-if="todos.pendingApprovalCount > 0" class="metric-badge-pulse">待处理</div>
-      </div>
+      </button>
 
-      <div
+      <button
+        type="button"
         class="metric-card"
-        role="button"
-        tabindex="0"
+        aria-label="查看进行中任务"
         @click="quickNavigate('/personal/tasks')"
       >
         <div class="metric-icon-wrap task">
@@ -169,12 +169,12 @@ onMounted(() => {
           <div class="metric-label">进行中任务</div>
           <div class="metric-value">{{ runningTasks }}</div>
         </div>
-      </div>
+      </button>
 
-      <div
+      <button
+        type="button"
         class="metric-card"
-        role="button"
-        tabindex="0"
+        aria-label="查看生成结果集"
         @click="quickNavigate('/personal/results')"
       >
         <div class="metric-icon-wrap result">
@@ -184,13 +184,13 @@ onMounted(() => {
           <div class="metric-label">生成结果集</div>
           <div class="metric-value">{{ newResults }}</div>
         </div>
-      </div>
+      </button>
 
-      <div
+      <button
+        type="button"
         class="metric-card"
         :class="{ has_unread: unread > 0 }"
-        role="button"
-        tabindex="0"
+        aria-label="查看未读通知"
         @click="quickNavigate('/personal/notifications')"
       >
         <div class="metric-icon-wrap notification">
@@ -200,7 +200,7 @@ onMounted(() => {
           <div class="metric-label">未读通知</div>
           <div class="metric-value">{{ unread }}</div>
         </div>
-      </div>
+      </button>
     </div>
 
     <!-- 保留 summary-bar 供测试与语义识别 -->
@@ -347,10 +347,14 @@ onMounted(() => {
 }
 
 .metric-card {
+  width: 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 16px 20px;
+  font: inherit;
+  text-align: left;
   background: #fff;
   border: 1px solid var(--od-gray-200, #e2e8f0);
   border-radius: var(--od-radius-card, 12px);

@@ -221,13 +221,15 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
       <!-- 磨砂质感顶栏 -->
       <a-layout-header class="header">
         <div class="header-left">
-          <div
+          <button
+            type="button"
             class="collapse-trigger"
+            :aria-label="collapsed ? '展开导航' : '折叠导航'"
             :title="collapsed ? '展开导航' : '折叠导航'"
             @click="collapsed = !collapsed"
           >
             <component :is="collapsed ? MenuUnfoldOutlined : MenuFoldOutlined" />
-          </div>
+          </button>
           <span class="title">{{ pageTitle }}</span>
         </div>
 
@@ -512,6 +514,9 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
 .collapse-trigger {
   width: 32px;
   height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
