@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { CheckCircleOutlined, CloseCircleOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -227,7 +227,6 @@ onMounted(load)
 <template>
   <div class="run-wizard-view">
     <PageHeader
-      :eyebrow="t('menu.groupPortal')"
       :title="service?.name ?? t('menu.algorithmWorkbench')"
       back-to="/algorithm-workbench"
       :parents="[t('menu.algorithmWorkbench')]"
@@ -242,16 +241,6 @@ onMounted(load)
     />
 
     <a-card v-else :bordered="false" class="wizard-card">
-      <template #title>
-        <a-space>
-          <a-button type="link" @click="router.push('/algorithm-workbench')">
-            <template #icon><ArrowLeftOutlined /></template>
-            返回算法列表
-          </a-button>
-          <span class="wizard-title">运行向导: {{ service?.name }}</span>
-        </a-space>
-      </template>
-
       <a-spin :spinning="loading">
         <a-steps :current="step" class="wizard-steps" size="small">
           <a-step :title="t('algoWorkbench.wizardStep1')" />
@@ -443,12 +432,6 @@ onMounted(load)
 .wizard-card {
   border-radius: var(--od-radius-card, 12px);
   box-shadow: var(--od-shadow-1);
-}
-
-.wizard-title {
-  font-size: 16px;
-  font-weight: 650;
-  color: var(--od-gray-900, #0f172a);
 }
 
 .wizard-steps {
