@@ -61,7 +61,7 @@ describe('PersonalWorkspaceView', () => {
     meMock.mockResolvedValue({
       name: '陈晓',
       tenantId: 'default',
-      projectId: 'demo-project',
+      projectId: 'proj-quality',
       roles: ['user'],
       devMode: true,
     })
@@ -86,6 +86,9 @@ describe('PersonalWorkspaceView', () => {
     expect(bar.text()).toContain('8')
     expect(bar.text()).toContain('5')
     expect(wrapper.text()).toContain('陈晓')
+    expect(wrapper.text()).toContain('默认租户')
+    expect(wrapper.text()).toContain('质量分析项目')
+    expect(wrapper.text()).not.toContain('proj-quality')
   })
 
   it('四个摘要卡片以原生按钮提供键盘可达的跳转入口', async () => {

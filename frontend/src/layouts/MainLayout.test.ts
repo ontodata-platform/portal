@@ -79,6 +79,8 @@ describe('MainLayout v2', () => {
     expect(wrapper.text()).not.toContain('统一任务中心')
     expect(wrapper.text()).not.toContain('开发模式')
     expect(wrapper.text()).toContain('dev-user')
+    expect(wrapper.text()).toContain('默认租户')
+    expect(wrapper.text()).not.toContain('default')
   })
 
   it('非 operator/admin 且 devMode=false 时隐藏管理端入口', async () => {

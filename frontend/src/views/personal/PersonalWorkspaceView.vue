@@ -19,6 +19,7 @@ import { personalApi, resultApi, taskApi } from '@/api/portal'
 import { useIdentityStore } from '@/stores/identity'
 import { useMessageStore } from '@/stores/message'
 import type { PersonalTodo } from '@/types/portal'
+import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -105,9 +106,9 @@ onMounted(() => {
       <div class="hero-left">
         <div class="greeting-row">
           <span class="greeting-text">{{ greeting }}，{{ identityStore.name }}</span>
-          <a-tag color="blue" class="tenant-badge">{{ identityStore.tenantId }}</a-tag>
+          <a-tag color="blue" class="tenant-badge">{{ 中文展示(identityStore.tenantId) }}</a-tag>
           <a-tag v-if="identityStore.identity.projectId" color="purple" class="project-badge">
-            {{ identityStore.identity.projectId }}
+            {{ 中文展示(identityStore.identity.projectId) }}
           </a-tag>
         </div>
         <p class="hero-subtitle">

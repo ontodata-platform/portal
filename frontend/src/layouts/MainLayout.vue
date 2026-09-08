@@ -263,7 +263,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
           </div>
 
           <!-- 租户标签 -->
-          <a-tag color="blue" class="tenant-tag">{{ identityStore.tenantId }}</a-tag>
+          <a-tag color="blue" class="tenant-tag">{{ 中文展示(identityStore.tenantId) }}</a-tag>
 
           <!-- 个人头像与操作下拉 -->
           <a-dropdown placement="bottomRight" :trigger="['click']">
@@ -278,7 +278,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
                 <div class="user-dropdown-header">
                   <div class="user-dropdown-name">{{ identityStore.name }}</div>
                   <div class="user-dropdown-meta">
-                    {{ identityStore.tenantId }}
+                    {{ 中文展示(identityStore.tenantId) }}
                     <template v-if="identityStore.identity.roles.length > 0">
                       · {{ identityStore.identity.roles.map(中文展示).join('、') }}
                     </template>

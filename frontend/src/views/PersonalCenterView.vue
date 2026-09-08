@@ -232,7 +232,7 @@ onMounted(loadAll)
               {{ t('personal.welcome') }}，{{ identityStore.name }}
             </h3>
             <div class="user-sub">
-              <span>{{ t('layout.tenant') }}: <strong>{{ identityStore.tenantId }}</strong></span>
+              <span>{{ t('layout.tenant') }}: <strong>{{ 中文展示(identityStore.tenantId) }}</strong></span>
               <span v-if="identityStore.roles.length > 0" class="role-list">
                 {{ t('layout.roles') }}: {{ identityStore.roles.map(中文展示).join('、') }}
               </span>
@@ -241,7 +241,7 @@ onMounted(loadAll)
         </div>
 
         <div class="welcome-actions">
-          <span class="user-sub">{{ t('layout.tenant') }} · {{ identityStore.tenantId }}</span>
+          <span class="user-sub">{{ t('layout.tenant') }} · {{ 中文展示(identityStore.tenantId) }}</span>
         </div>
       </div>
     </a-card>
