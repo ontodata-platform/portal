@@ -9,6 +9,7 @@ import {
   type AlgorithmServiceDetail,
   type PreflightResult,
 } from '@/api/algorithm-workbench'
+import { useForm, Field as VeeField } from 'vee-validate'
 import { useMessageStore } from '@/stores/message'
 import type { DescriptorInput, MyDelivery } from '@/types/descriptor'
 import ErrorState from '@/ui-kit/ErrorState.vue'
@@ -30,8 +31,8 @@ const inputs = ref<DescriptorInput[]>([])
 const step = ref(0)
 const submitting = ref(false)
 
-const form = reactive<Record<string, string>>({})
-const inputErrors = reactive<Record<string, string>>({})
+// 步骤 1 输入交给 vee-validate 托管：动态字段经 Field 注册，必填规则函数化，错误落在字段下方
+const { values: wizardValues, setFieldValue, validate: validateWizard } = useForm<Record<string, string>>()
 const deliveries = ref<MyDelivery[]>([])
 
 const preflightLoading = ref(false)
@@ -63,20 +64,20 @@ const inputOptions = (input: DescriptorInput) => {
 
 function fillDefaults() {
   for (const input of inputs.value) {
-    if (form[input.key] === undefined && input.defaultValue !== undefined) {
-      form[input.key] = input.defaultValue
+    if (wizardValues[input.key] === undefined && input.defaultValue !== undefined) {
+      setFieldValue(input.key, input.defaultValue)
     }
   }
 }
 
-function validateInput(input: DescriptorInput): boolean {
-  const value = form[input.key]?.trim()
-  if (input.required && !value) {
-    inputErrors[input.key] = t('common.required')
-    return false
+/** vee-validate 字段规则：必填项校验（错误信息落在字段下方） */
+function fieldRules(input: DescriptorInput) {
+  return (value: unknown) => {
+    if (input.required && (value === undefined || value === null || String(value).trim() === '')) {
+      return t('algoWorkbench.fieldRequired', { field: input.label })
+    }
+    return true
   }
-  delete inputErrors[input.key]
-  return true
 }
 
 function restoreDraft() {
@@ -90,7 +91,7 @@ function restoreDraft() {
     }
     for (const input of inputs.value) {
       const value = draft.form?.[input.key]
-      if (typeof value === 'string') form[input.key] = value
+      if (typeof value === 'string') setFieldValue(input.key, value)
     }
     if (draft.tier === 'standard' || draft.tier === 'long') tier.value = draft.tier
     if (typeof draft.outputs?.name === 'string') outputs.name = draft.outputs.name
@@ -107,7 +108,7 @@ function saveDraft() {
   if (!draftReady.value || !code.value) return
   localStorage.setItem(
     draftKey.value,
-    JSON.stringify({ form, tier: tier.value, outputs, savedAt: nowIso() }),
+    JSON.stringify({ form: wizardValues, tier: tier.value, outputs, savedAt: nowIso() }),
   )
 }
 
@@ -138,15 +139,13 @@ async function load() {
 const inputValues = computed(() => {
   const values: Record<string, string> = {}
   for (const input of inputs.value) {
-    const value = form[input.key]?.trim()
-    if (value) values[input.key] = value
+    const value = wizardValues[input.key]
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      values[input.key] = String(value)
+    }
   }
   return values
 })
-
-const missingRequired = computed(() =>
-  inputs.value.filter((input) => input.required && !inputValues.value[input.key]),
-)
 
 function pickTestFile(key: string) {
   fileTargetKey.value = key
@@ -159,7 +158,7 @@ async function onTestFileChange(event: Event) {
   if (!file || !fileTargetKey.value) return
   try {
     const receipt = await algorithmWorkbenchApi.uploadTestData(file.name)
-    form[fileTargetKey.value] = receipt.ref
+    setFieldValue(fileTargetKey.value, receipt.ref)
     testDataTags[fileTargetKey.value] = file.name
     testDataRefs.value = [...testDataRefs.value.filter((item) => !item.startsWith('test:')), receipt.ref]
   } catch (error) {
@@ -170,15 +169,15 @@ async function onTestFileChange(event: Event) {
 }
 
 const usedTestDataRefs = computed(() =>
-  inputs.value.filter((input) => (form[input.key] ?? '').startsWith('test:')).map((input) => form[input.key]),
+  inputs.value
+    .filter((input) => String(wizardValues[input.key] ?? '').startsWith('test:'))
+    .map((input) => String(wizardValues[input.key])),
 )
 
-function nextFromStep1() {
-  const valid = inputs.value.map(validateInput).every(Boolean)
-  if (!valid || missingRequired.value.length > 0) {
-    messageStore.warning(t('algoWorkbench.requiredMissing'))
-    return
-  }
+async function nextFromStep1() {
+  // vee-validate 全量校验：字段级错误已落在控件下方，无需 toast
+  const { valid } = await validateWizard()
+  if (!valid) return
   messageStore.clear()
   step.value = 1
   void runPreflight()
@@ -220,7 +219,7 @@ async function submit() {
   }
 }
 
-watch([form, tier, outputs], saveDraft, { deep: true })
+watch([wizardValues, tier, outputs], saveDraft, { deep: true })
 
 onMounted(load)
 </script>
@@ -260,76 +259,81 @@ onMounted(load)
           <a-step :title="t('algoWorkbench.wizardStep3')" />
         </a-steps>
 
-        <!-- 步骤 1：按描述符 inputs 动态渲染 -->
+        <!-- 步骤 1：按描述符 inputs 动态渲染（vee-validate 托管：必填校验即时反馈在字段下方） -->
         <div v-if="step === 0" class="wizard-body">
           <a-form layout="vertical" class="wizard-form">
-            <a-form-item
+            <VeeField
               v-for="input in inputs"
               :key="input.key"
+              v-slot="{ field, errorMessage }"
               :name="input.key"
-              :label="input.label"
-              :required="input.required"
-              :extra="input.hint"
-              :validate-status="inputErrors[input.key] ? 'error' : undefined"
-              :help="inputErrors[input.key]"
+              :rules="fieldRules(input)"
             >
-              <a-select
-                v-if="input.kind === 'dataset-ref'"
-                v-model:value="form[input.key]"
-                :options="inputOptions(input)"
-                :placeholder="t('algoWorkbench.wizardChooseData')"
-                allow-clear
-                show-search
-                option-filter-prop="label"
-                style="max-width: 520px"
-                :aria-label="input.label"
-                @blur="validateInput(input)"
-                @change="validateInput(input)"
-              />
-              <div v-if="input.kind === 'dataset-ref'" class="test-import-row">
-                <a-button size="small" @click="pickTestFile(input.key)">
-                  {{ t('algoWorkbench.importTestData') }}
-                </a-button>
-                <a-tag v-if="testDataTags[input.key]" color="orange" class="test-tag">
-                  {{ t('algoWorkbench.testDataOnly') }}：{{ testDataTags[input.key] }}
-                </a-tag>
-              </div>
-              <a-select
-                v-else-if="input.kind === 'select'"
-                v-model:value="form[input.key]"
-                :options="inputOptions(input)"
-                style="max-width: 360px"
-                allow-clear
-                :aria-label="input.label"
-                @blur="validateInput(input)"
-                @change="validateInput(input)"
-              />
-              <a-input-number
-                v-else-if="input.kind === 'number'"
-                v-model:value="form[input.key]"
-                style="max-width: 240px"
-                :aria-label="input.label"
-                @blur="validateInput(input)"
-                @change="validateInput(input)"
-              />
-              <a-date-picker
-                v-else-if="input.kind === 'date'"
-                v-model:value="form[input.key]"
-                value-format="YYYY-MM-DD"
-                style="max-width: 240px"
-                :aria-label="input.label"
-                @blur="validateInput(input)"
-                @change="validateInput(input)"
-              />
-              <a-input
-                v-else
-                v-model:value="form[input.key]"
-                style="max-width: 420px"
-                :aria-label="input.label"
-                @blur="validateInput(input)"
-                @update:value="validateInput(input)"
-              />
-            </a-form-item>
+              <a-form-item
+                :label="input.label"
+                :required="input.required"
+                :extra="input.hint"
+                :validate-status="errorMessage ? 'error' : undefined"
+                :help="errorMessage"
+              >
+                <a-select
+                  v-if="input.kind === 'dataset-ref'"
+                  :value="field.value"
+                  :options="inputOptions(input)"
+                  :placeholder="t('algoWorkbench.wizardChooseData')"
+                  allow-clear
+                  show-search
+                  option-filter-prop="label"
+                  style="max-width: 520px"
+                  :aria-label="input.label"
+                  @update:value="field.onChange"
+                  @blur="field.onBlur"
+                />
+                <div v-if="input.kind === 'dataset-ref'" class="test-import-row">
+                  <a-button size="small" @click="pickTestFile(input.key)">
+                    {{ t('algoWorkbench.importTestData') }}
+                  </a-button>
+                  <a-tag v-if="testDataTags[input.key]" color="orange" class="test-tag">
+                    {{ t('algoWorkbench.testDataOnly') }}：{{ testDataTags[input.key] }}
+                  </a-tag>
+                </div>
+                <a-select
+                  v-else-if="input.kind === 'select'"
+                  :value="field.value"
+                  :options="inputOptions(input)"
+                  style="max-width: 360px"
+                  allow-clear
+                  :aria-label="input.label"
+                  @update:value="field.onChange"
+                  @blur="field.onBlur"
+                />
+                <a-input-number
+                  v-else-if="input.kind === 'number'"
+                  :value="field.value"
+                  style="max-width: 240px"
+                  :aria-label="input.label"
+                  @update:value="field.onChange"
+                  @blur="field.onBlur"
+                />
+                <a-date-picker
+                  v-else-if="input.kind === 'date'"
+                  :value="field.value"
+                  value-format="YYYY-MM-DD"
+                  style="max-width: 240px"
+                  :aria-label="input.label"
+                  @update:value="field.onChange"
+                  @blur="field.onBlur"
+                />
+                <a-input
+                  v-else
+                  :value="field.value"
+                  style="max-width: 420px"
+                  :aria-label="input.label"
+                  @update:value="field.onChange"
+                  @blur="field.onBlur"
+                />
+              </a-form-item>
+            </VeeField>
 
             <a-divider class="output-divider">{{ t('algoWorkbench.outputsTitle') }}</a-divider>
             <a-form-item name="outputName" :label="t('algoWorkbench.outputName')" :extra="t('algoWorkbench.outputNameHint')">

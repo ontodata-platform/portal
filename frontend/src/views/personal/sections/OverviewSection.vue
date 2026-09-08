@@ -86,12 +86,12 @@ onMounted(() => {
           :key="bar.label"
           class="week-column"
           :class="{ today: bar.isToday }"
-          :title="`${bar.label} · ${bar.count}`"
           role="button"
           tabindex="0"
           @click="router.push({ path: '/personal/tasks', query: { date: bar.date } })"
           @keydown.enter="router.push({ path: '/personal/tasks', query: { date: bar.date } })"
         >
+          <span class="week-bubble">{{ bar.label }} · {{ bar.count }} 项</span>
           <span class="week-count">{{ bar.count }}</span>
           <div class="week-bar-container">
             <span class="week-bar" :style="{ height: `${Math.max(bar.heightPercent, 8)}%` }"></span>
@@ -234,6 +234,7 @@ onMounted(() => {
 }
 
 .week-column {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -244,6 +245,27 @@ onMounted(() => {
   padding: 6px 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.week-bubble {
+  position: absolute;
+  top: -6px;
+  transform: translateY(-100%);
+  background: var(--od-gray-900, #0f172a);
+  color: #fff;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+  z-index: 2;
+}
+
+.week-column:hover .week-bubble,
+.week-column:focus-visible .week-bubble {
+  opacity: 1;
 }
 
 .week-column:hover,
