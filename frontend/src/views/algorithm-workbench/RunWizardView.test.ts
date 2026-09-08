@@ -54,10 +54,10 @@ describe('RunWizardView', () => {
     vi.clearAllMocks()
     findServiceMock.mockResolvedValue({
       code: 'quality-weekly',
-      name: '客户质量分析',
+      name: '数据质量分析',
       category: '质量分析',
-      description: '校验客户数据质量',
-      inputHint: '需要客户主数据',
+      description: '校验待分析数据集质量',
+      inputHint: '需要待分析数据集',
       typicalDuration: '5 分钟',
       runCount: 1,
       status: 'PUBLISHED',
@@ -67,9 +67,9 @@ describe('RunWizardView', () => {
         serviceType: 'algorithm-service',
         provider: 'algorithm-platform',
         code: 'quality-weekly',
-        name: '客户质量分析',
+        name: '数据质量分析',
         summary: {},
-        sections: [{ type: 'inputs', inputs: [{ key: 'dataset', label: '客户主数据', kind: 'dataset-ref', required: true }] }],
+        sections: [{ type: 'inputs', inputs: [{ key: 'dataset', label: '待分析数据集', kind: 'dataset-ref', required: true }] }],
         actions: [],
       },
     })
@@ -85,7 +85,7 @@ describe('RunWizardView', () => {
     await wrapper.findAll('button').find((button) => button.text() === '下一步')!.trigger('click')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('客户主数据 为必填项')
+    expect(wrapper.text()).toContain('待分析数据集 为必填项')
     expect(preflightMock).not.toHaveBeenCalled()
   })
 })

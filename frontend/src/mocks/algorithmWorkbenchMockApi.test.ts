@@ -38,7 +38,7 @@ describe('算法工作台 mock API', () => {
   })
 
   it('预检：带输入时全部通过', async () => {
-    const res = (await api.request('POST', '/algorithm-services/tpl-quality-weekly/preflight', {}, { inputs: { customerData: 'ds-customer-monthly@v2026.08' } })) as {
+    const res = (await api.request('POST', '/algorithm-services/tpl-quality-weekly/preflight', {}, { inputs: { inputDataset: 'dset-ontology-instance@v2026.09' } })) as {
       ok: boolean
     }
     expect(res.ok).toBe(true)
@@ -55,9 +55,10 @@ describe('算法工作台 mock API', () => {
   })
 
   it('我的交付列表可供向导选择', async () => {
-    const res = (await api.request('GET', '/my/deliveries')) as { items: Array<{ serviceCode: string; version: string }> }
+    const res = (await api.request('GET', '/my/deliveries')) as { items: Array<{ serviceCode: string; serviceName: string; version: string }> }
     expect(res.items.length).toBeGreaterThan(0)
     expect(res.items[0].version).toBeTruthy()
+    expect(res.items.some((item) => item.serviceName.includes('客户'))).toBe(false)
   })
 
   it('服务摘要携带算法分类，且分类清单可查询', async () => {

@@ -41,9 +41,9 @@ function page<T>(items: T[], params: Record<string, unknown> = {}) {
 }
 
 const deliveries: MyDelivery[] = [
-  { serviceCode: 'ds-customer-monthly', serviceName: '客户主数据-月度快照', version: 'v2026.08', snapshotDate: relativeDate(24 * 7), expiresAt: relativeDate(-24 * 90), state: 'ACTIVE' },
-  { serviceCode: 'ds-customer-monthly', serviceName: '客户主数据-月度快照', version: 'v2026.07', snapshotDate: relativeDate(24 * 37), expiresAt: relativeDate(-24 * 60), state: 'ACTIVE' },
-  { serviceCode: 'ds-device-daily', serviceName: '设备遥测-日增量', version: 'v2026.09.01', snapshotDate: relativeDate(8), expiresAt: relativeDate(-8), state: 'EXPIRING' },
+  { serviceCode: 'dset-ontology-instance', serviceName: '本体实例数据集-周度快照', version: 'v2026.09', snapshotDate: relativeDate(24 * 7), expiresAt: relativeDate(-24 * 90), state: 'ACTIVE' },
+  { serviceCode: 'dset-ontology-instance', serviceName: '本体实例数据集-周度快照', version: 'v2026.08', snapshotDate: relativeDate(24 * 37), expiresAt: relativeDate(-24 * 60), state: 'ACTIVE' },
+  { serviceCode: 'dset-quality-sample', serviceName: '质量核查数据集-日增量', version: 'v2026.09.01', snapshotDate: relativeDate(8), expiresAt: relativeDate(-8), state: 'EXPIRING' },
 ]
 
 function serviceDescriptor(code: string, name: string, description: string): ServiceDescriptor {
@@ -53,7 +53,7 @@ function serviceDescriptor(code: string, name: string, description: string): Ser
     provider: 'algorithm-recombine',
     code,
     name,
-    summary: { version: '1.2.0', status: 'PUBLISHED', badges: ['准入：已通过', '语义依赖：客户主题'] },
+    summary: { version: '1.2.0', status: 'PUBLISHED', badges: ['准入：已通过', '语义依赖：数据质量规则本体'] },
     sections: [
       { type: 'summary', title: '基本信息', fields: [
         { label: '服务编码', value: code },
@@ -63,7 +63,7 @@ function serviceDescriptor(code: string, name: string, description: string): Ser
       ] },
       { type: 'richtext', title: '服务说明', text: description },
       { type: 'inputs', title: '输入要求', inputs: [
-        { key: 'customerData', label: '客户主数据', kind: 'dataset-ref', required: true, hint: '从我的订阅与交付中选择版本' },
+        { key: 'inputDataset', label: '待分析数据集', kind: 'dataset-ref', required: true, hint: '从我的订阅与交付中选择版本' },
         { key: 'qualityThreshold', label: '质量合格阈值', kind: 'number', defaultValue: '0.8', hint: '0~1 之间的小数' },
       ] },
       { type: 'outputs', title: '输出说明', items: [
@@ -71,7 +71,7 @@ function serviceDescriptor(code: string, name: string, description: string): Ser
         { label: '证据归档', value: '运行快照与校验记录' },
       ] },
       { type: 'semantic-deps', title: '语义依赖', items: [
-        { label: '客户主题本体', value: '已发布版本（运行时自动校验兼容性）' },
+        { label: '数据质量规则本体', value: '已发布版本（运行时自动校验兼容性）' },
       ] },
       { type: 'history', title: '运行历史', stats: [
         { label: '累计运行', value: '128 次' },
@@ -86,39 +86,39 @@ function serviceDescriptor(code: string, name: string, description: string): Ser
 }
 
 const services: ServiceRecord[] = [
-  { summary: { code: 'tpl-quality-weekly', name: '客户质量分析-周批', category: '质量分析', description: '按客户主题口径对客户主数据做字段级质量核查并输出报告。', inputHint: '需要：客户主数据', typicalDuration: '6~9 分钟', runCount: 128, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('tpl-quality-weekly', '客户质量分析-周批', '按客户主题口径对客户主数据做字段级质量核查：完整性、唯一性、格式合规，输出报告与证据归档。') },
+  { summary: { code: 'tpl-quality-weekly', name: '数据质量分析-周批', category: '质量分析', description: '按数据质量规则对待分析数据集做字段级核查并输出报告。', inputHint: '需要：待分析数据集', typicalDuration: '6~9 分钟', runCount: 128, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('tpl-quality-weekly', '数据质量分析-周批', '按数据质量规则对待分析数据集做完整性、唯一性和格式合规核查，输出报告与证据归档。') },
   { summary: { code: 'cap-anomaly-detect', name: '设备异常检测', category: '异常检测', description: '基于设备遥测数据的时序异常检测，标记疑似异常时段。', inputHint: '需要：设备遥测', typicalDuration: '3~5 分钟', runCount: 86, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-anomaly-detect', '设备异常检测', '基于设备遥测时序数据检测异常波动，输出疑似异常时段与置信度，供人工复核。') },
-  { summary: { code: 'tpl-churn-train', name: '流失预测-训练', category: '预测', description: '以客户主数据与历史行为训练流失预测模型。', inputHint: '需要：客户主数据', typicalDuration: '20~40 分钟', runCount: 12, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('tpl-churn-train', '流失预测-训练', '训练客户流失预测模型；训练完成生成模型版本与评估报告，推理服务另行订阅。') },
-  { summary: { code: 'cap-sales-forecast', name: '销量预测-月度', category: '预测', description: '按月度销量序列生成下月预测区间。', inputHint: '需要：销量历史', typicalDuration: '4~6 分钟', runCount: 34, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-sales-forecast', '销量预测-月度', '按历史月度销量生成下月预测区间，输出预测表与置信区间图。') },
-  { summary: { code: 'cap-complaint-classify', name: '文本投诉分类', category: '文本处理', description: '对投诉文本做主题分类与紧急度评级。', inputHint: '需要：投诉记录', typicalDuration: '2~4 分钟', runCount: 57, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-complaint-classify', '文本投诉分类', '对投诉文本做主题分类与紧急度评级，输出分类明细表。') },
+  { summary: { code: 'tpl-classification-train', name: '分类预测训练', category: '预测', description: '基于历史标注数据训练分类预测模型。', inputHint: '需要：待分析数据集', typicalDuration: '20~40 分钟', runCount: 12, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('tpl-classification-train', '分类预测训练', '训练分类预测模型，完成后生成模型版本与评估报告。') },
+  { summary: { code: 'cap-timeseries-forecast', name: '时间序列预测', category: '预测', description: '按历史时序数据生成下一周期预测区间。', inputHint: '需要：待分析数据集', typicalDuration: '4~6 分钟', runCount: 34, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-timeseries-forecast', '时间序列预测', '按历史时序数据生成下一周期预测区间，输出预测表与置信区间图。') },
+  { summary: { code: 'cap-text-classify', name: '文本主题分类', category: '文本处理', description: '对文本数据做主题分类与优先级识别。', inputHint: '需要：待分析数据集', typicalDuration: '2~4 分钟', runCount: 57, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-text-classify', '文本主题分类', '对文本数据做主题分类与优先级识别，输出分类明细表。') },
 ]
 
 const categories = [...new Set(services.map((item) => item.summary.category))]
 
 const runs: AlgorithmRun[] = [
-  { taskId: 'task-a1b2c3d4', serviceCode: 'tpl-quality-weekly', serviceName: '客户质量分析-周批', status: 'SUCCEEDED', stage: '已完成', startedAt: relativeIso(20), duration: '7 分 12 秒', nodes: [
+  { taskId: 'task-a1b2c3d4', serviceCode: 'tpl-quality-weekly', serviceName: '数据质量分析-周批', status: 'SUCCEEDED', stage: '已完成', startedAt: relativeIso(20), duration: '7 分 12 秒', nodes: [
     { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(20), finishedAt: relativeIso(19.6) },
     { name: '质量核查', state: 'SUCCEEDED', startedAt: relativeIso(19.6), finishedAt: relativeIso(19.1) },
     { name: '报告生成', state: 'SUCCEEDED', startedAt: relativeIso(19.1), finishedAt: relativeIso(18.8) },
-  ], artifacts: [ { name: '客户质量分析报告.xlsx', kind: 'BUSINESS_DATA', size: '842 KB' }, { name: '运行证据包.zip', kind: 'EVIDENCE', size: '96 KB' } ],
+  ], artifacts: [ { name: '数据质量分析报告.xlsx', kind: 'BUSINESS_DATA', size: '842 KB' }, { name: '运行证据包.zip', kind: 'EVIDENCE', size: '96 KB' } ],
   container: { containerId: 'ctr-7f2a91', image: 'registry/quality-weekly:1.2.0', node: 'algo-node-02', state: 'EXITED', cpu: '已释放', mem: '已释放', logTail: ['[12:04] 字段核查完成：128 项', '[12:05] 报告写入对象存储', '[12:05] 容器正常退出 (code=0)'] },
-  outputSpec: { name: '客户质量分析报告-周批', description: '字段级合格率与问题明细', archiveTier: 'standard' } },
+  outputSpec: { name: '数据质量分析报告-周批', description: '字段级合格率与问题明细', archiveTier: 'standard' } },
   { taskId: 'task-b2c3d4e5', serviceCode: 'cap-anomaly-detect', serviceName: '设备异常检测', status: 'RUNNING', stage: '异常检测中（2/3 节点）', startedAt: relativeIso(0.5), duration: '已运行 3 分钟', nodes: [
     { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(0.5), finishedAt: relativeIso(0.3) },
     { name: '异常检测', state: 'RUNNING', startedAt: relativeIso(0.3) },
     { name: '结果汇聚', state: 'PENDING' },
   ], artifacts: [],
   container: { containerId: 'ctr-c41d02', image: 'registry/anomaly-detect:2.0.0', node: 'algo-node-01', state: 'RUNNING', cpu: '1.6 核', mem: '2.4 GB', logTail: ['[14:41] 加载遥测分片 3/7', '[14:42] 滑动窗口推理中…'] } },
-  { taskId: 'task-c3d4e5f6', serviceCode: 'tpl-quality-weekly', serviceName: '客户质量分析-周批', status: 'FAILED', stage: '预检未通过', startedAt: relativeIso(30), duration: '—', humanReason: '输入数据“客户主数据-月度快照”的订阅已过期，无法读取该版本。', fixHint: '到数据工作台续订该服务后重新发起运行。', nodes: [
+  { taskId: 'task-c3d4e5f6', serviceCode: 'tpl-quality-weekly', serviceName: '数据质量分析-周批', status: 'FAILED', stage: '预检未通过', startedAt: relativeIso(30), duration: '—', humanReason: '输入数据“本体实例数据集-周度快照”的订阅已过期，无法读取该版本。', fixHint: '到数据工作台续订该服务后重新发起运行。', nodes: [
     { name: '预检', state: 'FAILED', startedAt: relativeIso(30), finishedAt: relativeIso(30), humanReason: '订阅过期', fixHint: '续订后重试' },
   ], artifacts: [],
   container: { containerId: 'ctr-90aa13', image: 'registry/quality-weekly:1.2.0', node: 'algo-node-02', state: 'FAILED', cpu: '已释放', mem: '已释放', logTail: ['[09:12] 预检失败：订阅过期 (code=SUBSCRIPTION_EXPIRED)', '[09:12] 容器异常退出 (code=1)'] } },
-  { taskId: 'task-d4e5f6g7', serviceCode: 'cap-sales-forecast', serviceName: '销量预测-月度', status: 'SUCCEEDED', stage: '已完成', startedAt: relativeIso(74), duration: '5 分 02 秒', nodes: [
+  { taskId: 'task-d4e5f6g7', serviceCode: 'cap-timeseries-forecast', serviceName: '时间序列预测', status: 'SUCCEEDED', stage: '已完成', startedAt: relativeIso(74), duration: '5 分 02 秒', nodes: [
     { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(74), finishedAt: relativeIso(73.6) },
     { name: '预测计算', state: 'SUCCEEDED', startedAt: relativeIso(73.6), finishedAt: relativeIso(73.2) },
   ], artifacts: [ { name: '下月销量预测.csv', kind: 'BUSINESS_DATA', size: '38 KB' } ],
   container: { containerId: 'ctr-55be70', image: 'registry/sales-forecast:1.0.3', node: 'algo-node-03', state: 'EXITED', cpu: '已释放', mem: '已释放', logTail: ['[08:30] 预测区间生成', '[08:30] 容器正常退出 (code=0)'] } },
-  { taskId: 'task-e5f6g7h8', serviceCode: 'cap-complaint-classify', serviceName: '文本投诉分类', status: 'CANCELLED', stage: '已取消', startedAt: relativeIso(96), duration: '1 分 10 秒', nodes: [
+  { taskId: 'task-e5f6g7h8', serviceCode: 'cap-text-classify', serviceName: '文本主题分类', status: 'CANCELLED', stage: '已取消', startedAt: relativeIso(96), duration: '1 分 10 秒', nodes: [
     { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(96), finishedAt: relativeIso(95.7) },
     { name: '文本分类', state: 'CANCELLED', startedAt: relativeIso(95.7) },
   ], artifacts: [] },
@@ -172,7 +172,7 @@ export function createAlgorithmWorkbenchMockApi(): AlgorithmWorkbenchMockApi {
     if (normalizedMethod === 'POST' && preflightMatch) {
       const inputs = (body as { inputs?: Record<string, string> } | undefined)?.inputs ?? {}
       const checks = [
-        { label: '语义依赖', state: 'pass', hint: '客户主题本体已发布且兼容' },
+        { label: '语义依赖', state: 'pass', hint: '数据质量规则本体已发布且兼容' },
         { label: '数据就绪', state: Object.keys(inputs).length > 0 ? 'pass' : 'fail', hint: Object.keys(inputs).length > 0 ? '输入版本就绪且订阅有效' : '请选择输入数据版本' },
         { label: '能力可用', state: 'pass', hint: '能力版本已准入且未撤回' },
       ]

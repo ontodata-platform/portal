@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ArrowLeftOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -52,7 +53,13 @@ onMounted(load)
 </script>
 
 <template>
-  <div>
+  <div class="algorithm-service-detail-view">
+    <div class="detail-navigation">
+      <a-button type="text" class="detail-back" @click="router.push('/algorithm-workbench')">
+        <template #icon><ArrowLeftOutlined /></template>
+        返回算法列表
+      </a-button>
+    </div>
     <ErrorState
       v-if="loadError"
       :reason="loadError"
@@ -77,6 +84,14 @@ onMounted(load)
 .detail-card {
   border-radius: var(--od-radius-card, 12px);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.detail-navigation {
+  margin-bottom: 8px;
+}
+
+.detail-back {
+  padding-inline: 0;
 }
 
 .detail-category {
