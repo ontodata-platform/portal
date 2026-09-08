@@ -94,7 +94,7 @@ describe('TaskSection', () => {
       type: undefined,
     })
     expect(wrapper.text()).toContain('查询')
-    expect(wrapper.text()).toContain('统一任务中心')
+    expect(wrapper.text()).not.toContain('统一任务中心')
   })
 
   it('查询按钮按筛选条件重新加载并重置页码', async () => {

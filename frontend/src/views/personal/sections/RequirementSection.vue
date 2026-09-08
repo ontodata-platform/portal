@@ -18,7 +18,6 @@ import type { RequirementRequest } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import OdTable from '@/ui-kit/OdTable.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
@@ -237,11 +236,6 @@ onMounted(load)
 
 <template>
   <div class="requirement-section">
-    <PageHeader
-      :eyebrow="t('menu.groupCollab')"
-      :title="t('menu.requirements')"
-    />
-
     <ErrorState
       v-if="loadError"
       :reason="loadError"

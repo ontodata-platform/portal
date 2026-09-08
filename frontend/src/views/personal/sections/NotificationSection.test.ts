@@ -63,7 +63,7 @@ describe('NotificationSection', () => {
     await flushPromises()
     expect(listMock).toHaveBeenCalled()
     expect(wrapper.text()).toContain('全部已读')
-    expect(wrapper.text()).toContain('通知中心')
+    expect(wrapper.text()).not.toContain('通知中心')
   })
 
   it('可将单条标为已读并刷新', async () => {

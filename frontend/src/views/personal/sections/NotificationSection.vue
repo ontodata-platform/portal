@@ -11,7 +11,6 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -98,11 +97,16 @@ onMounted(load)
 
 <template>
   <div class="notification-section">
-    <PageHeader
-      :eyebrow="t('menu.groupCollab')"
-      :title="t('menu.notifications')"
-    >
-      <template #extra>
+    <ErrorState
+      v-if="loadError"
+      :reason="loadError"
+      :next-step="t('common.loadNextStep')"
+      :action-label="t('common.reload')"
+      @retry="load"
+    />
+
+    <a-card v-else :bordered="false" class="notifications-card">
+      <div class="notification-toolbar">
         <a-button
           type="primary"
           ghost
@@ -113,18 +117,7 @@ onMounted(load)
           <template #icon><CheckOutlined /></template>
           {{ t('notifications.markAllRead') }}
         </a-button>
-      </template>
-    </PageHeader>
-
-    <ErrorState
-      v-if="loadError"
-      :reason="loadError"
-      :next-step="t('common.loadNextStep')"
-      :action-label="t('common.reload')"
-      @retry="load"
-    />
-
-    <a-card v-else :bordered="false" class="notifications-card">
+      </div>
       <EmptyState
         v-if="!loading && rows.length === 0"
         :title="t('notifications.empty')"
@@ -190,6 +183,12 @@ onMounted(load)
 .notifications-card {
   border-radius: var(--od-radius-card, 12px);
   box-shadow: var(--od-shadow-1);
+}
+
+.notification-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
 }
 
 .notice-title-text {

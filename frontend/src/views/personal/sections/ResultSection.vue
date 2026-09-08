@@ -11,7 +11,6 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
@@ -114,11 +113,6 @@ onMounted(load)
 
 <template>
   <div class="result-section">
-    <PageHeader
-      :eyebrow="t('menu.groupPortal')"
-      :title="t('menu.results')"
-    />
-
     <ErrorState
       v-if="loadError"
       :reason="loadError"
