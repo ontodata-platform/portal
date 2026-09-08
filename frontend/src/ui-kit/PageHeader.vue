@@ -55,10 +55,14 @@ function goBack() {
 .od-page-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--od-space-3);
   margin-bottom: 12px;
   padding: 0 0 4px 0;
+}
+
+.od-page-header__extra {
+  margin-left: auto;
 }
 
 .od-page-header__eyebrow {
