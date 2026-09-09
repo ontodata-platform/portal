@@ -10,6 +10,7 @@ import type {
   ApprovalNudgeResult,
   ApprovalRequest,
   BatchDecideResult,
+  DataRequirementProfile,
   Feedback,
   IamUser,
   MarketplaceApplyResponse,
@@ -26,6 +27,10 @@ import type {
   RetentionCleanupResult,
   RetentionStatus,
   RequirementRequest,
+  RequirementAnalysis,
+  RequirementOverlapCandidate,
+  RequirementPlan,
+  RequirementProgress,
   ScenarioBinding,
   ScenarioOntologyRef,
   ScenarioPresentation,
@@ -97,11 +102,18 @@ export const requirementApi = {
     title: string
     description?: string
     requester?: string
+    dataProfile?: DataRequirementProfile
   }) => client.post<RequirementRequest>('/requirements', body).then((r) => r.data),
-  analyze: (code: string) => client.post<RequirementRequest>(`/requirements/${code}/analyze`).then((r) => r.data),
-  assign: (code: string, body: { assigneeSystem: string; assigneeRef?: string; plan?: Record<string, unknown> }) =>
+  analyze: (code: string, body?: { analysis: RequirementAnalysis }) =>
+    client.post<RequirementRequest>(`/requirements/${code}/analyze`, body).then((r) => r.data),
+  overlapCandidates: (code: string) =>
+    client.get<RequirementOverlapCandidate[]>(`/requirements/${code}/overlap-candidates`).then((r) => r.data),
+  consolidate: (code: string, body: { primaryCode: string; reason: string }) =>
+    client.post<RequirementRequest>(`/requirements/${code}/consolidate`, body).then((r) => r.data),
+  assign: (code: string, body: { assigneeSystem: string; assigneeRef?: string; plan: RequirementPlan }) =>
     client.post<RequirementRequest>(`/requirements/${code}/assign`, body).then((r) => r.data),
-  progress: (code: string) => client.post<RequirementRequest>(`/requirements/${code}/progress`).then((r) => r.data),
+  progress: (code: string, body?: RequirementProgress) =>
+    client.post<RequirementRequest>(`/requirements/${code}/progress`, body).then((r) => r.data),
   complete: (code: string, body: { closedNote: string }) =>
     client.post<RequirementRequest>(`/requirements/${code}/complete`, body).then((r) => r.data),
   cancel: (code: string, body: { closedNote?: string }) =>

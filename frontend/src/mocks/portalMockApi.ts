@@ -69,6 +69,65 @@ function aggregate(sourceSystem: string, items: RecordValue[], message?: string)
   return { sourceSystem, available: true, message, body: { total: items.length, items: items.map(clone) } }
 }
 
+const TERMINAL_REQUIREMENT_STATUSES = new Set(['COMPLETED', 'CANCELED'])
+
+function normalized(value: unknown): string {
+  return String(value ?? '').trim().toLocaleLowerCase()
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.map(normalized).filter(Boolean) : []
+}
+
+function overlapFor(source: RecordValue, candidate: RecordValue): RecordValue | null {
+  if (
+    source.code === candidate.code
+    || source.requirementType !== 'DATA'
+    || candidate.requirementType !== 'DATA'
+    || TERMINAL_REQUIREMENT_STATUSES.has(String(source.status))
+    || TERMINAL_REQUIREMENT_STATUSES.has(String(candidate.status))
+    || candidate.consolidation
+  ) return null
+
+  const sourceProfile = bodyAsRecord(source.dataProfile)
+  const candidateProfile = bodyAsRecord(candidate.dataProfile)
+  if (!Object.keys(sourceProfile).length || !Object.keys(candidateProfile).length) return null
+  if (normalized(sourceProfile.sensitivity) !== normalized(candidateProfile.sensitivity)) return null
+  if (normalized(sourceProfile.useCase) !== normalized(candidateProfile.useCase)) return null
+
+  const reasons: string[] = []
+  let score = 0
+  if (normalized(sourceProfile.dataObject) === normalized(candidateProfile.dataObject)) {
+    score += 45
+    reasons.push('数据对象一致')
+  }
+  if (normalized(sourceProfile.scope) === normalized(candidateProfile.scope)) {
+    score += 20
+    reasons.push('使用范围一致')
+  }
+  if (normalized(sourceProfile.granularity) === normalized(candidateProfile.granularity)) {
+    score += 15
+    reasons.push('数据粒度一致')
+  }
+  score += 10
+  reasons.push('使用场景一致')
+  const sourceFields = new Set(stringArray(sourceProfile.fields))
+  const sharedFields = stringArray(candidateProfile.fields).filter((field) => sourceFields.has(field))
+  if (sharedFields.length > 0) {
+    score += 10
+    reasons.push(`包含 ${sharedFields.length} 个相同字段`)
+  }
+  if (score < 45) return null
+  return {
+    code: candidate.code,
+    title: candidate.title,
+    requester: candidate.requester,
+    status: candidate.status,
+    score,
+    reasons,
+  }
+}
+
 export function createPortalMockApi(): PortalMockApi {
   const approvals: RecordValue[] = [
     {
@@ -132,9 +191,23 @@ export function createPortalMockApi(): PortalMockApi {
        code: 'req-001', requirementType: 'COMPREHENSIVE', title: '供应链风险分析场景', description: '整合订单数据、风险算法和本体规则。', requester: '陈晓',
        status: 'IN_PROGRESS', assigneeSystem: 'algorithm-recombine', assigneeRef: 'tpl-risk-flow', createdAt: timestamp, updatedAt: timestamp,
      },
-     {
-       code: 'req-002', requirementType: 'DATA', title: '补充区域仓储数据', description: '申请区域仓储日快照。', requester: 'alice',
-       status: 'OPEN', createdAt: timestamp, updatedAt: timestamp,
+    {
+      code: 'req-002', requirementType: 'DATA', title: '补充区域仓储数据', description: '申请区域仓储日快照。', requester: 'alice',
+      status: 'OPEN',
+      dataProfile: {
+        businessDomain: '供应链', dataObject: '区域仓储库存', scope: '华东区域', granularity: '日', period: '近 12 个月', frequency: '每日',
+        fields: ['warehouse_id', 'product_id', 'inventory_qty', 'snapshot_date'], useCase: '供应链库存分析', sensitivity: 'INTERNAL',
+      },
+      createdAt: timestamp, updatedAt: timestamp,
+    },
+    {
+      code: 'req-006', requirementType: 'DATA', title: '华东仓储库存分析数据', description: '需要华东仓储库存日快照用于补货分析。', requester: 'bob',
+      status: 'OPEN',
+      dataProfile: {
+        businessDomain: '供应链', dataObject: '区域仓储库存', scope: '华东区域', granularity: '日', period: '近 12 个月', frequency: '每日',
+        fields: ['warehouse_id', 'product_id', 'inventory_qty', 'snapshot_date'], useCase: '供应链库存分析', sensitivity: 'INTERNAL',
+      },
+      createdAt: timestamp, updatedAt: timestamp,
      },
      {
        code: 'req-003', requirementType: 'ALGORITHM', title: '设备异常检测周批', description: '把遥测日增量接入异常检测能力。', requester: 'bob',
@@ -278,11 +351,57 @@ export function createPortalMockApi(): PortalMockApi {
     }
 
     if (normalizedMethod === 'get' && path === '/requirements') return page(requirements, params)
+    const overlapMatch = path.match(/^\/requirements\/([^/]+)\/overlap-candidates$/)
+    if (normalizedMethod === 'get' && overlapMatch) {
+      const source = find(requirements, 'code', overlapMatch[1], path)
+      return requirements
+        .map((candidate) => overlapFor(source, candidate))
+        .filter((candidate): candidate is RecordValue => candidate !== null)
+        .sort((left, right) => Number(right.score) - Number(left.score))
+        .map(clone)
+    }
+    const consolidateMatch = path.match(/^\/requirements\/([^/]+)\/consolidate$/)
+    if (normalizedMethod === 'post' && consolidateMatch) {
+      const related = find(requirements, 'code', consolidateMatch[1], path)
+      const primaryCode = stringValue(body.primaryCode)
+      const reason = stringValue(body.reason)
+      if (!primaryCode || !reason) throw error(422, 'VALIDATION_FAILED', '请选择主需求并填写整合说明', path)
+      const primary = find(requirements, 'code', primaryCode, path)
+      if (related.code === primary.code) throw error(409, 'STATE_CONFLICT', '不能将需求整合到自身', path)
+      if (TERMINAL_REQUIREMENT_STATUSES.has(String(related.status)) || TERMINAL_REQUIREMENT_STATUSES.has(String(primary.status))) {
+        throw error(409, 'STATE_CONFLICT', '已结束的需求不能参与整合', path)
+      }
+      if (related.status !== 'ANALYZING' || primary.status !== 'ANALYZING') {
+        throw error(409, 'STATE_CONFLICT', '请先完成两个需求的分析，再决定是否整合', path)
+      }
+      if (!overlapFor(related, primary)) {
+        throw error(409, 'STATE_CONFLICT', '仅可整合到同类、同敏感等级且存在明确重叠的数据需求', path)
+      }
+      if (related.consolidation) throw error(409, 'STATE_CONFLICT', '该需求已关联到其他主需求', path)
+      if (!primary.consolidation) {
+        update(primary, {
+          consolidation: {
+            primaryCode: primary.code, role: 'PRIMARY', reason, consolidatedBy: demoIdentity.name, consolidatedAt: timestamp, relatedCodes: [related.code],
+          },
+        })
+      } else {
+        const consolidation = bodyAsRecord(primary.consolidation)
+        update(primary, {
+          consolidation: { ...consolidation, relatedCodes: [...stringArray(consolidation.relatedCodes), String(related.code)] },
+        })
+      }
+      return clone(update(related, {
+        consolidation: { primaryCode: primary.code, role: 'RELATED', reason, consolidatedBy: demoIdentity.name, consolidatedAt: timestamp },
+      }))
+    }
     if (normalizedMethod === 'get' && path.startsWith('/requirements/')) return clone(find(requirements, 'code', path.slice('/requirements/'.length), path))
     if (normalizedMethod === 'post' && path === '/requirements') {
       const title = stringValue(body.title)
       if (!title) throw error(422, 'VALIDATION_FAILED', '需求标题不能为空', path, { title: '请输入需求标题' })
-      const requirement = { code: nextCode('req'), requirementType: body.requirementType ?? 'COMPREHENSIVE', title, description: body.description, requester: body.requester ?? demoIdentity.name, status: 'OPEN', createdAt: timestamp, updatedAt: timestamp }
+      const requirement = {
+        code: nextCode('req'), requirementType: body.requirementType ?? 'COMPREHENSIVE', title, description: body.description,
+        dataProfile: body.dataProfile, requester: body.requester ?? demoIdentity.name, status: 'OPEN', createdAt: timestamp, updatedAt: timestamp,
+      }
       requirements.unshift(requirement)
       return clone(requirement)
     }
@@ -290,9 +409,52 @@ export function createPortalMockApi(): PortalMockApi {
     if (normalizedMethod === 'post' && requirementAction) {
       const item = find(requirements, 'code', requirementAction[1], path)
       const action = requirementAction[2]
-      const nextStatus: Record<string, string> = { analyze: 'ANALYZING', assign: 'ASSIGNED', progress: 'IN_PROGRESS', complete: 'COMPLETED', cancel: 'CANCELED' }
-      if (item.status === 'COMPLETED' || item.status === 'CANCELED') throw error(409, 'STATE_CONFLICT', '终态需求不能继续流转', path)
-      return clone(update(item, { status: nextStatus[action], ...(action === 'assign' ? { assigneeSystem: body.assigneeSystem, assigneeRef: body.assigneeRef, plan: body.plan } : {}), ...(action === 'complete' || action === 'cancel' ? { closedNote: body.closedNote } : {}) }))
+      const status = String(item.status)
+      if (TERMINAL_REQUIREMENT_STATUSES.has(status)) throw error(409, 'STATE_CONFLICT', '终态需求不能继续流转', path)
+      if (action === 'analyze') {
+        if (status !== 'OPEN') throw error(409, 'STATE_CONFLICT', '仅待分析需求可以开展分析', path)
+        const analysis = bodyAsRecord(body.analysis)
+        const conclusion = stringValue(analysis.conclusion)
+        const feasibility = stringValue(analysis.feasibility)
+        const priority = stringValue(analysis.priority)
+        if (!conclusion || !feasibility || !priority) {
+          throw error(422, 'VALIDATION_FAILED', '请填写分析结论、可行性和优先级', path, { analysis: '分析结论、可行性和优先级均为必填项' })
+        }
+        return clone(update(item, {
+          status: 'ANALYZING',
+          analysis: { ...analysis, conclusion, feasibility, priority, risks: stringValue(analysis.risks), analyzedBy: demoIdentity.name, analyzedAt: timestamp },
+        }))
+      }
+      if (action === 'assign') {
+        if (status !== 'ANALYZING') throw error(409, 'STATE_CONFLICT', '仅已分析需求可以分派', path)
+        const assigneeSystem = stringValue(body.assigneeSystem)
+        const plan = bodyAsRecord(body.plan)
+        if (!assigneeSystem || !stringValue(plan.owner) || !stringValue(plan.deliverable) || !stringValue(plan.targetDate)) {
+          throw error(422, 'VALIDATION_FAILED', '请补全承接系统、负责人、交付物和目标日期', path)
+        }
+        return clone(update(item, { status: 'ASSIGNED', assigneeSystem, assigneeRef: stringValue(body.assigneeRef), plan }))
+      }
+      if (action === 'progress') {
+        if (status !== 'ASSIGNED' && status !== 'IN_PROGRESS') throw error(409, 'STATE_CONFLICT', '仅已分派或进行中的需求可以登记进度', path)
+        const percent = Number(body.percent)
+        const note = stringValue(body.note)
+        if (!Number.isFinite(percent) || percent < 0 || percent > 100 || !note) {
+          throw error(422, 'VALIDATION_FAILED', '请填写 0 到 100 的进度和进度说明', path)
+        }
+        const progressEntries = Array.isArray(item.progressEntries) ? item.progressEntries : []
+        return clone(update(item, {
+          status: 'IN_PROGRESS',
+          progressEntries: [...progressEntries, { percent, note, recordedBy: demoIdentity.name, recordedAt: timestamp }],
+        }))
+      }
+      if (action === 'complete') {
+        if (status !== 'IN_PROGRESS') throw error(409, 'STATE_CONFLICT', '仅进行中的需求可以完成', path)
+        const closedNote = stringValue(body.closedNote)
+        if (!closedNote) throw error(422, 'VALIDATION_FAILED', '完成需求必须填写结项说明', path)
+        return clone(update(item, { status: 'COMPLETED', closedNote }))
+      }
+      if (status !== 'OPEN' && status !== 'ANALYZING') throw error(409, 'STATE_CONFLICT', '当前状态不能取消需求', path)
+      return clone(update(item, { status: 'CANCELED', closedNote: stringValue(body.closedNote) }))
     }
 
     if (normalizedMethod === 'get' && path === '/operations/notices') return page(notices, params)

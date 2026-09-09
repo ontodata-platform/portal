@@ -90,6 +90,60 @@ export interface PortalResult {
   updatedAt: string
 }
 
+export interface DataRequirementProfile {
+  businessDomain: string
+  dataObject: string
+  scope: string
+  granularity: string
+  period?: string
+  frequency?: string
+  fields: string[]
+  useCase: string
+  sensitivity: 'INTERNAL' | 'SENSITIVE'
+  deliveryDeadline?: string
+}
+
+export interface RequirementAnalysis {
+  conclusion: string
+  feasibility: 'FEASIBLE' | 'NEEDS_CLARIFICATION' | 'NOT_FEASIBLE'
+  priority: 'HIGH' | 'MEDIUM' | 'LOW'
+  risks?: string
+  analyzedBy?: string
+  analyzedAt?: string
+}
+
+export interface RequirementPlan {
+  owner: string
+  deliverable: string
+  targetDate: string
+  milestones?: string
+}
+
+export interface RequirementProgress {
+  percent: number
+  note: string
+  recordedBy?: string
+  recordedAt?: string
+}
+
+export interface RequirementOverlapCandidate {
+  code: string
+  title: string
+  requester: string
+  status: RequirementRequest['status']
+  score: number
+  reasons: string[]
+}
+
+export interface RequirementConsolidation {
+  primaryCode: string
+  role: 'PRIMARY' | 'RELATED'
+  reason: string
+  consolidatedBy?: string
+  consolidatedAt?: string
+  relatedCodes?: string[]
+}
+
 /** 需求单（requirement-center）：req-* 编码，单向状态机。 */
 export interface RequirementRequest {
   code: string
@@ -100,7 +154,11 @@ export interface RequirementRequest {
   status: 'OPEN' | 'ANALYZING' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELED'
   assigneeSystem?: string
   assigneeRef?: string
-  plan?: Record<string, unknown>
+  dataProfile?: DataRequirementProfile
+  analysis?: RequirementAnalysis
+  plan?: RequirementPlan
+  progressEntries?: RequirementProgress[]
+  consolidation?: RequirementConsolidation
   closedNote?: string
   createdAt: string
   updatedAt: string

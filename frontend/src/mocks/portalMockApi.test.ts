@@ -8,6 +8,12 @@ type MockTemplateList = { body: { items: unknown[] } }
 type MockRun = { started: boolean; status: string }
 type MockUnread = { unread: number }
 type MockNotification = { id: string }
+type MockRequirement = {
+  code: string
+  requester: string
+  consolidation?: { primaryCode: string; role: string; reason: string }
+}
+type MockOverlapCandidate = { code: string; score: number; reasons: string[] }
 
 describe('portal local mock API', () => {
   it('keeps the approval, workbench, and notification flows stateful in one browser session', async () => {
@@ -45,6 +51,99 @@ describe('portal local mock API', () => {
 
     const dueSoon = await api.request('get', '/approvals', { sla: 'DUE_SOON' }) as MockPage
     expect((dueSoon.items[0] as { slaStatus: string }).slaStatus).toBe('DUE_SOON')
+  })
+
+  it('finds explainable overlapping data requirements and retains each requester after consolidation', async () => {
+    const api = createPortalMockApi()
+
+    const candidates = await api.request('get', '/requirements/req-002/overlap-candidates') as MockOverlapCandidate[]
+    expect(candidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'req-006',
+          score: expect.any(Number),
+          reasons: expect.arrayContaining([expect.any(String)]),
+        }),
+      ]),
+    )
+
+    const conflictingPurpose = await api.request('post', '/requirements', {}, {
+      requirementType: 'DATA',
+      title: '华东仓储库存盘点数据',
+      dataProfile: {
+        businessDomain: '供应链',
+        dataObject: '区域仓储库存',
+        scope: '华东区域',
+        granularity: '日',
+        fields: ['warehouse_id', 'inventory_qty'],
+        useCase: '仓储盘点审计',
+        sensitivity: 'INTERNAL',
+      },
+    }) as MockRequirement
+    const candidatesWithConflict = await api.request('get', '/requirements/req-002/overlap-candidates') as MockOverlapCandidate[]
+    expect(candidatesWithConflict.map((candidate) => candidate.code)).not.toContain(conflictingPurpose.code)
+
+    await expect(api.request(
+      'post',
+      '/requirements/req-006/consolidate',
+      {},
+      { primaryCode: 'req-002', reason: '数据对象、范围和粒度一致，统一组织交付。' },
+    )).rejects.toMatchObject({ response: { status: 409, data: { code: 'STATE_CONFLICT' } } })
+
+    await api.request('post', '/requirements/req-002/analyze', {}, {
+      analysis: { conclusion: '可由仓储日快照满足。', feasibility: 'FEASIBLE', priority: 'MEDIUM' },
+    })
+    await api.request('post', '/requirements/req-006/analyze', {}, {
+      analysis: { conclusion: '可与相同范围需求共享交付。', feasibility: 'FEASIBLE', priority: 'MEDIUM' },
+    })
+
+    const consolidated = await api.request(
+      'post',
+      '/requirements/req-006/consolidate',
+      {},
+      { primaryCode: 'req-002', reason: '数据对象、范围和粒度一致，统一组织交付。' },
+    ) as MockRequirement
+    expect(consolidated.requester).toBe('bob')
+    expect(consolidated.consolidation).toMatchObject({
+      primaryCode: 'req-002',
+      role: 'RELATED',
+      reason: '数据对象、范围和粒度一致，统一组织交付。',
+    })
+
+    const primary = await api.request('get', '/requirements/req-002') as MockRequirement
+    expect(primary.consolidation).toMatchObject({ primaryCode: 'req-002', role: 'PRIMARY' })
+  })
+
+  it('records analysis, delivery plan, and progress as requirement facts', async () => {
+    const api = createPortalMockApi()
+
+    const analyzed = await api.request('post', '/requirements/req-002/analyze', {}, {
+      analysis: { conclusion: '可由仓储日快照满足。', feasibility: 'FEASIBLE', priority: 'HIGH', risks: '字段口径需确认。' },
+    }) as Record<string, unknown>
+    expect(analyzed).toMatchObject({
+      status: 'ANALYZING',
+      analysis: expect.objectContaining({ conclusion: '可由仓储日快照满足。', priority: 'HIGH', analyzedBy: '陈晓' }),
+    })
+
+    const assigned = await api.request('post', '/requirements/req-002/assign', {}, {
+      assigneeSystem: 'data-platform',
+      assigneeRef: 'ds-warehouse-daily',
+      plan: { owner: '王工', deliverable: '华东仓储日快照服务', targetDate: '2026-09-30', milestones: '字段确认后发布' },
+    }) as Record<string, unknown>
+    expect(assigned).toMatchObject({
+      status: 'ASSIGNED',
+      assigneeSystem: 'data-platform',
+      plan: expect.objectContaining({ owner: '王工', targetDate: '2026-09-30' }),
+    })
+
+    const progressed = await api.request('post', '/requirements/req-002/progress', {}, {
+      percent: 40,
+      note: '已完成字段口径确认。',
+    }) as Record<string, unknown>
+    expect(progressed).toMatchObject({
+      status: 'IN_PROGRESS',
+      progressEntries: [expect.objectContaining({ percent: 40, note: '已完成字段口径确认。', recordedBy: '陈晓' })],
+    })
   })
 
   it('nudges a pending approval into the notification inbox', async () => {
