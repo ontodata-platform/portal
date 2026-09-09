@@ -44,7 +44,6 @@ function backToUser() {
     <div class="admin-body">
       <aside class="admin-nav">
         <div class="admin-nav-head">
-          <span class="admin-badge">{{ t('admin.badge') }}</span>
           <span class="admin-nav-title">{{ t('menu.admin') }}</span>
         </div>
         <a-menu mode="inline" :selected-keys="selectedKeys" class="admin-menu" @click="onNavClick">
@@ -70,45 +69,35 @@ function backToUser() {
 <style scoped>
 .admin-shell {
   min-height: 100%;
-  border-radius: var(--od-radius-card, 12px);
-  overflow: hidden;
-  box-shadow: var(--od-shadow-2);
 }
 
 .admin-body {
   display: flex;
-  min-height: 0;
-  background: #fff;
+  align-items: flex-start;
+  gap: 20px;
+  min-height: 100%;
+  background: transparent;
 }
 
 .admin-nav {
   display: flex;
   flex-direction: column;
-  width: 210px;
-  flex: 0 0 210px;
-  border-right: 1px solid var(--od-gray-200, #e2e8f0);
-  background: #fafbfc;
+  width: 184px;
+  flex: 0 0 184px;
+  position: sticky;
+  top: 0;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: var(--od-radius-card, 12px);
+  background: #fff;
   padding: 12px 0 8px;
+  box-shadow: var(--od-shadow-xs);
 }
 
 .admin-nav-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 2px 14px 12px;
-  border-bottom: 1px solid var(--od-gray-200, #e2e8f0);
-  margin-bottom: 6px;
-}
-
-.admin-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  background: rgba(37, 99, 235, 0.12);
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  border-radius: 999px;
-  color: var(--od-color-primary, #1e40af);
-  letter-spacing: 0.05em;
+  padding: 3px 14px 9px;
+  margin-bottom: 2px;
 }
 
 .admin-nav-title {
@@ -120,7 +109,6 @@ function backToUser() {
 .admin-menu {
   background: transparent !important;
   border-right: 0 !important;
-  flex: 1;
 }
 
 :deep(.admin-menu .ant-menu-item) {
@@ -136,7 +124,8 @@ function backToUser() {
 }
 
 .admin-nav-foot {
-  padding: 8px 14px;
+  margin-top: 8px;
+  padding: 8px 14px 0;
   border-top: 1px solid var(--od-gray-200, #e2e8f0);
 }
 
@@ -154,8 +143,23 @@ function backToUser() {
 
 .admin-content {
   flex: 1;
-  padding: 20px 24px;
   min-width: 0;
-  background: #fff;
+}
+
+@media (max-width: 900px) {
+  .admin-body {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .admin-nav {
+    width: 100%;
+    flex-basis: auto;
+    position: static;
+  }
+
+  .admin-content {
+    width: 100%;
+  }
 }
 </style>

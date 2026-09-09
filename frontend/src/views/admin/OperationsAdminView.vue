@@ -10,7 +10,6 @@ import type { Feedback, Notice, OperationsStatistics } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import OdTable from '@/ui-kit/OdTable.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const messageStore = useMessageStore()
@@ -242,11 +241,6 @@ onMounted(() => {
 
 <template>
   <div class="operations-admin-view">
-    <PageHeader
-      :eyebrow="t('menu.groupOperations')"
-      :title="t('menu.operations')"
-    />
-
     <ErrorState
       v-if="loadError"
       :reason="loadError"
@@ -363,7 +357,7 @@ onMounted(() => {
       </a-card>
 
       <!-- 用户反馈 -->
-      <a-card :bordered="false" class="op-card" :title="t('operations.userFeedback')">
+      <a-card :bordered="false" class="op-card op-card--feedback" :title="t('operations.userFeedback')">
         <div class="toolbar-area">
           <a-space wrap>
             <a-select v-model:value="feedbackQuery.status" :placeholder="t('operations.feedbackStatusPlaceholder')" allow-clear style="width: 140px">
@@ -464,20 +458,21 @@ onMounted(() => {
 .operations-body {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: 12px;
+  min-height: 80px;
+  padding: 14px 16px;
   background: #ffffff;
   border: 1px solid var(--od-gray-200, #e2e8f0);
   border-radius: var(--od-radius-card, 12px);
@@ -543,8 +538,27 @@ onMounted(() => {
 }
 
 .op-card {
+  border: 1px solid var(--od-gray-200, #e2e8f0);
   border-radius: var(--od-radius-card, 12px);
-  box-shadow: var(--od-shadow-1);
+  overflow: hidden;
+  box-shadow: var(--od-shadow-xs);
+}
+
+:deep(.op-card .ant-card-head) {
+  min-height: 52px;
+  padding: 0 18px;
+  border-bottom-color: var(--od-gray-200, #e2e8f0);
+}
+
+:deep(.op-card .ant-card-head-title) {
+  padding: 14px 0;
+  color: var(--od-gray-900, #0f172a);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+:deep(.op-card .ant-card-body) {
+  padding: 16px 18px 18px;
 }
 
 .toolbar-area {
@@ -553,11 +567,28 @@ onMounted(() => {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+}
+
+.op-card--feedback :deep(.od-empty) {
+  min-height: 176px;
+  padding: 24px 16px;
 }
 
 .mono-code {
   font-family: var(--od-font-mono, monospace);
   font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+
+  :deep(.op-card .ant-card-head),
+  :deep(.op-card .ant-card-body) {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
 }
 </style>
