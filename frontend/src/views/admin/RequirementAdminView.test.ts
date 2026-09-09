@@ -50,8 +50,8 @@ const stubs = {
   'a-timeline': { template: '<ol class="timeline"><slot /></ol>' },
   'a-timeline-item': { props: ['color'], template: '<li><slot /></li>' },
   'a-divider': { template: '<div><slot /></div>' },
-  'a-form': { template: '<form><slot /></form>' },
-  'a-form-item': { props: ['label'], template: '<div><slot /></div>' },
+  'a-form': { name: 'AForm', props: ['model'], template: '<form><slot /></form>' },
+  'a-form-item': { name: 'AFormItem', props: ['name', 'label', 'required'], template: '<div><slot /></div>' },
   'a-descriptions': { template: '<div><slot /></div>' },
   'a-descriptions-item': { props: ['label'], template: '<div><slot /></div>' },
 }
@@ -139,6 +139,23 @@ describe('RequirementAdminView', () => {
       analysis: { conclusion: '可由高分辨率光学影像满足港区目标特性提取需求。', feasibility: 'FEASIBLE', priority: 'MEDIUM', risks: undefined },
     })
     expect(listMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('分析结论的必填校验读取当前输入模型，而不是读取不存在的字段', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    await wrapper.findAll('button').find((button) => button.text().includes('办理'))!.trigger('click')
+    const analysisForm = wrapper.findAllComponents({ name: 'AForm' }).find((form) => form.find('textarea[name="analysisConclusion"]').exists())
+    const conclusionItem = wrapper.findAllComponents({ name: 'AFormItem' }).find((item) => item.find('textarea[name="analysisConclusion"]').exists())
+
+    expect(analysisForm).toBeTruthy()
+    expect(analysisForm!.props('model')).toMatchObject({ conclusion: '' })
+    expect(conclusionItem).toBeTruthy()
+    expect(conclusionItem!.props('name')).toBe('conclusion')
+
+    await wrapper.find('textarea[name="analysisConclusion"]').setValue('影像覆盖范围满足目标特性提取需求。')
+    expect(analysisForm!.props('model')).toMatchObject({ conclusion: '影像覆盖范围满足目标特性提取需求。' })
   })
 
   it('将候选需求整合到当前主需求时要求整合说明并保留明确方向', async () => {

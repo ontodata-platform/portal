@@ -551,19 +551,23 @@ onMounted(load)
                   <p>{{ t('requirements.handlingHintAnalysis') }}</p>
                 </div>
               </div>
-              <a-form layout="vertical" class="handling-form">
-                <a-form-item name="analysisConclusion" :label="t('requirements.analysisConclusion')" required>
+              <a-form :model="analysisForm" layout="vertical" class="handling-form">
+                <a-form-item
+                  name="conclusion"
+                  :label="t('requirements.analysisConclusion')"
+                  :rules="[{ required: true, message: t('requirements.analysisConclusionRequired'), trigger: 'change' }]"
+                >
                   <a-textarea v-model:value="analysisForm.conclusion" name="analysisConclusion" :placeholder="t('requirements.analysisConclusionPlaceholder')" :rows="4" />
                 </a-form-item>
                 <div class="handling-form__two-columns">
-                  <a-form-item name="analysisFeasibility" :label="t('requirements.analysisFeasibility')" required>
+                  <a-form-item name="feasibility" :label="t('requirements.analysisFeasibility')" required>
                     <a-select v-model:value="analysisForm.feasibility">
                       <a-select-option value="FEASIBLE">{{ t('requirements.feasibilityFeasible') }}</a-select-option>
                       <a-select-option value="NEEDS_CLARIFICATION">{{ t('requirements.feasibilityClarification') }}</a-select-option>
                       <a-select-option value="NOT_FEASIBLE">{{ t('requirements.feasibilityNotFeasible') }}</a-select-option>
                     </a-select>
                   </a-form-item>
-                  <a-form-item name="analysisPriority" :label="t('requirements.analysisPriority')" required>
+                  <a-form-item name="priority" :label="t('requirements.analysisPriority')" required>
                     <a-select v-model:value="analysisForm.priority">
                       <a-select-option value="HIGH">{{ t('requirements.priorityHigh') }}</a-select-option>
                       <a-select-option value="MEDIUM">{{ t('requirements.priorityMedium') }}</a-select-option>
@@ -571,7 +575,7 @@ onMounted(load)
                     </a-select>
                   </a-form-item>
                 </div>
-                <a-form-item name="analysisRisks" :label="t('requirements.analysisRisks')">
+                <a-form-item name="risks" :label="t('requirements.analysisRisks')">
                   <a-textarea v-model:value="analysisForm.risks" :placeholder="t('requirements.analysisRisksPlaceholder')" :rows="2" />
                 </a-form-item>
                 <div class="handling-form__actions">
@@ -629,7 +633,7 @@ onMounted(load)
 
             <section v-else-if="activePanel === 'assignment' && current.status === 'ANALYZING'" data-handling-panel="assignment" class="handling-panel">
               <div class="handling-panel__heading"><div><h3>{{ t('requirements.handlingAssignment') }}</h3><p>{{ t('requirements.handlingHintAssignment') }}</p></div></div>
-              <a-form layout="vertical" class="handling-form">
+              <a-form :model="assignForm" layout="vertical" class="handling-form">
                 <a-form-item name="assigneeSystem" :label="t('requirements.assignTargetLabel')" required>
                   <a-select v-model:value="assignForm.assigneeSystem">
                     <a-select-option v-for="target in ASSIGN_TARGETS" :key="target.value" :value="target.value">{{ t(target.labelKey) }}</a-select-option>
@@ -640,17 +644,17 @@ onMounted(load)
                 </a-form-item>
                 <a-divider orientation="left" plain>{{ t('requirements.deliveryPlanTitle') }}</a-divider>
                 <div class="handling-form__two-columns">
-                  <a-form-item name="planOwner" :label="t('requirements.planOwner')" required>
+                  <a-form-item name="owner" :label="t('requirements.planOwner')" required>
                     <a-input v-model:value="assignForm.owner" name="planOwner" :placeholder="t('requirements.planOwnerPlaceholder')" />
                   </a-form-item>
-                  <a-form-item name="planTargetDate" :label="t('requirements.planTargetDate')" required>
+                  <a-form-item name="targetDate" :label="t('requirements.planTargetDate')" required>
                     <a-input v-model:value="assignForm.targetDate" name="planTargetDate" type="date" />
                   </a-form-item>
                 </div>
-                <a-form-item name="planDeliverable" :label="t('requirements.planDeliverable')" required>
+                <a-form-item name="deliverable" :label="t('requirements.planDeliverable')" required>
                   <a-input v-model:value="assignForm.deliverable" name="planDeliverable" :placeholder="t('requirements.planDeliverablePlaceholder')" />
                 </a-form-item>
-                <a-form-item name="planMilestones" :label="t('requirements.planMilestones')">
+                <a-form-item name="milestones" :label="t('requirements.planMilestones')">
                   <a-textarea v-model:value="assignForm.milestones" name="planMilestones" :placeholder="t('requirements.planMilestonesPlaceholder')" :rows="3" />
                 </a-form-item>
                 <div class="handling-form__actions"><a-button type="primary" :loading="acting" @click="assign">{{ t('requirements.assign') }}</a-button></div>
@@ -659,8 +663,8 @@ onMounted(load)
 
             <section v-else-if="activePanel === 'progress' && (current.status === 'ASSIGNED' || current.status === 'IN_PROGRESS')" data-handling-panel="progress" class="handling-panel">
               <div class="handling-panel__heading"><div><h3>{{ t('requirements.progressTitle') }}</h3><p>{{ t('requirements.handlingHintProgress') }}</p></div></div>
-              <a-form layout="vertical" class="handling-form">
-                <a-form-item name="progressPercent" :label="t('requirements.progressPercent')" required>
+              <a-form :model="progressForm" layout="vertical" class="handling-form">
+                <a-form-item name="percent" :label="t('requirements.progressPercent')" required>
                   <a-input
                     v-model:value="progressForm.percent"
                     name="progressPercent"
@@ -670,7 +674,7 @@ onMounted(load)
                     :placeholder="t('requirements.progressPercentPlaceholder')"
                   />
                 </a-form-item>
-                <a-form-item name="progressNote" :label="t('requirements.progressNote')" required>
+                <a-form-item name="note" :label="t('requirements.progressNote')" required>
                   <a-textarea v-model:value="progressForm.note" name="progressNote" :placeholder="t('requirements.progressNotePlaceholder')" :rows="3" />
                 </a-form-item>
                 <div class="handling-form__actions"><a-button type="primary" :loading="acting" @click="progress">{{ t('requirements.submitProgress') }}</a-button></div>
@@ -679,7 +683,7 @@ onMounted(load)
 
             <section v-else-if="activePanel === 'close' && current.status === 'IN_PROGRESS'" data-handling-panel="close" class="handling-panel">
               <div class="handling-panel__heading"><div><h3>{{ t('requirements.handlingClose') }}</h3><p>{{ t('requirements.handlingHintClose') }}</p></div></div>
-              <a-form layout="vertical" class="handling-form">
+              <a-form :model="closeForm" layout="vertical" class="handling-form">
                 <a-form-item name="closedNote" :label="t('requirements.closedNoteLabel')" required>
                   <a-textarea v-model:value="closeForm.closedNote" :placeholder="t('requirements.closedNotePlaceholder')" :rows="4" />
                 </a-form-item>
@@ -703,9 +707,9 @@ onMounted(load)
     </a-drawer>
 
     <a-modal v-model:open="consolidationOpen" :title="t('requirements.consolidationModal')" :confirm-loading="consolidating" @ok="consolidate">
-      <a-form layout="vertical">
+      <a-form :model="consolidationForm" layout="vertical">
         <p class="consolidation-hint">{{ t('requirements.consolidationHint') }}</p>
-        <a-form-item name="consolidationReason" :label="t('requirements.consolidationReason')" required>
+        <a-form-item name="reason" :label="t('requirements.consolidationReason')" required>
           <a-textarea v-model:value="consolidationForm.reason" name="consolidationReason" :placeholder="t('requirements.consolidationReasonPlaceholder')" :rows="3" />
         </a-form-item>
       </a-form>
