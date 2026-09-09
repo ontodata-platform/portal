@@ -58,28 +58,28 @@ describe('RequirementSection', () => {
     await flushPromises()
 
     await wrapper.findAll('button').find((button) => button.text().includes('登记需求'))!.trigger('click')
-    await wrapper.find('input[name="title"]').setValue('华东仓储库存补货分析')
-    await wrapper.find('textarea[name="description"]').setValue('用于制定补货计划。')
-    await wrapper.find('input[name="businessDomain"]').setValue('供应链')
-    await wrapper.find('input[name="dataObject"]').setValue('区域仓储库存')
-    await wrapper.find('input[name="scope"]').setValue('华东区域')
-    await wrapper.find('input[name="granularity"]').setValue('日')
-    await wrapper.find('input[name="fields"]').setValue('warehouse_id，inventory_qty')
-    await wrapper.find('input[name="useCase"]').setValue('供应链库存分析')
+    await wrapper.find('input[name="title"]').setValue('东海港区目标特性识别影像需求')
+    await wrapper.find('textarea[name="description"]').setValue('用于港区舰船与设施目标特性提取。')
+    await wrapper.find('input[name="businessDomain"]').setValue('遥感目标识别')
+    await wrapper.find('input[name="dataObject"]').setValue('高分辨率光学卫星影像')
+    await wrapper.find('input[name="scope"]').setValue('东海重点海域')
+    await wrapper.find('input[name="granularity"]').setValue('0.5 米空间分辨率')
+    await wrapper.find('input[name="fields"]').setValue('scene_id，acquisition_time，orbit_id')
+    await wrapper.find('input[name="useCase"]').setValue('港区目标特性提取')
     await wrapper.find('.modal-ok').trigger('click')
     await flushPromises()
 
     expect(createMock).toHaveBeenCalledWith({
       requirementType: 'DATA',
-      title: '华东仓储库存补货分析',
-      description: '用于制定补货计划。',
+      title: '东海港区目标特性识别影像需求',
+      description: '用于港区舰船与设施目标特性提取。',
       dataProfile: {
-        businessDomain: '供应链',
-        dataObject: '区域仓储库存',
-        scope: '华东区域',
-        granularity: '日',
-        fields: ['warehouse_id', 'inventory_qty'],
-        useCase: '供应链库存分析',
+        businessDomain: '遥感目标识别',
+        dataObject: '高分辨率光学卫星影像',
+        scope: '东海重点海域',
+        granularity: '0.5 米空间分辨率',
+        fields: ['scene_id', 'acquisition_time', 'orbit_id'],
+        useCase: '港区目标特性提取',
         sensitivity: 'INTERNAL',
       },
     })
@@ -88,7 +88,7 @@ describe('RequirementSection', () => {
   it('个人需求页只允许撤回待受理需求，不显示运营分析、分派和办结动作', async () => {
     listMock.mockResolvedValue({
       total: 1,
-      items: [{ code: 'req-002', requirementType: 'DATA', title: '补充区域仓储数据', requester: '陈晓', status: 'OPEN' }],
+      items: [{ code: 'req-002', requirementType: 'DATA', title: '高分辨率光学影像目标特性提取', requester: '陈晓', status: 'OPEN' }],
     })
     const wrapper = mountView()
     await flushPromises()

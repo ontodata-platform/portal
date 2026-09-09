@@ -48,7 +48,7 @@ describe('AssistantView', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('随时问我吧')
     expect(wrapper.text()).toContain('找数据服务')
-    expect(wrapper.text()).toContain('跑质量分析')
+    expect(wrapper.text()).toContain('跑目标特性提取')
   })
 
   it('发送消息后出现数据服务卡片', async () => {
@@ -57,7 +57,7 @@ describe('AssistantView', () => {
     await wrapper.find('textarea.hero-input').setValue('帮我找数据服务')
     await wrapper.find('button.send-btn').trigger('click')
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('客户主数据-月度快照')
+      expect(wrapper.text()).toContain('高分光学卫星影像-东海重点海域')
     })
   })
 

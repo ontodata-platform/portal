@@ -34,7 +34,7 @@ export function routeAssistantIntent(text: string): AssistantTurnResult {
         confirmToken: `cft-assistant-${Date.now()}`,
         tool: 'recombine.submit_workflow',
         riskLevel: 'R4',
-        summary: { code: 'tpl-quality-weekly', plan: '提交客户质量分析-周批', impact: '将创建运行任务并可能升级审批' },
+        summary: { code: 'tpl-quality-weekly', plan: '提交港区目标特性提取-周批', impact: '将创建运行任务并可能升级审批' },
         argumentsSummary: '{"template":"tpl-quality-weekly"}',
         expiresAt: new Date(Date.now() + 300_000).toISOString(),
       }
@@ -67,7 +67,7 @@ export function routeAssistantIntent(text: string): AssistantTurnResult {
           payload: {
             title: '申请数据服务授权',
             steps: ['在商城打开目标服务', '提交授权申请', '等待审批通过后查看投递结果'],
-            target: '/data-workbench/ds-device-daily',
+            target: '/data-workbench/ds-sar-maritime',
           },
         },
       ],

@@ -131,9 +131,9 @@ function overlapFor(source: RecordValue, candidate: RecordValue): RecordValue | 
 export function createPortalMockApi(): PortalMockApi {
   const approvals: RecordValue[] = [
     {
-      code: 'apr-data-001', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-customer-monthly',
-      title: '客户主数据服务使用申请', requester: '张晓明', status: 'PENDING', slaStatus: 'ON_TIME',
-      detail: { serviceCode: 'ds-customer-monthly', grantedColumns: ['customer_id', 'segment'] }, createdAt: timestamp, updatedAt: timestamp,
+      code: 'apr-data-001', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-gaofen-optical',
+      title: '东海高分光学影像服务使用申请', requester: '张晓明', status: 'PENDING', slaStatus: 'ON_TIME',
+      detail: { serviceCode: 'ds-gaofen-optical', grantedColumns: ['scene_id', 'acquisition_time', 'cloud_cover'] }, createdAt: timestamp, updatedAt: timestamp,
     },
     {
       code: 'apr-r4-sample', approvalType: 'R4_TOOL_CALL', sourceSystem: 'mcp-gateway', sourceCode: 'cfm-sample',
@@ -141,15 +141,15 @@ export function createPortalMockApi(): PortalMockApi {
       detail: { tool: 'workflow.submit_execution', riskLevel: 'R4' }, createdAt: timestamp, updatedAt: timestamp,
     },
     {
-      code: 'apr-delivery-002', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-device-daily',
-      title: '设备遥测服务订阅', requester: demoIdentity.name, status: 'APPROVED', slaStatus: 'MET',
-      detail: { serviceCode: 'ds-device-daily', deliveryStatus: 'FAILED', deliveryError: '等待管理平台重新投递' },
+      code: 'apr-delivery-002', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-payload-telemetry',
+      title: '卫星载荷遥测服务订阅', requester: demoIdentity.name, status: 'APPROVED', slaStatus: 'MET',
+      detail: { serviceCode: 'ds-payload-telemetry', deliveryStatus: 'FAILED', deliveryError: '等待管理平台重新投递' },
       createdAt: timestamp, updatedAt: timestamp, decisionAt: timestamp, decisionBy: '陈晓',
     },
     {
-      code: 'apr-overdue-003', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-supplier-credit',
-      title: '供应商信用服务超期未批', requester: '王工', status: 'PENDING', slaStatus: 'OVERDUE',
-      slaDeadline: relativeIso(30), detail: { serviceCode: 'ds-supplier-credit' }, createdAt: relativeIso(48), updatedAt: relativeIso(6),
+      code: 'apr-overdue-003', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-sar-maritime',
+      title: 'SAR海面目标检测辅助数据超期未批', requester: '王工', status: 'PENDING', slaStatus: 'OVERDUE',
+      slaDeadline: relativeIso(30), detail: { serviceCode: 'ds-sar-maritime' }, createdAt: relativeIso(48), updatedAt: relativeIso(6),
     },
     {
       code: 'apr-due-004', approvalType: 'R4_TOOL_CALL', sourceSystem: 'mcp-gateway', sourceCode: 'cfm-due-soon',
@@ -167,59 +167,59 @@ export function createPortalMockApi(): PortalMockApi {
  const tasks: RecordValue[] = [
    {
      taskId: 'tsk-run-001', taskType: 'WORKFLOW_EXECUTION', sourceSystem: 'algorithm-recombine', status: 'RUNNING', stage: '执行节点 2/3', progress: 62,
-     resourceRefs: ['tpl-quality-weekly@1', 'ds-customer-monthly@v2026.08'], resultRefs: [], traceId: 'mock-trace-run-001', createdAt: relativeIso(2), updatedAt: relativeIso(1),
+     resourceRefs: ['tpl-maritime-target-flow@1', 'ds-gaofen-optical@v2026.09'], resultRefs: [], traceId: 'mock-trace-run-001', createdAt: relativeIso(2), updatedAt: relativeIso(1),
    },
    {
      taskId: 'tsk-import-002', taskType: 'DATA_IMPORT', sourceSystem: 'data-platform', status: 'SUCCESS', stage: '质量校验完成', progress: 100,
-     resourceRefs: ['dataset-order@12'], resultRefs: ['result-quality-002'], traceId: 'mock-trace-import-002', createdAt: relativeIso(28), updatedAt: relativeIso(27),
+     resourceRefs: ['ds-sar-maritime@v1.4.2'], resultRefs: ['result-quality-002'], traceId: 'mock-trace-import-002', createdAt: relativeIso(28), updatedAt: relativeIso(27),
    },
    {
      taskId: 'tsk-run-003', taskType: 'WORKFLOW_EXECUTION', sourceSystem: 'algorithm-recombine', status: 'SUCCESS', stage: '已完成', progress: 100,
-     resourceRefs: ['cap-anomaly-detect@2', 'ds-device-daily@v2026.09.01'], resultRefs: ['result-anomaly-001'], traceId: 'mock-trace-run-003', createdAt: relativeIso(50), updatedAt: relativeIso(49),
+     resourceRefs: ['cap-infrared-weak-target@2', 'ds-payload-telemetry@v2026.09.01'], resultRefs: ['result-anomaly-001'], traceId: 'mock-trace-run-003', createdAt: relativeIso(50), updatedAt: relativeIso(49),
    },
    {
      taskId: 'tsk-run-004', taskType: 'WORKFLOW_EXECUTION', sourceSystem: 'algorithm-recombine', status: 'FAILED', stage: '预检未通过', progress: 0,
-     resourceRefs: ['tpl-churn-train@1'], resultRefs: [], traceId: 'mock-trace-run-004', createdAt: relativeIso(74), updatedAt: relativeIso(74),
+     resourceRefs: ['tpl-orbit-anomaly@1'], resultRefs: [], traceId: 'mock-trace-run-004', createdAt: relativeIso(74), updatedAt: relativeIso(74),
    },
    {
      taskId: 'tsk-import-005', taskType: 'DATA_IMPORT', sourceSystem: 'data-platform', status: 'SUCCESS', stage: '交付完成', progress: 100,
-     resourceRefs: ['ds-supplier-credit@v3.0.1'], resultRefs: ['result-supplier-001'], traceId: 'mock-trace-import-005', createdAt: relativeIso(98), updatedAt: relativeIso(97),
+     resourceRefs: ['ds-payload-telemetry@v3.0.1'], resultRefs: ['result-payload-001'], traceId: 'mock-trace-import-005', createdAt: relativeIso(98), updatedAt: relativeIso(97),
    },
  ]
    const requirements: RecordValue[] = [
      {
-       code: 'req-001', requirementType: 'COMPREHENSIVE', title: '供应链风险分析场景', description: '整合订单数据、风险算法和本体规则。', requester: '陈晓',
-       status: 'IN_PROGRESS', assigneeSystem: 'algorithm-recombine', assigneeRef: 'tpl-risk-flow', createdAt: timestamp, updatedAt: timestamp,
+       code: 'req-001', requirementType: 'COMPREHENSIVE', title: '海上目标态势研判场景', description: '整合光学影像、目标检测算法和海上目标本体规则。', requester: '陈晓',
+       status: 'IN_PROGRESS', assigneeSystem: 'algorithm-recombine', assigneeRef: 'tpl-maritime-target-flow', createdAt: timestamp, updatedAt: timestamp,
      },
     {
-      code: 'req-002', requirementType: 'DATA', title: '补充区域仓储数据', description: '申请区域仓储日快照。', requester: 'alice',
+      code: 'req-002', requirementType: 'DATA', title: '高分辨率光学影像目标特性提取', description: '申请东海重点海域高分光学卫星影像，用于港区舰船与设施目标特性提取。', requester: 'alice',
       status: 'OPEN',
       dataProfile: {
-        businessDomain: '供应链', dataObject: '区域仓储库存', scope: '华东区域', granularity: '日', period: '近 12 个月', frequency: '每日',
-        fields: ['warehouse_id', 'product_id', 'inventory_qty', 'snapshot_date'], useCase: '供应链库存分析', sensitivity: 'INTERNAL',
+        businessDomain: '遥感目标识别', dataObject: '高分辨率光学卫星影像', scope: '东海重点海域', granularity: '0.5 米空间分辨率', period: '近 6 个月', frequency: '按过境批次',
+        fields: ['scene_id', 'acquisition_time', 'orbit_id', 'sensor_type', 'cloud_cover', 'image_uri'], useCase: '港区目标特性提取', sensitivity: 'INTERNAL',
       },
       createdAt: timestamp, updatedAt: timestamp,
     },
     {
-      code: 'req-006', requirementType: 'DATA', title: '华东仓储库存分析数据', description: '需要华东仓储库存日快照用于补货分析。', requester: 'bob',
+      code: 'req-006', requirementType: 'DATA', title: '东海港区目标特性识别影像需求', description: '需要同海域同分辨率光学影像用于港区目标特性识别。', requester: 'bob',
       status: 'OPEN',
       dataProfile: {
-        businessDomain: '供应链', dataObject: '区域仓储库存', scope: '华东区域', granularity: '日', period: '近 12 个月', frequency: '每日',
-        fields: ['warehouse_id', 'product_id', 'inventory_qty', 'snapshot_date'], useCase: '供应链库存分析', sensitivity: 'INTERNAL',
+        businessDomain: '遥感目标识别', dataObject: '高分辨率光学卫星影像', scope: '东海重点海域', granularity: '0.5 米空间分辨率', period: '近 6 个月', frequency: '按过境批次',
+        fields: ['scene_id', 'acquisition_time', 'orbit_id', 'sensor_type', 'cloud_cover', 'image_uri'], useCase: '港区目标特性提取', sensitivity: 'INTERNAL',
       },
       createdAt: timestamp, updatedAt: timestamp,
      },
      {
-       code: 'req-003', requirementType: 'ALGORITHM', title: '设备异常检测周批', description: '把遥测日增量接入异常检测能力。', requester: 'bob',
+       code: 'req-003', requirementType: 'ALGORITHM', title: '红外弱小目标检测轨次处理', description: '将载荷红外影像接入弱小目标检测能力，形成轨次级处理结果。', requester: 'bob',
        status: 'ANALYZING', createdAt: timestamp, updatedAt: timestamp,
      },
      {
-       code: 'req-004', requirementType: 'DATA', title: '供应商信用回填', description: '把季度信用评估回填到订单分析。', requester: '王工',
-       status: 'ASSIGNED', assigneeSystem: 'data-platform', assigneeRef: 'ds-supplier-credit', createdAt: timestamp, updatedAt: timestamp,
+       code: 'req-004', requirementType: 'DATA', title: 'SAR海面目标检测辅助数据', description: '申请SAR影像及海况辅助要素，用于海面目标检测结果复核。', requester: '王工',
+       status: 'ASSIGNED', assigneeSystem: 'data-platform', assigneeRef: 'ds-sar-maritime', createdAt: timestamp, updatedAt: timestamp,
      },
      {
-       code: 'req-005', requirementType: 'COMPREHENSIVE', title: '门户运营看板', description: '门户自办的运营指标汇总。', requester: '李工',
-       status: 'COMPLETED', assigneeSystem: 'portal', closedNote: '看板已上线', createdAt: timestamp, updatedAt: timestamp,
+       code: 'req-005', requirementType: 'COMPREHENSIVE', title: '卫星载荷效能评估看板', description: '汇总载荷工作状态、目标识别效果和轨次处理效能。', requester: '李工',
+       status: 'COMPLETED', assigneeSystem: 'portal', closedNote: '载荷效能看板已上线并完成验收', createdAt: timestamp, updatedAt: timestamp,
      },
    ]
   const iamUsers: RecordValue[] = [
@@ -235,12 +235,12 @@ export function createPortalMockApi(): PortalMockApi {
     { id: 'p-approval', name: '审批决策', resource: '/approvals/*/decision', action: 'decide', effect: 'PERMIT', roles: ['named-approver'] },
   ]
   const notices: RecordValue[] = [
-    { code: 'ntc-001', title: '本周质量分析批次已开放', content: '客户质量分析-周批已对制造业数据团队开放，可在算法工作台提交。', section: '公告', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
-    { code: 'ntc-002', title: '数据服务目录更新', content: '新增设备遥测-日增量，支持申请后审批投递。', section: '服务动态', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
+    { code: 'ntc-001', title: '东海港区目标特性提取批次已开放', content: '港区目标特性提取流程已对空间信息应用团队开放，可在算法工作台提交。', section: '公告', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
+    { code: 'ntc-002', title: '遥感数据服务目录更新', content: '新增SAR海面目标检测辅助数据，支持申请后审批投递。', section: '服务动态', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
   ]
   const notifications: RecordValue[] = [
-    { id: 'ntf-001', type: 'APPROVAL_DECIDED', title: '有一项数据服务申请待审批', body: '请在审批中心处理客户主数据服务申请。', resourceRef: 'apr-data-001', createdAt: timestamp },
-    { id: 'ntf-002', type: 'TASK_COMPLETED', title: '数据导入任务已完成', body: '订单数据质量校验已通过。', resourceRef: 'tsk-import-002', readAt: timestamp, createdAt: timestamp },
+    { id: 'ntf-001', type: 'APPROVAL_DECIDED', title: '有一项数据服务申请待审批', body: '请在审批中心处理东海高分光学影像服务申请。', resourceRef: 'apr-data-001', createdAt: timestamp },
+    { id: 'ntf-002', type: 'TASK_COMPLETED', title: '数据导入任务已完成', body: 'SAR海面目标检测辅助数据质量校验已通过。', resourceRef: 'tsk-import-002', readAt: timestamp, createdAt: timestamp },
   ]
   const services: RecordValue[] = seedDataServices.map((item) => ({
     code: item.code,
@@ -250,29 +250,29 @@ export function createPortalMockApi(): PortalMockApi {
     classification: item.classification,
     subscribed: item.subscribed,
     description:
-      item.code === 'ds-customer-monthly'
-        ? '制造业客户主数据月度快照，供分析与订阅投递。'
-        : item.code === 'ds-device-daily'
-          ? '产线设备遥测日增量，含密级字段需审批后开通。'
-          : '供应商信用季度评估，支持按服务申请订阅。',
+      item.code === 'ds-gaofen-optical'
+        ? '东海重点海域高分光学卫星影像，支持目标特性提取与按场景订阅。'
+        : item.code === 'ds-sar-maritime'
+          ? 'SAR海面目标检测辅助数据，含敏感空间要素，审批后开通。'
+          : '卫星载荷遥测轨次增量，支持载荷效能评估与异常研判。',
   }))
   const capabilities: RecordValue[] = [
-    { code: 'cap-risk-score', name: '风险评分算法能力', status: 'ADMITTED', currentVersion: 3, description: '已准入的风险评分算法。' },
-    { code: 'cap-order-check', name: '订单校验算法能力', status: 'ADMITTED', currentVersion: 1, description: '已准入的订单校验算法。' },
+    { code: 'cap-maritime-target-feature', name: '海上目标特性提取能力', status: 'ADMITTED', currentVersion: 3, description: '已准入的海上目标特性提取算法能力。' },
+    { code: 'cap-infrared-weak-target', name: '红外弱小目标检测能力', status: 'ADMITTED', currentVersion: 1, description: '已准入的红外弱小目标检测算法能力。' },
   ]
   const templates: RecordValue[] = [
-    { code: 'tpl-risk-flow', name: '供应链风险研判流程', status: 'PUBLISHED', currentVersion: 2, description: '订单输入、风险评分和规则解释。' },
-    { code: 'tpl-order-check', name: '订单质量校验流程', status: 'PUBLISHED', currentVersion: 1, description: '订单数据规范性校验。' },
+    { code: 'tpl-maritime-target-flow', name: '海上目标态势研判流程', status: 'PUBLISHED', currentVersion: 2, description: '光学影像输入、目标特性提取和本体规则研判。' },
+    { code: 'tpl-payload-quality', name: '卫星载荷遥测质量校验流程', status: 'PUBLISHED', currentVersion: 1, description: '载荷遥测轨次数据质量校验。' },
   ]
   const results: RecordValue[] = [
-    { resultId: 'result-quality-002', sourceSystem: 'data-platform', resultType: 'QUALITY_REPORT', resourceRefs: ['dataset-order@12'], metadata: { qualityScore: 98 }, sourceTaskId: 'tsk-import-002', traceId: 'mock-trace-import-002', createdAt: timestamp, updatedAt: timestamp },
+    { resultId: 'result-quality-002', sourceSystem: 'data-platform', resultType: 'QUALITY_REPORT', resourceRefs: ['ds-sar-maritime@v1.4.2'], metadata: { qualityScore: 98 }, sourceTaskId: 'tsk-import-002', traceId: 'mock-trace-import-002', createdAt: timestamp, updatedAt: timestamp },
   ]
   const feedbacks: RecordValue[] = []
   const scenarios: RecordValue[] = [
     {
-      code: 'scn-risk-001', version: '1.0.0', name: '供应链风险分析', description: '已发布的风险分析场景。', status: 'PUBLISHED', tenantId: 'default', createdBy: demoIdentity.name,
-      ontologyRefs: [{ packageCode: 'pkg-supply-chain', version: '1.0.0' }],
-      bindings: [{ type: 'WORKFLOW_TEMPLATE', ref: 'tpl-risk-flow', version: '2.0.0', alias: 'riskFlow', sourceSystem: 'ALGORITHM_RECOMBINE' }],
+      code: 'scn-maritime-target-001', version: '1.0.0', name: '海上目标态势研判', description: '已发布的海上目标态势研判场景。', status: 'PUBLISHED', tenantId: 'default', createdBy: demoIdentity.name,
+      ontologyRefs: [{ packageCode: 'pkg-maritime-target', version: '1.0.0' }],
+      bindings: [{ type: 'WORKFLOW_TEMPLATE', ref: 'tpl-maritime-target-flow', version: '2.0.0', alias: 'maritimeTargetFlow', sourceSystem: 'ALGORITHM_RECOMBINE' }],
       createdAt: timestamp, updatedAt: timestamp,
     },
   ]

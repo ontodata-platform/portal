@@ -59,16 +59,16 @@ const stubs = {
 const openItem = {
   code: 'req-002',
   requirementType: 'DATA',
-  title: '补充区域仓储数据',
+  title: '高分辨率光学影像目标特性提取',
   requester: 'alice',
   status: 'OPEN',
   dataProfile: {
-    businessDomain: '供应链',
-    dataObject: '区域仓储库存',
-    scope: '华东区域',
-    granularity: '日',
-    fields: ['warehouse_id', 'inventory_qty'],
-    useCase: '供应链库存分析',
+    businessDomain: '遥感目标识别',
+    dataObject: '高分辨率光学卫星影像',
+    scope: '东海重点海域',
+    granularity: '0.5 米空间分辨率',
+    fields: ['scene_id', 'acquisition_time', 'orbit_id'],
+    useCase: '港区目标特性提取',
     sensitivity: 'INTERNAL',
   },
   createdAt: '2026-08-31T09:30:00.000Z',
@@ -88,7 +88,7 @@ describe('RequirementAdminView', () => {
     analyzeMock.mockResolvedValue({ ...openItem, status: 'ANALYZING' })
     consolidateMock.mockResolvedValue({ ...openItem, consolidation: { primaryCode: 'req-002', role: 'RELATED' } })
     overlapCandidatesMock.mockResolvedValue([
-      { code: 'req-006', title: '华东仓储库存分析数据', requester: 'bob', status: 'OPEN', score: 90, reasons: ['数据对象一致', '使用范围一致'] },
+      { code: 'req-006', title: '东海港区目标特性识别影像需求', requester: 'bob', status: 'OPEN', score: 90, reasons: ['数据对象一致', '使用范围一致'] },
     ])
   })
 
@@ -110,7 +110,7 @@ describe('RequirementAdminView', () => {
     expect(wrapper.find('.page-desc').exists()).toBe(false)
   })
 
-  it('办理抽屉以分析事实和相似候选支持数据需求整合决策', async () => {
+  it('办理抽屉只呈现当前步骤，并以分析事实和相似候选支持数据需求整合决策', async () => {
     const wrapper = mountView()
     await flushPromises()
 
@@ -120,20 +120,23 @@ describe('RequirementAdminView', () => {
     await flushPromises()
 
     expect(wrapper.find('.drawer').exists()).toBe(true)
-    expect(wrapper.text()).toContain('接收')
+    expect(wrapper.text()).toContain('分析结论')
+    expect(wrapper.find('[data-handling-panel="analysis"]').exists()).toBe(true)
+    expect(wrapper.find('[data-handling-panel="assignment"]').exists()).toBe(false)
+    expect(wrapper.find('[data-handling-target="overview"]').exists()).toBe(true)
     expect(overlapCandidatesMock).toHaveBeenCalledWith('req-002')
     expect(wrapper.text()).toContain('相似需求候选')
     expect(wrapper.text()).toContain('数据对象一致')
     expect(wrapper.findAll('button').find((button) => button.text() === '整合到当前需求')).toBeUndefined()
 
-    await wrapper.find('textarea[name="analysisConclusion"]').setValue('可由仓储日快照满足。')
+    await wrapper.find('textarea[name="analysisConclusion"]').setValue('可由高分辨率光学影像满足港区目标特性提取需求。')
     const analyze = wrapper.findAll('button').find((button) => button.text() === '提交分析')
     expect(analyze).toBeTruthy()
     await analyze!.trigger('click')
     await flushPromises()
 
     expect(analyzeMock).toHaveBeenCalledWith('req-002', {
-      analysis: { conclusion: '可由仓储日快照满足。', feasibility: 'FEASIBLE', priority: 'MEDIUM', risks: undefined },
+      analysis: { conclusion: '可由高分辨率光学影像满足港区目标特性提取需求。', feasibility: 'FEASIBLE', priority: 'MEDIUM', risks: undefined },
     })
     expect(listMock).toHaveBeenCalledTimes(2)
   })
@@ -142,7 +145,7 @@ describe('RequirementAdminView', () => {
     const analyzedItem = {
       ...openItem,
       status: 'ANALYZING',
-      analysis: { conclusion: '可由仓储日快照满足。', feasibility: 'FEASIBLE', priority: 'MEDIUM' },
+      analysis: { conclusion: '可由高分辨率光学影像满足港区目标特性提取需求。', feasibility: 'FEASIBLE', priority: 'MEDIUM' },
     }
     listMock.mockResolvedValue({ total: 1, items: [analyzedItem] })
     const wrapper = mountView()
@@ -154,13 +157,13 @@ describe('RequirementAdminView', () => {
     const consolidate = wrapper.findAll('button').find((button) => button.text() === '整合到当前需求')
     expect(consolidate).toBeTruthy()
     await consolidate!.trigger('click')
-    await wrapper.find('textarea[name="consolidationReason"]').setValue('数据对象、范围和粒度一致，统一组织交付。')
+    await wrapper.find('textarea[name="consolidationReason"]').setValue('影像类型、覆盖海域和空间分辨率一致，统一组织交付。')
     await wrapper.find('.modal-ok').trigger('click')
     await flushPromises()
 
     expect(consolidateMock).toHaveBeenCalledWith('req-006', {
       primaryCode: 'req-002',
-      reason: '数据对象、范围和粒度一致，统一组织交付。',
+      reason: '影像类型、覆盖海域和空间分辨率一致，统一组织交付。',
     })
   })
 
@@ -168,7 +171,7 @@ describe('RequirementAdminView', () => {
     const analyzedItem = {
       ...openItem,
       status: 'ANALYZING',
-      analysis: { conclusion: '可由仓储日快照满足。', feasibility: 'FEASIBLE', priority: 'MEDIUM' },
+      analysis: { conclusion: '可由高分辨率光学影像满足港区目标特性提取需求。', feasibility: 'FEASIBLE', priority: 'MEDIUM' },
     }
     listMock.mockResolvedValue({ total: 1, items: [analyzedItem] })
     assignMock.mockResolvedValue({ ...analyzedItem, status: 'ASSIGNED' })
@@ -176,8 +179,9 @@ describe('RequirementAdminView', () => {
     await flushPromises()
 
     await wrapper.findAll('button').find((button) => button.text().includes('办理'))!.trigger('click')
+    await wrapper.find('[data-handling-target="assignment"]').trigger('click')
     await wrapper.find('input[name="planOwner"]').setValue('王工')
-    await wrapper.find('input[name="planDeliverable"]').setValue('华东仓储日快照服务')
+    await wrapper.find('input[name="planDeliverable"]').setValue('东海重点海域光学影像服务')
     await wrapper.find('input[name="planTargetDate"]').setValue('2026-09-30')
     await wrapper.find('textarea[name="planMilestones"]').setValue('字段确认后发布')
     await wrapper.findAll('button').find((button) => button.text() === '分派')!.trigger('click')
@@ -188,7 +192,7 @@ describe('RequirementAdminView', () => {
       assigneeRef: undefined,
       plan: {
         owner: '王工',
-        deliverable: '华东仓储日快照服务',
+        deliverable: '东海重点海域光学影像服务',
         targetDate: '2026-09-30',
         milestones: '字段确认后发布',
       },
@@ -200,7 +204,7 @@ describe('RequirementAdminView', () => {
       ...openItem,
       status: 'ASSIGNED',
       assigneeSystem: 'data-platform',
-      plan: { owner: '王工', deliverable: '华东仓储日快照服务', targetDate: '2026-09-30' },
+      plan: { owner: '王工', deliverable: '东海重点海域光学影像服务', targetDate: '2026-09-30' },
     }
     listMock.mockResolvedValue({ total: 1, items: [assignedItem] })
     progressMock.mockResolvedValue({ ...assignedItem, status: 'IN_PROGRESS' })
@@ -209,13 +213,13 @@ describe('RequirementAdminView', () => {
 
     await wrapper.findAll('button').find((button) => button.text().includes('办理'))!.trigger('click')
     await wrapper.find('input[name="progressPercent"]').setValue('40')
-    await wrapper.find('textarea[name="progressNote"]').setValue('已完成字段口径确认。')
+    await wrapper.find('textarea[name="progressNote"]').setValue('已完成影像时相与云量阈值确认。')
     await wrapper.findAll('button').find((button) => button.text() === '登记进度')!.trigger('click')
     await flushPromises()
 
     expect(progressMock).toHaveBeenCalledWith('req-002', {
       percent: 40,
-      note: '已完成字段口径确认。',
+      note: '已完成影像时相与云量阈值确认。',
     })
   })
 })
