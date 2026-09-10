@@ -3,10 +3,8 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
-  DatabaseOutlined,
   DownloadOutlined,
   EyeOutlined,
-  SearchOutlined,
   WarningOutlined,
 } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -17,12 +15,12 @@ import {
   dataWorkbenchApi,
   type DataApplication,
   type DataSubscription,
-  type DatasetSummary,
 } from '@/api/data-workbench'
 import { marketplaceApi } from '@/api/portal'
 import { downloadBlob } from '@/utils/download'
 import { catalogItems, catalogTotal } from '@/catalog'
 import MarketServiceCard from '@/components/marketplace/MarketServiceCard.vue'
+import TableFilterBar from '@/ui-kit/TableFilterBar.vue'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
@@ -37,27 +35,50 @@ const route = useRoute()
 const router = useRouter()
 const messageStore = useMessageStore()
 
-const allowedTabs = new Set(['services', 'datasets', 'applications', 'subscriptions'])
+const allowedTabs = new Set(['services', 'applications', 'subscriptions'])
 const queryTab = String(route.query.tab ?? '')
 const activeTab = ref(allowedTabs.has(queryTab) ? queryTab : 'services')
 
-// ── 数据服务签（目录） ──
+// ── 数据目录签（B2-1：数据集并入产品详情的"关联数据资产"，目录只保留产品视角） ──
 const loading = ref(false)
 const loadError = ref('')
 const aggregation = ref<UpstreamAggregation | null>(null)
 const rows = ref<CatalogEntry[]>([])
 const total = ref(0)
-const query = reactive({ page: 1, size: 20, keyword: '' })
+const query = reactive({ page: 1, size: 20, keyword: '', subscribed: '', classification: '' })
 
-// ── 数据集签（v5 §14.3，底座依赖 D-4，mock 先行） ──
-const datasetsLoading = ref(false)
-const datasets = ref<DatasetSummary[]>([])
-const domains = ref<string[]>([])
-const datasetQuery = reactive({ keyword: '', domain: '' })
+/** B2-2/B2-3：客户端即时过滤（开通状态/密级/关键字），不再依赖"查询"按钮。 */
+const visibleRows = computed(() =>
+  rows.value.filter((row) => {
+    if (query.subscribed && String(row.subscribed) !== query.subscribed) return false
+    if (query.classification && row.classification !== query.classification) return false
+    if (query.keyword) {
+      const keyword = query.keyword.toLowerCase()
+      if (!`${row.name}${row.code}`.toLowerCase().includes(keyword)) return false
+    }
+    return true
+  }),
+)
 
-const domainOptions = computed(() => [
-  { label: t('dataWorkbench.domainAll'), value: '' },
-  ...domains.value.map((domain) => ({ label: domain, value: domain })),
+const catalogFilterSpecs = computed(() => [
+  {
+    key: 'subscribed',
+    label: t('marketplace.filterSubscribed'),
+    options: [
+      { value: 'true', label: t('marketplace.subscribed') },
+      { value: 'false', label: t('marketplace.unsubscribed') },
+    ],
+    width: 140,
+  },
+  {
+    key: 'classification',
+    label: t('marketplace.filterClassification'),
+    options: [
+      { value: 'INTERNAL', label: t('dataWorkbench.classificationInternal') },
+      { value: 'CONFIDENTIAL', label: t('dataWorkbench.classificationConfidential') },
+    ],
+    width: 120,
+  },
 ])
 
 // ── 我的申请签 ──
@@ -97,31 +118,6 @@ async function load() {
   }
 }
 
-async function loadDatasets() {
-  datasetsLoading.value = true
-  try {
-    const res = await dataWorkbenchApi.listDatasets({
-      page: 1,
-      size: 50,
-      keyword: datasetQuery.keyword || undefined,
-      domain: datasetQuery.domain || undefined,
-    })
-    datasets.value = res.items
-  } catch (error) {
-    messageStore.reportError(error)
-  } finally {
-    datasetsLoading.value = false
-  }
-}
-
-async function loadDomains() {
-  try {
-    domains.value = await dataWorkbenchApi.listDomains()
-  } catch {
-    domains.value = []
-  }
-}
-
 async function loadApplications() {
   applicationsLoading.value = true
   try {
@@ -157,10 +153,7 @@ async function downloadSubscription(record: DataSubscription) {
 }
 
 function onTabChange(tab: string | number) {
-  if (tab === 'datasets' && datasets.value.length === 0) {
-    void loadDatasets()
-    void loadDomains()
-  } else if (tab === 'applications' && applications.value.length === 0) {
+  if (tab === 'applications' && applications.value.length === 0) {
     void loadApplications()
   } else if (tab === 'subscriptions' && subscriptions.value.length === 0) {
     void loadSubscriptions()
@@ -219,29 +212,23 @@ onMounted(() => {
             :description="t('marketplace.description')"
           />
 
-          <div class="toolbar">
-            <a-input
-              v-model:value="query.keyword"
-              :placeholder="t('marketplace.searchPlaceholder')"
-              style="width: 320px"
-              allow-clear
-              @press-enter="query.page = 1; load()"
-            >
-              <template #prefix><SearchOutlined style="color: #94a3b8" /></template>
-            </a-input>
-            <a-button type="primary" @click="query.page = 1; load()">
-              {{ t('common.query') }}
-            </a-button>
-          </div>
+          <TableFilterBar
+            :query="query"
+            :filters="catalogFilterSpecs"
+            :search-placeholder="t('marketplace.searchPlaceholder')"
+            :search-width="320"
+            @update="Object.assign(query, $event)"
+            @search="query.page = 1; load()"
+          />
 
           <SkeletonList v-if="loading" variant="cards" :rows="6" />
           <EmptyState
-            v-else-if="rows.length === 0"
+            v-else-if="visibleRows.length === 0"
             :title="t('marketplace.emptyTitle')"
             :description="t('marketplace.emptyDesc')"
           />
           <div v-else class="card-grid">
-            <MarketServiceCard v-for="item in rows" :key="item.code" :item="item" />
+            <MarketServiceCard v-for="item in visibleRows" :key="item.code" :item="item" />
           </div>
           <div v-if="total > query.size" class="pager">
             <a-pagination
@@ -259,60 +246,7 @@ onMounted(() => {
         </a-card>
       </a-tab-pane>
 
-      <!-- 签页 2: 数据集 (v5 §14.3 新增) -->
-      <a-tab-pane key="datasets" :tab="t('dataWorkbench.tabDatasets')">
-        <a-card :bordered="false" class="marketplace-card">
-          <div class="toolbar">
-            <a-input-search
-              v-model:value="datasetQuery.keyword"
-              :placeholder="t('dataWorkbench.datasetSearch')"
-              style="width: 320px"
-              allow-clear
-              @search="loadDatasets"
-            />
-            <a-select
-              v-model:value="datasetQuery.domain"
-              :options="domainOptions"
-              style="width: 200px"
-              @change="loadDatasets"
-            />
-          </div>
-
-          <SkeletonList v-if="datasetsLoading" variant="cards" :rows="6" />
-          <EmptyState
-            v-else-if="datasets.length === 0"
-            :title="t('dataWorkbench.emptyDatasets')"
-            :description="t('dataWorkbench.emptyDatasetsDesc')"
-          />
-          <div v-else class="card-grid">
-            <a-card
-              v-for="dataset in datasets"
-              :key="dataset.code"
-              hoverable
-              class="dataset-card"
-              @click="router.push(`/data-workbench/dataset/${encodeURIComponent(dataset.code)}`)"
-            >
-              <div class="dataset-head">
-                <DatabaseOutlined class="dataset-icon" />
-                <div class="dataset-titles">
-                  <div class="dataset-name">{{ dataset.name }}</div>
-                  <div class="dataset-code">
-                    <span class="cell-mono">{{ dataset.code }}</span>
-                    <a-tag>{{ dataset.version }}</a-tag>
-                  </div>
-                </div>
-              </div>
-              <p class="dataset-desc">{{ dataset.description }}</p>
-              <div class="dataset-meta">
-                <span>{{ t('dataWorkbench.domainLabel') }}：{{ dataset.domain }}</span>
-                <span>{{ t('dataWorkbench.qualityPassRate') }}：{{ dataset.qualityPassRate }}</span>
-              </div>
-            </a-card>
-          </div>
-        </a-card>
-      </a-tab-pane>
-
-      <!-- 签页 3: 我的申请 -->
+      <!-- 签页 2: 我的申请（B2-1：数据集签已并入产品详情"关联数据资产"，目录只保留产品视角） -->
       <a-tab-pane key="applications" :tab="t('dataWorkbench.tabApplications')">
         <a-card :bordered="false" class="marketplace-card">
           <SkeletonList v-if="applicationsLoading" variant="list" :rows="4" />

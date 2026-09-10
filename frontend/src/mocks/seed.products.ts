@@ -66,5 +66,9 @@ export function productDescriptorOf(service: SeedDataService, index: number): Pr
       channel: confidential ? '受控对象存储，审批通过后投递' : '门户订阅签页在线领取',
       sla: cycle === '日更' ? '过境后 6 小时内可申请' : `${cycle}窗口关闭后 1 个工作日可申请`,
     },
+    // B2-1：产品详情"关联数据资产"节的数据来源（产品 → 底层数据集映射）。
+    asset: dataset
+      ? { code: dataset.code, name: dataset.name, version: dataset.version, qualityPassRate: dataset.qualityPassRate }
+      : undefined,
   }
 }

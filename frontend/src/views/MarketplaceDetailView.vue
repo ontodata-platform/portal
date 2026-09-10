@@ -204,6 +204,27 @@ onMounted(loadDetail)
                 </a-descriptions-item>
               </a-descriptions>
             </DescriptorSection>
+
+            <!-- B2-1：产品详情内直接呈现底层数据资产，数据集不再作为平级目录 -->
+            <DescriptorSection
+              :title="t('marketplace.sectionAssets')"
+              :empty="!descriptor?.asset"
+              :empty-title="t('marketplace.emptySection', { section: t('marketplace.sectionAssets') })"
+            >
+              <button
+                v-if="descriptor?.asset"
+                type="button"
+                class="asset-link"
+                @click="router.push(`/data-workbench/dataset/${encodeURIComponent(descriptor.asset.code)}`)"
+              >
+                <span class="asset-name">{{ descriptor.asset.name }}</span>
+                <span class="cell-mono asset-code">{{ descriptor.asset.code }}</span>
+                <a-tag>{{ descriptor.asset.version }}</a-tag>
+                <span class="asset-quality">
+                  {{ t('dataWorkbench.qualityPassRate') }}：{{ descriptor.asset.qualityPassRate }}
+                </span>
+              </button>
+            </DescriptorSection>
           </div>
         </template>
         <template v-else-if="!loading && (notFound || aggregation?.available)">
@@ -255,6 +276,35 @@ onMounted(loadDetail)
 .product-sections {
   display: grid;
   gap: 16px;
+}
+
+/* B2-1：关联数据资产卡（整卡可点，跳数据集详情） */
+.asset-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 8px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+}
+
+.asset-link:hover {
+  border-color: var(--od-primary, #2563eb);
+}
+
+.asset-name {
+  font-weight: 600;
+}
+
+.asset-quality {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--od-gray-500, #64748b);
 }
 
 .requirement-list {

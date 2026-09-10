@@ -24,4 +24,13 @@ export interface ProductDescriptor {
   updateCycle: ProductUpdateCycle
   applyRequirements: string[]
   delivery: ProductDelivery
+  /** 关联数据资产（B2-1）：产品详情内展示的底层数据集（DATASET_BY_SERVICE 映射）。 */
+  asset?: ProductAsset
+}
+
+export interface ProductAsset {
+  code: string
+  name: string
+  version: string
+  qualityPassRate: string
 }
