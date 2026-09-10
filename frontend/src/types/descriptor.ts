@@ -175,7 +175,7 @@ export interface AlgorithmRun {
   humanReason?: string
   fixHint?: string
   nodes: AlgorithmRunNode[]
-  artifacts: Array<{ name: string; kind: string; size: string }>
+  artifacts: Array<{ name: string; kind: string; size: string; ready?: boolean }>
   container?: AlgorithmContainerInfo
   outputSpec?: RunOutputSpec
   testDataRefs?: string[]

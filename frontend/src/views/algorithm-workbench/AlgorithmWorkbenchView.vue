@@ -23,6 +23,7 @@ import { formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
+import { downloadBlob } from '@/utils/download'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -175,9 +176,14 @@ const artifacts = computed(() =>
   ),
 )
 
-function download(artifactName: string) {
-  messageStore.info(t('algoWorkbench.mockDownload'))
-  void artifactName
+async function download(taskId: string, artifactName: string, ready = true) {
+  if (!ready) return
+  try {
+    const file = await algorithmWorkbenchApi.downloadArtifact(taskId, artifactName)
+    downloadBlob(file.filename, file.mime, file.blob)
+  } catch (error) {
+    messageStore.reportError(error)
+  }
 }
 
 function copyContainerLog(lines: string[]) {
@@ -445,10 +451,20 @@ onMounted(() => {
                 <span class="mono-code">{{ record.taskId }}</span>
               </template>
               <template v-else-if="column.key === 'actions'">
-                <a-button size="small" type="primary" ghost @click="download(record.name)">
-                  <template #icon><DownloadOutlined /></template>
-                  {{ t('algoWorkbench.download') }}
-                </a-button>
+                <a-tooltip :title="record.ready === false ? t('common.fileGenerating') : undefined">
+                  <span>
+                    <a-button
+                      size="small"
+                      type="primary"
+                      ghost
+                      :disabled="record.ready === false"
+                      @click="download(record.taskId, record.name, record.ready !== false)"
+                    >
+                      <template #icon><DownloadOutlined /></template>
+                      {{ t('algoWorkbench.download') }}
+                    </a-button>
+                  </span>
+                </a-tooltip>
               </template>
             </template>
           </OdTable>

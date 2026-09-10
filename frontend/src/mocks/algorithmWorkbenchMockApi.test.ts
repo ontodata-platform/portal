@@ -92,4 +92,20 @@ describe('算法工作台 mock API', () => {
     expect(run.container?.image).toContain('anomaly-detect')
     expect(run.container?.logTail.length).toBeGreaterThan(0)
   })
+
+  it('结果物下载返回 CSV 行，生成中的结果物不可下', async () => {
+    const file = (await api.request(
+      'GET',
+      `/my/algorithm-runs/task-d4e5f6g7/artifacts/${encodeURIComponent('海表温度预测.csv')}/download`,
+    )) as { filename: string; rows: Array<Record<string, unknown>> }
+    expect(file.filename).toBe('海表温度预测.csv')
+    expect(file.rows.length).toBeGreaterThanOrEqual(20)
+
+    await expect(
+      api.request(
+        'GET',
+        `/my/algorithm-runs/task-m3n4o5p6/artifacts/${encodeURIComponent('目标特性报告生成中.csv')}/download`,
+      ),
+    ).rejects.toMatchObject({ response: { status: 409, data: { code: 'FILE_NOT_READY' } } })
+  })
 })

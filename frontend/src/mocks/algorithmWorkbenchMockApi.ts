@@ -9,6 +9,7 @@ import type {
   ServiceDescriptor,
 } from '@/types/descriptor'
 import { relativeIso } from '@/mocks/seed'
+import { csvFilename, expandDemoRows } from '@/utils/download'
 
 const relativeDate = (hoursAgo: number) => relativeIso(hoursAgo).slice(0, 10)
 
@@ -153,7 +154,7 @@ const runs: AlgorithmRun[] = [
     { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(2.5), finishedAt: relativeIso(2.1) },
     { name: '特征提取', state: 'SUCCEEDED', startedAt: relativeIso(2.1), finishedAt: relativeIso(1.4) },
     { name: '报告生成', state: 'RUNNING', startedAt: relativeIso(1.4) },
-  ], artifacts: [] },
+  ], artifacts: [ { name: '目标特性报告生成中.csv', kind: 'BUSINESS_DATA', size: '—', ready: false } ] },
   { taskId: 'task-n4o5p6q7', serviceCode: 'cap-anomaly-detect', serviceName: '载荷遥测异常检测', status: 'SUCCEEDED', stage: '已完成', startedAt: relativeIso(16), duration: '4 分 22 秒', nodes: [
     { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(16), finishedAt: relativeIso(15.7) },
     { name: '异常检测', state: 'SUCCEEDED', startedAt: relativeIso(15.7), finishedAt: relativeIso(15.3) },
@@ -263,6 +264,28 @@ export function createAlgorithmWorkbenchMockApi(): AlgorithmWorkbenchMockApi {
         found.stage = '排队中（复跑）'
       }
       return clone(found)
+    }
+
+    const artifactMatch = path.match(/^\/my\/algorithm-runs\/([^/]+)\/artifacts\/(.+)\/download$/)
+    if (normalizedMethod === 'GET' && artifactMatch) {
+      const taskId = decodeURIComponent(artifactMatch[1])
+      const name = decodeURIComponent(artifactMatch[2])
+      const found = runs.find((item) => item.taskId === taskId)
+      if (!found) throw error(404, 'NOT_FOUND', '未找到该运行记录', path)
+      const artifact = found.artifacts.find((item) => item.name === name)
+      if (!artifact) throw error(404, 'NOT_FOUND', '未找到该结果物', path)
+      if (artifact.ready === false) throw error(409, 'FILE_NOT_READY', '交付文件生成中', path)
+      const isLog = artifact.kind === 'EVIDENCE' || artifact.name.includes('日志')
+      const columns = isLog ? ['line', 'message'] : ['record_id', 'task_id', 'artifact', 'value']
+      const sample = isLog
+        ? (found.container?.logTail ?? ['运行完成']).map((line, index) => [String(index + 1), line])
+        : [['1', found.taskId, artifact.name, found.serviceName]]
+      return {
+        filename: csvFilename(artifact.name),
+        mime: 'text/csv;charset=utf-8',
+        title: artifact.name,
+        rows: expandDemoRows(columns, sample, isLog ? Math.max(20, sample.length) : 24),
+      }
     }
 
     throw error(404, 'MOCK_ROUTE_NOT_FOUND', '请求的演示功能暂未覆盖', path)

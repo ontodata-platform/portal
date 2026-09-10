@@ -20,6 +20,7 @@ import {
   type DatasetSummary,
 } from '@/api/data-workbench'
 import { marketplaceApi } from '@/api/portal'
+import { downloadBlob } from '@/utils/download'
 import { catalogItems, catalogTotal } from '@/catalog'
 import MarketServiceCard from '@/components/marketplace/MarketServiceCard.vue'
 import { useMessageStore } from '@/stores/message'
@@ -142,6 +143,16 @@ async function loadSubscriptions() {
     messageStore.reportError(error)
   } finally {
     subscriptionsLoading.value = false
+  }
+}
+
+async function downloadSubscription(record: DataSubscription) {
+  if (!record.hasFile) return
+  try {
+    const file = await marketplaceApi.downloadDeliverable(record.code)
+    downloadBlob(file.filename, file.mime, file.blob)
+  } catch (error) {
+    messageStore.reportError(error)
   }
 }
 
@@ -416,13 +427,18 @@ onMounted(() => {
                     <template #icon><EyeOutlined /></template>
                     {{ t('dataWorkbench.previewData') }}
                   </a-button>
-                  <a-button
-                    size="small"
-                    @click="messageStore.info('开始下载受控交付物，请注意数据安全规范')"
-                  >
-                    <template #icon><DownloadOutlined /></template>
-                    下载
-                  </a-button>
+                  <a-tooltip :title="record.hasFile ? undefined : t('common.fileGenerating')">
+                    <span>
+                      <a-button
+                        size="small"
+                        :disabled="!record.hasFile"
+                        @click="downloadSubscription(record)"
+                      >
+                        <template #icon><DownloadOutlined /></template>
+                        {{ t('common.download') }}
+                      </a-button>
+                    </span>
+                  </a-tooltip>
                 </a-space>
               </template>
             </template>

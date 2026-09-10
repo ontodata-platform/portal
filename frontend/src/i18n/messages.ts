@@ -37,6 +37,8 @@ export const zhCn = {
     cancel: '取消',
     nextStep: '下一步',
     prevStep: '上一步',
+    download: '下载',
+    fileGenerating: '交付文件生成中',
   },
   odTable: {
     emptyTitle: '暂无记录',
@@ -851,6 +853,8 @@ export const enUs: MessageSchema = {
     cancel: 'Cancel',
     nextStep: 'Next',
     prevStep: 'Back',
+    download: 'Download',
+    fileGenerating: 'Delivery file is still being generated',
   },
   odTable: {
     emptyTitle: 'No records',

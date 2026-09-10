@@ -6,6 +6,7 @@ import { client } from '@/api/client'
 import { useLocalMock } from '@/mocks/localMode'
 import { localAlgorithmWorkbenchMockApi } from '@/mocks/algorithmWorkbenchMockApi'
 import type { AlgorithmRun, AlgorithmServiceSummary, MyDelivery, ServiceDescriptor } from '@/types/descriptor'
+import { mockResultFile } from '@/utils/download'
 
 export interface AlgorithmServiceDetail extends AlgorithmServiceSummary {
   descriptor: ServiceDescriptor
@@ -98,6 +99,30 @@ export const algorithmWorkbenchApi = {
     viaMock(
       () => localAlgorithmWorkbenchMockApi.request('POST', `/my/algorithm-runs/${encodeURIComponent(taskId)}/cancel`) as Promise<AlgorithmRun>,
       () => client.post(`/my/algorithm-runs/${encodeURIComponent(taskId)}/cancel`).then((r) => r.data),
+    ),
+
+  /**
+   * 运行结果物下载。真实模式：GET /api/v1/results/{sourceSystem}/{resultId}/download
+   * （对齐后端 T0-1：受控下载，302 签名链接或流式二选一，由后端定）。
+   */
+  downloadArtifact: (taskId: string, name: string): Promise<{ filename: string; mime: string; blob: Blob }> =>
+    viaMock(
+      () => localAlgorithmWorkbenchMockApi
+        .request('GET', `/my/algorithm-runs/${encodeURIComponent(taskId)}/artifacts/${encodeURIComponent(name)}/download`)
+        .then((payload) => {
+          const data = payload as { filename: string; mime: string; title: string; rows: Record<string, unknown>[] }
+          return { filename: data.filename, mime: data.mime, blob: mockResultFile(data.title, data.rows) }
+        }),
+      () => client
+        .get(`/results/algorithm-recombine/${encodeURIComponent(taskId)}/download`, {
+          params: { name },
+          responseType: 'blob',
+        })
+        .then((response) => ({
+          filename: `${name.replace(/\.[^.]+$/, '')}.csv`,
+          mime: String(response.headers['content-type'] ?? 'text/csv;charset=utf-8'),
+          blob: response.data as Blob,
+        })),
     ),
 
   /** 运行向导 dataset-ref 选项来源（L2 由 D-1 聚合接口提供） */

@@ -58,6 +58,7 @@ export interface SeedDataSubscription {
   deliveryType: string
   rowsCount: number
   previewUrl?: string
+  hasFile?: boolean
 }
 
 export interface SeedUser {

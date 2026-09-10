@@ -3,6 +3,9 @@
  * requirement-center/operations-center）。
  */
 import { client } from './client'
+import { localDataWorkbenchMockApi } from '@/mocks/dataWorkbenchMockApi'
+import { useLocalMock } from '@/mocks/localMode'
+import { mockResultFile } from '@/utils/download'
 
 import type {
   ApplyDataServiceRequest,
@@ -148,6 +151,22 @@ export const marketplaceApi = {
     client.post<MarketplaceApplyResponse>(`/marketplace/data-services/${code}/apply`, body).then((r) => r.data),
   retryDelivery: (approvalCode: string) =>
     client.post<ApprovalRequest>(`/marketplace/applications/${approvalCode}/retry-delivery`).then((r) => r.data),
+
+  /**
+   * 订阅交付下载。真实模式：GET /api/v1/results/{sourceSystem}/{resultId}/download
+   * （对齐后端 T0-1：受控下载，302 签名链接或流式二选一，由后端定）。
+   */
+  downloadDeliverable: (code: string): Promise<{ filename: string; mime: string; blob: Blob }> =>
+    useLocalMock
+      ? localDataWorkbenchMockApi.request('GET', `/subscriptions/${encodeURIComponent(code)}/download`).then((payload) => {
+          const data = payload as { filename: string; mime: string; title: string; rows: Record<string, unknown>[] }
+          return { filename: data.filename, mime: data.mime, blob: mockResultFile(data.title, data.rows) }
+        })
+      : client.get(`/results/data-platform/${encodeURIComponent(code)}/download`, { responseType: 'blob' }).then((response) => ({
+          filename: `${code}.csv`,
+          mime: String(response.headers['content-type'] ?? 'text/csv;charset=utf-8'),
+          blob: response.data as Blob,
+        })),
 }
 
 /** 算法工作台：能力目录（算法转换工具）与工作流模板（算法重组平台）聚合及运行。 */

@@ -10,6 +10,7 @@ import {
   seedDatasets,
   seedDatasetSubscriptions,
 } from '@/mocks/seed'
+import { expandDemoRows } from '@/utils/download'
 
 const relativeDate = (hoursAgo: number) => relativeIso(hoursAgo).slice(0, 10)
 
@@ -52,6 +53,7 @@ export interface DataSubscription {
   deliveryType: string
   rowsCount: number
   previewUrl?: string
+  hasFile: boolean
 }
 
 interface DatasetRecord {
@@ -176,6 +178,7 @@ export function createDataWorkbenchMockApi(): DataWorkbenchMockApi {
     deliveryType: item.deliveryType,
     rowsCount: item.rowsCount,
     previewUrl: item.previewUrl,
+    hasFile: item.hasFile !== false,
   }))
   let sequence = seedDatasetApplications.length
 
@@ -238,6 +241,22 @@ export function createDataWorkbenchMockApi(): DataWorkbenchMockApi {
       return {
         total: subscriptions.length,
         items: clone(subscriptions),
+      }
+    }
+
+    const downloadMatch = path.match(/^\/subscriptions\/([^/]+)\/download$/)
+    if (normalizedMethod === 'GET' && downloadMatch) {
+      const code = decodeURIComponent(downloadMatch[1])
+      const found = subscriptions.find((item) => item.code === code)
+      if (!found) throw error(404, 'NOT_FOUND', '未找到该订阅交付', path)
+      if (!found.hasFile) throw error(409, 'FILE_NOT_READY', '交付文件生成中', path)
+      const datasetCode = found.previewUrl?.match(/dataset\/([^/?]+)/)?.[1]
+      const dataset = seedDatasets.find((item) => item.code === datasetCode) ?? seedDatasets[0]
+      return {
+        filename: `${found.serviceName}.csv`,
+        mime: 'text/csv;charset=utf-8',
+        title: found.serviceName,
+        rows: expandDemoRows(dataset.sampleColumns, dataset.sampleRows, 32),
       }
     }
 

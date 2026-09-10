@@ -523,6 +523,7 @@ export const seedDatasetSubscriptions: SeedDataSubscription[] = [
     deliveryType: 'DATASET',
     rowsCount: 12500,
     previewUrl: '/data-workbench/dataset/dset-optical-snapshot',
+    hasFile: true,
   },
   {
     code: 'sub-002',
@@ -535,6 +536,7 @@ export const seedDatasetSubscriptions: SeedDataSubscription[] = [
     deliveryType: 'SNAPSHOT',
     rowsCount: 86400,
     previewUrl: '/data-workbench/dataset/dset-payload-daily',
+    hasFile: true,
   },
   {
     code: 'sub-003',
@@ -547,6 +549,7 @@ export const seedDatasetSubscriptions: SeedDataSubscription[] = [
     deliveryType: 'DATASET',
     rowsCount: 4300,
     previewUrl: '/data-workbench/dataset/dset-sst-field',
+    hasFile: false,
   },
 ]
 

@@ -66,4 +66,18 @@ describe('数据工作台 mock API（数据集）', () => {
     expect(listed.items[0].code).toBe(created.code)
     expect(listed.items.some((item) => item.serviceCode === 'dset-optical-snapshot')).toBe(true)
   })
+
+  it('订阅交付下载返回 20~50 行样例，无文件时拒绝', async () => {
+    const file = (await api.request('GET', '/subscriptions/sub-001/download')) as {
+      filename: string
+      rows: Array<Record<string, unknown>>
+    }
+    expect(file.filename).toMatch(/\.csv$/)
+    expect(file.rows.length).toBeGreaterThanOrEqual(20)
+    expect(file.rows.length).toBeLessThanOrEqual(50)
+
+    await expect(api.request('GET', '/subscriptions/sub-003/download')).rejects.toMatchObject({
+      response: { status: 409, data: { code: 'FILE_NOT_READY' } },
+    })
+  })
 })
