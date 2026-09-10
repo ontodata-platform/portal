@@ -460,6 +460,31 @@ export function createPortalMockApi(): PortalMockApi {
     if (normalizedMethod === 'post' && feedbackAction) return clone(update(find(feedbacks, 'code', feedbackAction[1], path), { status: 'HANDLED', handleNote: body.handleNote, handledAt: timestamp }))
     if (normalizedMethod === 'get' && path === '/operations/statistics') return { noticeTotal: notices.length, publishedNotices: notices.filter((item) => item.status === 'PUBLISHED').length, pendingFeedbacks: feedbacks.filter((item) => item.status === 'PENDING').length }
 
+    // B1 首页聚合：已发布公告 + 跨域待办摘要 + 推荐入口位。
+    // 推荐位当前为内置配置，D4 内容运营上线后改由 cms/entry 配置数据驱动。
+    if (normalizedMethod === 'get' && path === '/content/home') {
+      return {
+        greetingName: demoIdentity.name,
+        notices: notices
+          .filter((item) => item.status === 'PUBLISHED')
+          .slice(0, 6)
+          .map((item) => clone({ code: item.code, title: item.title, content: item.content, section: item.section, publishedAt: item.publishedAt ? String(item.publishedAt) : String(item.updatedAt) })),
+        entries: [
+          { code: 'data-workbench', title: '数据工作台', description: '浏览目录、申请数据服务与订阅交付', route: '/data-workbench', icon: 'database' },
+          { code: 'algorithm-workbench', title: '算法工作台', description: '运行已发布算法并查看结果', route: '/algorithm-workbench', icon: 'appstore' },
+          { code: 'assistant', title: '智能服务', description: '找数据、跑分析、看待办，一句话说清楚', route: '/assistant', icon: 'robot' },
+          { code: 'personal-results', title: '我的交付结果', description: '在线预览、领取与下载交付文件', route: '/personal/results', icon: 'file-done' },
+        ],
+        todo: {
+          pendingApprovals: approvals.filter((item) => item.status === 'PENDING').length,
+          runningTasks: tasks.filter((item) => item.status === 'RUNNING').length,
+          openRequirements: requirements.filter((item) => ['OPEN', 'ANALYZING', 'ASSIGNED', 'IN_PROGRESS'].includes(String(item.status))).length,
+          unread: notifications.filter((item) => !item.readAt).length,
+        },
+      }
+    }
+
+
     if (normalizedMethod === 'get' && path === '/marketplace/data-services') return aggregate('data-platform', page(services, params).items)
     const serviceMatch = path.match(/^\/marketplace\/data-services\/([^/]+)(?:\/apply)?$/)
     if (serviceMatch && normalizedMethod === 'get') return { sourceSystem: 'data-platform', available: true, item: clone(find(services, 'code', serviceMatch[1], path)), body: clone(find(services, 'code', serviceMatch[1], path)) }

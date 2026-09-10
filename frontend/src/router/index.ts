@@ -104,7 +104,13 @@ export const routes: RouteRecordRaw[] = [
       path: '/',
       component: MainLayout,
       children: [
-        { path: '', redirect: '/assistant' },
+        { path: '', redirect: '/home' },
+        {
+          path: 'home',
+          name: 'home',
+          component: () => import('@/views/home/HomeView.vue'),
+          meta: { titleKey: 'menu.home', group: 'groupPortal' },
+        },
         {
           path: 'assistant',
           name: 'assistant',

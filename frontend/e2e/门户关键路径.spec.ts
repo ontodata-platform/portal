@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 const criticalRoutes = [
+  '/home',
   '/assistant',
   '/personal',
   '/personal/tasks',

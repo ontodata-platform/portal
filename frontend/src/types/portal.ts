@@ -176,6 +176,40 @@ export interface Notice {
   updatedAt: string
 }
 
+/** 首页跨域待办聚合（B1）：口径=审批 PENDING / 任务 RUNNING / 需求未终态 / 通知未读。 */
+export interface HomeTodoAggregate {
+  pendingApprovals: number
+  runningTasks: number
+  openRequirements: number
+  unread: number
+}
+
+/** 首页推荐入口位（B1）：D4 内容运营上线后由运营配置驱动。 */
+export interface HomeEntry {
+  code: string
+  title: string
+  description: string
+  route: string
+  icon: 'database' | 'appstore' | 'robot' | 'file-done'
+}
+
+/** 首页公告摘要（B1）：仅取已发布公告。 */
+export interface HomeNotice {
+  code: string
+  title: string
+  content: string
+  section: string
+  publishedAt?: string
+}
+
+/** 首页聚合数据（B1）：GET /api/v1/content/home。 */
+export interface HomeData {
+  greetingName: string
+  notices: HomeNotice[]
+  entries: HomeEntry[]
+  todo: HomeTodoAggregate
+}
+
 /** 反馈（operations-center）：fb-* 编码。 */
 export interface Feedback {
   code: string

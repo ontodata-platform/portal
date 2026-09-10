@@ -120,9 +120,9 @@ describe('IA v2 路由与旧路径重定向', () => {
     vi.unstubAllEnvs()
   })
 
-  it('默认落地 /assistant', async () => {
+  it('默认落地 /home', async () => {
     await router.push('/')
-    expect(router.currentRoute.value.path).toBe('/assistant')
+    expect(router.currentRoute.value.path).toBe('/home')
   })
 
   it.each([

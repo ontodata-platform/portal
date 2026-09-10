@@ -5,6 +5,7 @@ import {
   CheckOutlined,
   DatabaseOutlined,
   GlobalOutlined,
+  HomeOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -70,6 +71,7 @@ const commandResults = computed(() => {
 
 const navItems = computed(() => {
   const items = [
+    { key: '/home', label: t('menu.home'), icon: HomeOutlined },
     { key: '/assistant', label: t('menu.assistant'), icon: RobotOutlined },
     { key: '/personal', label: t('menu.personal'), icon: UserOutlined },
     { key: '/data-workbench', label: t('menu.marketplace'), icon: DatabaseOutlined },
@@ -83,6 +85,7 @@ const navItems = computed(() => {
 
 const selectedKeys = computed(() => {
   const path = route.path
+  if (path === '/' || path.startsWith('/home')) return ['/home']
   if (path.startsWith('/personal')) return ['/personal']
   if (path.startsWith('/data-workbench') || path.startsWith('/marketplace')) return ['/data-workbench']
   if (path.startsWith('/algorithm-workbench') || path.startsWith('/workbench')) return ['/algorithm-workbench']
@@ -192,7 +195,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
         class="portal-nav-menu"
         @click="handleMenuClick"
       >
-        <a-menu-item v-for="item in navItems.slice(0, 4)" :key="item.key">
+        <a-menu-item v-for="item in navItems.slice(0, 5)" :key="item.key">
           <template #icon>
             <component :is="item.icon" />
           </template>
