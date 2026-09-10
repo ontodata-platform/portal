@@ -256,6 +256,18 @@ export const routes: RouteRecordRaw[] = [
               meta: { titleKey: 'menu.adminApprovals', roles: ADMIN_ROLES },
             },
             {
+              path: 'approval-config',
+              name: 'admin-approval-config',
+              component: () => import('@/views/admin/ApprovalConfigView.vue'),
+              meta: { titleKey: 'admin.approvalConfig.title', roles: ADMIN_ROLES },
+            },
+            {
+              path: 'statistics',
+              name: 'admin-statistics',
+              component: () => import('@/views/admin/StatisticsView.vue'),
+              meta: { titleKey: 'admin.statistics.title', roles: ADMIN_ROLES },
+            },
+            {
               path: 'iam',
               name: 'admin-iam',
               component: () => import('@/views/admin/IamAdminView.vue'),
