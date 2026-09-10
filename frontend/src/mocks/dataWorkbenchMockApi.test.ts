@@ -15,11 +15,11 @@ describe('数据工作台 mock API（数据集）', () => {
   })
 
   it('目录支持主题域与关键词过滤', async () => {
-    const byDomain = (await api.request('GET', '/datasets', { domain: '客户域' })) as {
+    const byDomain = (await api.request('GET', '/datasets', { domain: '光学影像' })) as {
       items: Array<{ domain: string }>
     }
     expect(byDomain.items.length).toBeGreaterThan(0)
-    expect(byDomain.items.every((item) => item.domain === '客户域')).toBe(true)
+    expect(byDomain.items.every((item) => item.domain === '光学影像')).toBe(true)
 
     const byKeyword = (await api.request('GET', '/datasets', { keyword: '遥测' })) as {
       items: Array<{ name: string }>
@@ -28,7 +28,7 @@ describe('数据工作台 mock API（数据集）', () => {
   })
 
   it('数据集详情包含描述符区块（口径/字段/样例/质量/版本）', async () => {
-    const res = (await api.request('GET', '/datasets/dset-customer-monthly')) as {
+    const res = (await api.request('GET', '/datasets/dset-optical-snapshot')) as {
       descriptor: { sections: Array<{ type: string }> }
     }
     const types = res.descriptor.sections.map((section) => section.type)
@@ -45,6 +45,6 @@ describe('数据工作台 mock API（数据集）', () => {
 
   it('主题域清单可查询', async () => {
     const res = (await api.request('GET', '/dataset-domains')) as { items: string[] }
-    expect(res.items).toContain('客户域')
+    expect(res.items).toContain('光学影像')
   })
 })

@@ -47,7 +47,7 @@ describe('AlgorithmWorkbenchView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     listServicesMock.mockResolvedValue({ total: 0, items: [] })
-    listCategoriesMock.mockResolvedValue(['质量分析', '预测'])
+    listCategoriesMock.mockResolvedValue(['目标特性提取', '时序预测'])
   })
 
   it('分类筛选以可聚焦按钮呈现，并用所选分类重新加载服务', async () => {
@@ -56,7 +56,7 @@ describe('AlgorithmWorkbenchView', () => {
     })
     await flushPromises()
 
-    const forecast = wrapper.findAll('button.category-filter').find((button) => button.text() === '预测')
+    const forecast = wrapper.findAll('button.category-filter').find((button) => button.text() === '时序预测')
     expect(forecast).toBeDefined()
     expect(forecast!.attributes('aria-pressed')).toBe('false')
 
@@ -67,7 +67,7 @@ describe('AlgorithmWorkbenchView', () => {
       page: 1,
       size: 20,
       keyword: undefined,
-      category: '预测',
+      category: '时序预测',
     })
     expect(forecast!.attributes('aria-pressed')).toBe('true')
   })

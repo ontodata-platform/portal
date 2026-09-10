@@ -23,7 +23,7 @@ describe('PageHeader', () => {
     const wrapper = mount(PageHeader, {
       props: {
         eyebrow: '服务门户',
-        title: '客户质量分析-周批',
+        title: '目标特性提取-周批',
         backTo: '/algorithm-workbench',
         parents: ['数据工作台', '算法工作台'],
       },

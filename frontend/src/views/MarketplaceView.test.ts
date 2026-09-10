@@ -53,7 +53,7 @@ describe('MarketplaceView', () => {
       available: true,
       body: {
         total: 1,
-        items: [{ code: 'dsv-12345678', name: '客户主数据服务', status: 'ACTIVE', currentVersion: 1 }],
+        items: [{ code: 'dsv-12345678', name: '高分光学影像服务', status: 'ACTIVE', currentVersion: 1 }],
       },
     })
     const wrapper = mountView()

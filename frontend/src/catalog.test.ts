@@ -7,13 +7,13 @@ describe('catalog', () => {
     const item = catalogItem({
       sourceSystem: 'data-platform',
       available: true,
-      body: { code: 'dsv-a', name: '客户服务', status: 'ACTIVE', currentVersion: 1 },
+      body: { code: 'dsv-a', name: '高分光学影像服务', status: 'ACTIVE', currentVersion: 1 },
     })
-    expect(item?.name).toBe('客户服务')
+    expect(item?.name).toBe('高分光学影像服务')
     expect(catalogTotal({
       sourceSystem: 'data-platform',
       available: true,
-      body: { code: 'dsv-a', name: '客户服务', status: 'ACTIVE', currentVersion: 1 },
+      body: { code: 'dsv-a', name: '高分光学影像服务', status: 'ACTIVE', currentVersion: 1 },
     })).toBe(1)
   })
 

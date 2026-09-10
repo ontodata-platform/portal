@@ -54,7 +54,7 @@ const commonCommands: PortalCommand[] = [
 
 const intentCommands: PortalCommand[] = [
   { id: 'intent-data', label: '帮我找数据服务', description: '将意图交给智能服务处理', path: '/assistant', assistantQuery: '帮我找数据服务' },
-  { id: 'intent-run', label: '帮我跑质量分析', description: '从智能服务开始配置运行', path: '/assistant', assistantQuery: '跑一遍客户质量分析' },
+  { id: 'intent-run', label: '帮我跑目标特性提取', description: '从智能服务开始配置运行', path: '/assistant', assistantQuery: '跑一遍港区目标特性提取' },
   { id: 'intent-approval', label: '我有哪些待办审批', description: '查询当前需要处理的审批', path: '/assistant', assistantQuery: '我有哪些待办审批' },
 ]
 

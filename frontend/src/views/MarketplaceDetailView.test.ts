@@ -48,10 +48,10 @@ describe('MarketplaceDetailView', () => {
       available: true,
       body: {
         code: 'dsv-test-100',
-        name: '测试客户数据服务',
+        name: '高分光学影像服务',
         status: 'ONLINE',
         currentVersion: '1.2.0',
-        description: '客户基础特征服务',
+        description: '东海示范区光学影像服务',
       },
     })
     vi.mocked(marketplaceApi.apply).mockResolvedValue({
@@ -64,7 +64,7 @@ describe('MarketplaceDetailView', () => {
     })
     await flushPromises()
 
-    expect(wrapper.text()).toContain('测试客户数据服务')
+    expect(wrapper.text()).toContain('高分光学影像服务')
     expect(wrapper.text()).toContain('dsv-test-100')
     expect(wrapper.text()).toContain('v1.2.0')
 

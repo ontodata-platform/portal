@@ -270,7 +270,7 @@ export function createLocalAgentMockApi() {
     },
     catalogSearch: async (params: { q: string }): Promise<CatalogSearchResponse> => ({
       hits: params.q.trim()
-        ? [{ kind: 'workflow', id: 'tpl-quality-weekly', title: '客户质量分析-周批', snippet: '目录命中质量分析流程。', classification: 'INTERNAL', source: 'recombine' }]
+        ? [{ kind: 'workflow', id: 'tpl-quality-weekly', title: '目标特性提取-周批', snippet: '目录命中港区目标特性提取流程。', classification: 'INTERNAL', source: 'recombine' }]
         : [],
     }),
     stream: async (sessionId: string, handlers: LocalAgentStreamHandlers, signal: AbortSignal): Promise<void> => {

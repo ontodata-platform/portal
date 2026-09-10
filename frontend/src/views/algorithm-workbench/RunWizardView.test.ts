@@ -54,9 +54,9 @@ describe('RunWizardView', () => {
     vi.clearAllMocks()
     findServiceMock.mockResolvedValue({
       code: 'quality-weekly',
-      name: '数据质量分析',
-      category: '质量分析',
-      description: '校验待分析数据集质量',
+      name: '目标特性提取',
+      category: '目标特性提取',
+      description: '从光学影像提取目标特性',
       inputHint: '需要待分析数据集',
       typicalDuration: '5 分钟',
       runCount: 1,
@@ -67,7 +67,7 @@ describe('RunWizardView', () => {
         serviceType: 'algorithm-service',
         provider: 'algorithm-platform',
         code: 'quality-weekly',
-        name: '数据质量分析',
+        name: '目标特性提取',
         summary: {},
         sections: [{ type: 'inputs', inputs: [{ key: 'dataset', label: '待分析数据集', kind: 'dataset-ref', required: true }] }],
         actions: [],

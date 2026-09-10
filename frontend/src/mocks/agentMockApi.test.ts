@@ -31,7 +31,7 @@ describe('local agent mock', () => {
       controller.signal,
     )
 
-    await api.postMessage(session.id, '更新客户表')
+    await api.postMessage(session.id, '更新影像快照')
     await Promise.resolve()
     expect(cards).toHaveLength(1)
     const token = (cards[0] as { confirmToken: string }).confirmToken
@@ -56,7 +56,7 @@ describe('local agent mock', () => {
       controller.signal,
     )
 
-    const run = await api.createRun(session.id, { graph: 'quality', input: { question: '分析客户表质量' } })
+    const run = await api.createRun(session.id, { graph: 'quality', input: { question: '分析高分光学影像' } })
     expect(run.status).toBe('interrupted')
     expect(interrupts).toEqual([
       expect.objectContaining({ kind: 'approval', ref: SAMPLE_R4_APPROVAL, tool: 'workflow.submit_execution' }),

@@ -69,11 +69,11 @@ describe('算法工作台 mock API', () => {
   })
 
   it('目录支持按分类过滤', async () => {
-    const res = (await api.request('GET', '/algorithm-services', { category: '预测' })) as {
+    const res = (await api.request('GET', '/algorithm-services', { category: '时序预测' })) as {
       items: Array<{ category: string }>
     }
     expect(res.items.length).toBeGreaterThan(0)
-    expect(res.items.every((item) => item.category === '预测')).toBe(true)
+    expect(res.items.every((item) => item.category === '时序预测')).toBe(true)
   })
 
   it('测试数据上传：CSV 返回临时引用，其他类型拒绝', async () => {

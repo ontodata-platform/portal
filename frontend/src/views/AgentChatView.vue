@@ -33,7 +33,7 @@ interface ChatItem {
 }
 
 const LAST_SESSION_KEY = 'ontodata.agent.lastSession'
-const SAMPLE_QUALITY_PROMPT = '分析客户表质量并提交工作流'
+const SAMPLE_QUALITY_PROMPT = '分析高分光学影像并提交目标特性提取'
 
 const { t } = useI18n()
 const route = useRoute()

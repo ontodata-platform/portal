@@ -134,7 +134,7 @@ describe('MainLayout v2', () => {
     const wrapper = mountLayout()
     await flushPromises()
     const input = wrapper.find('input.global-search')
-    await input.setValue('客户主数据')
+    await input.setValue('高分光学影像')
     await input.trigger('focus')
     expect(pushMock).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('快速命令')

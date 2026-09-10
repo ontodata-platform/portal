@@ -193,7 +193,7 @@ onMounted(loadDetail)
             <a-input
               v-model:value="applyForm.columnInput"
               aria-label="申请字段"
-              placeholder="例如：客户编号、客户名称、创建时间（回车添加）"
+              placeholder="例如：景号、过境时间、云量（回车添加）"
               @press-enter.prevent="addColumn"
             >
               <template #suffix>

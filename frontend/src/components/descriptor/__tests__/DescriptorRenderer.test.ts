@@ -10,14 +10,14 @@ const descriptor: ServiceDescriptor = {
   serviceType: 'algorithm-service',
   provider: 'algorithm-recombine',
   code: 'tpl-quality-weekly',
-  name: '客户质量分析-周批',
+  name: '目标特性提取-周批',
   summary: { version: '1.2.0', status: 'PUBLISHED', badges: ['准入：APPROVED'] },
   sections: [
     { type: 'summary', title: '基本信息', fields: [{ label: '服务编码', value: 'tpl-quality-weekly' }] },
-    { type: 'richtext', title: '服务说明', text: '对客户主数据做字段级质量核查。' },
+    { type: 'richtext', title: '服务说明', text: '对高分光学影像做目标特性提取。' },
     { type: 'mystery-block', title: '未来新区块' },
     { type: 'inputs', title: '输入要求', inputs: [
-      { key: 'customerData', label: '客户主数据', kind: 'dataset-ref', required: true },
+      { key: 'opticalScene', label: '高分光学影像快照', kind: 'dataset-ref', required: true },
       { key: 'qualityThreshold', label: '质量合格阈值', kind: 'number', defaultValue: '0.8' },
     ] },
   ],
@@ -55,7 +55,7 @@ function mountRenderer() {
 describe('DescriptorRenderer', () => {
   it('渲染服务名称与摘要徽章', () => {
     const wrapper = mountRenderer()
-    expect(wrapper.text()).toContain('客户质量分析-周批')
+    expect(wrapper.text()).toContain('目标特性提取-周批')
     expect(wrapper.text()).toContain('1.2.0')
     expect(wrapper.text()).toContain('准入：已通过')
   })
@@ -67,9 +67,9 @@ describe('DescriptorRenderer', () => {
     expect(text).toContain('服务编码')
     expect(text).toContain('tpl-quality-weekly')
     expect(text).toContain('服务说明')
-    expect(text).toContain('对客户主数据做字段级质量核查。')
+    expect(text).toContain('对高分光学影像做目标特性提取。')
     expect(text).toContain('输入要求')
-    expect(text).toContain('客户主数据')
+    expect(text).toContain('高分光学影像快照')
     expect(text).toContain('数据引用')
   })
 

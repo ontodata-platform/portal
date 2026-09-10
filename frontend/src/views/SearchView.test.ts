@@ -66,8 +66,8 @@ describe('SearchView', () => {
         {
           kind: 'data_asset',
           id: 'dsv-a1',
-          title: '客户主数据',
-          snippet: '客户基础特征',
+          title: '高分光学影像',
+          snippet: '东海示范区光学影像',
           classification: 'INTERNAL',
           source: 'data-platform',
         },
@@ -86,12 +86,12 @@ describe('SearchView', () => {
   it('提交关键词后调用 catalog/search 并展示命中', async () => {
     const wrapper = mountView()
     const view = wrapper.findComponent(SearchView)
-    ;(view.vm as unknown as { query: { q: string } }).query.q = '客户'
+    ;(view.vm as unknown as { query: { q: string } }).query.q = '高分'
     await (view.vm as unknown as { search: () => Promise<void> }).search()
     await flushPromises()
 
-    expect(catalogSearchMock).toHaveBeenCalledWith({ q: '客户', kind: undefined, limit: 20 })
-    expect(wrapper.text()).toContain('客户主数据')
+    expect(catalogSearchMock).toHaveBeenCalledWith({ q: '高分', kind: undefined, limit: 20 })
+    expect(wrapper.text()).toContain('高分光学影像')
     expect(wrapper.text()).toContain('风险编排')
   })
 
@@ -108,7 +108,7 @@ describe('SearchView', () => {
   it('点击数据资产命中进入商城详情', async () => {
     const wrapper = mountView()
     const view = wrapper.findComponent(SearchView)
-    ;(view.vm as unknown as { query: { q: string } }).query.q = '客户'
+    ;(view.vm as unknown as { query: { q: string } }).query.q = '高分'
     await (view.vm as unknown as { search: () => Promise<void> }).search()
     await flushPromises()
 

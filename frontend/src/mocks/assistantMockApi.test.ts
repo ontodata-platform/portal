@@ -16,7 +16,7 @@ describe('assistantMockApi 意图路由', () => {
     expect(listed.cards?.every((card) => card.type === 'algorithm')).toBe(true)
     expect(listed.confirm).toBeUndefined()
 
-    const run = routeAssistantIntent('跑一遍客户质量分析并提交')
+    const run = routeAssistantIntent('跑一遍港区目标特性提取并提交')
     expect(run.confirm?.tool).toBe('recombine.submit_workflow')
     expect(run.approvalCode).toBe('apr-r4-sample')
   })
@@ -28,7 +28,7 @@ describe('assistantMockApi 意图路由', () => {
   })
 
   it('申请/权限/开通 → guide', () => {
-    const result = routeAssistantIntent('申请开通设备遥测权限')
+    const result = routeAssistantIntent('申请开通载荷遥测权限')
     expect(result.cards?.[0]?.type).toBe('guide')
     if (result.cards?.[0]?.type === 'guide') {
       expect(result.cards[0].payload.target).toContain('/data-workbench/')

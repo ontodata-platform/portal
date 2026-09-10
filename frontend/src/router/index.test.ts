@@ -147,9 +147,9 @@ describe('IA v2 路由与旧路径重定向', () => {
   })
 
   it('统一搜索 query 透传到 /assistant', async () => {
-    await router.push('/search?q=客户')
+    await router.push('/search?q=高分')
     expect(router.currentRoute.value.path).toBe('/assistant')
-    expect(router.currentRoute.value.query.q).toBe('客户')
+    expect(router.currentRoute.value.query.q).toBe('高分')
   })
 
   it('/agent/chat?session= 续接到 /assistant?resume=', async () => {

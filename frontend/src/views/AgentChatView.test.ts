@@ -221,14 +221,14 @@ describe('AgentChatView', () => {
     await flushPromises()
     await selectAgent(wrapper, 'agent-1')
 
-    await wrapper.find('textarea').setValue('分析客户表质量并提交工作流')
+    await wrapper.find('textarea').setValue('分析高分光学影像并提交目标特性提取')
     const send = wrapper.findAll('button').find((button) => button.text().includes('发送'))!
     await send.trigger('click')
     await flushPromises()
 
     expect(createRunMock).toHaveBeenCalledWith('s-1', {
       graph: 'quality',
-      input: { question: '分析客户表质量并提交工作流' },
+      input: { question: '分析高分光学影像并提交目标特性提取' },
     })
     expect(postMessageMock).not.toHaveBeenCalled()
   })
@@ -238,13 +238,13 @@ describe('AgentChatView', () => {
     await flushPromises()
     await selectAgent(wrapper, 'agent-1')
 
-    await wrapper.find('textarea').setValue('查一下客户主数据')
+    await wrapper.find('textarea').setValue('查一下高分光学影像')
     const send = wrapper.findAll('button').find((button) => button.text().includes('发送'))!
     await send.trigger('click')
     await flushPromises()
 
-    expect(postMessageMock).toHaveBeenCalledWith('s-1', '查一下客户主数据')
-    expect(wrapper.text()).toContain('查一下客户主数据')
+    expect(postMessageMock).toHaveBeenCalledWith('s-1', '查一下高分光学影像')
+    expect(wrapper.text()).toContain('查一下高分光学影像')
     expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe('')
   })
 

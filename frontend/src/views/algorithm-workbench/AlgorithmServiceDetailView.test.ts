@@ -32,8 +32,8 @@ describe('AlgorithmServiceDetailView', () => {
     vi.clearAllMocks()
     findServiceMock.mockResolvedValue({
       code: 'tpl-quality-weekly',
-      name: '数据质量分析-周批',
-      category: '质量分析',
+      name: '目标特性提取-周批',
+      category: '目标特性提取',
       descriptor: { sections: [] },
     })
   })

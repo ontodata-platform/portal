@@ -67,10 +67,10 @@ function mountView(pinia = createPinia()) {
 const draftScenario = {
   code: 'scn-abc123',
   version: '1.0.0',
-  name: '客户数据质量分析场景',
+  name: '海上目标态势研判场景',
   status: 'DRAFT',
   bindings: [
-    { type: 'DATA_SNAPSHOT', ref: 'snap-customer-master', version: '3.0.0', alias: 'customerData', sourceSystem: 'DATA_PLATFORM' },
+    { type: 'DATA_SNAPSHOT', ref: 'snap-optical-scene', version: '3.0.0', alias: 'opticalScene', sourceSystem: 'DATA_PLATFORM' },
   ],
   tenantId: 'default',
   createdAt: '2026-08-26T08:00:00Z',
