@@ -204,14 +204,6 @@ export function createPortalMockApi(): PortalMockApi {
   ]
   const results: RecordValue[] = hydrateResults()
   const feedbacks: RecordValue[] = hydrateFeedbacks()
-  const scenarios: RecordValue[] = [
-    {
-      code: 'scn-maritime-target-001', version: '1.0.0', name: '海上目标态势研判', description: '已发布的海上目标态势研判场景。', status: 'PUBLISHED', tenantId: 'default', createdBy: demoIdentity.name,
-      ontologyRefs: [{ packageCode: 'pkg-maritime-target', version: '1.0.0' }],
-      bindings: [{ type: 'WORKFLOW_TEMPLATE', ref: 'tpl-maritime-target-flow', version: '2.0.0', alias: 'maritimeTargetFlow', sourceSystem: 'ALGORITHM_RECOMBINE' }],
-      createdAt: timestamp, updatedAt: timestamp,
-    },
-  ]
   let sequence = 20
 
   const find = (items: RecordValue[], key: string, value: string, path: string) => {
@@ -500,37 +492,6 @@ export function createPortalMockApi(): PortalMockApi {
       return { taskId: task.taskId, status: task.status, started: true }
     }
 
-    if (normalizedMethod === 'get' && path === '/scenarios') return page(scenarios, params)
-    if (normalizedMethod === 'post' && path === '/scenarios') {
-      const name = stringValue(body.name)
-      const bindings = Array.isArray(body.bindings) ? body.bindings : []
-      if (!name || bindings.length === 0) throw error(422, 'VALIDATION_FAILED', '场景名称和至少一个装配绑定不能为空', path, { name: '请输入场景名称', bindings: '至少添加一个装配绑定' })
-      const scenario = { code: nextCode('scn'), version: '1.0.0', name, description: body.description, projectId: body.projectId, status: 'DRAFT', ontologyRefs: body.ontologyRefs ?? [], bindings, presentation: body.presentation, tenantId: 'default', createdBy: body.createdBy ?? demoIdentity.name, createdAt: timestamp, updatedAt: timestamp }
-      scenarios.unshift(scenario)
-      return clone(scenario)
-    }
-    const scenarioVersionMatch = path.match(/^\/scenarios\/([^/]+)\/versions\/([^/]+)\/(publish|deprecate)$/)
-    if (normalizedMethod === 'post' && scenarioVersionMatch) {
-      const scenario = scenarios.find((item) => item.code === scenarioVersionMatch[1] && item.version === scenarioVersionMatch[2])
-      if (!scenario) throw error(404, 'NOT_FOUND', '未找到场景版本', path)
-      return clone(update(scenario, { status: scenarioVersionMatch[3] === 'publish' ? 'PUBLISHED' : 'DEPRECATED' }))
-    }
-    const scenarioDraftMatch = path.match(/^\/scenarios\/([^/]+)\/drafts$/)
-    if (normalizedMethod === 'post' && scenarioDraftMatch) {
-      const base = find(scenarios, 'code', scenarioDraftMatch[1], path)
-      const draft = { ...clone(base), version: `1.0.${sequence++}`, status: 'DRAFT', createdAt: timestamp, updatedAt: timestamp }
-      scenarios.unshift(draft)
-      return clone(draft)
-    }
-    const scenarioUpdateMatch = path.match(/^\/scenarios\/([^/]+)\/versions\/([^/]+)$/)
-    if (normalizedMethod === 'put' && scenarioUpdateMatch) {
-      const scenario = scenarios.find((item) => item.code === scenarioUpdateMatch[1] && item.version === scenarioUpdateMatch[2])
-      if (!scenario) throw error(404, 'NOT_FOUND', '未找到场景版本', path)
-      if (scenario.status !== 'DRAFT') throw error(409, 'STATE_CONFLICT', '仅草稿场景可以编辑', path)
-      return clone(update(scenario, body))
-    }
-    if (normalizedMethod === 'get' && path.startsWith('/scenarios/')) return clone(find(scenarios, 'code', path.slice('/scenarios/'.length), path))
-
     if (normalizedMethod === 'get' && path === '/personal/me') return { ...demoIdentity }
     if (normalizedMethod === 'get' && path === '/personal/requirements') {
       return page(requirements.filter((item) => item.requester === demoIdentity.name), params)
@@ -549,16 +510,6 @@ export function createPortalMockApi(): PortalMockApi {
     if (normalizedMethod === 'post' && path === '/personal/notifications/read-all') {
       notifications.forEach((item) => update(item, { readAt: timestamp }))
       return { unread: 0 }
-    }
-
-    if (normalizedMethod === 'post' && path === '/projections/rebuild') {
-      return { consumerGroup: 'portal.task-projection-rebuild-mock', polled: 0, applied: 0, duplicate: 0, stale: 0, unknown: 0, tasks: tasks.length, elapsedMillis: 12 }
-    }
-    if (normalizedMethod === 'get' && path === '/retention/status') {
-      return { retentionDays: 180, cutoffAt: new Date(Date.now() - 180 * 86400e3).toISOString(), tasks: 0, approvals: 0, requirements: 0, feedbacks: 0, notices: 0 }
-    }
-    if (normalizedMethod === 'post' && path === '/retention/cleanup') {
-      return { dryRun: params.dryRun !== 'false' && params.dryRun !== false, tasks: 0, approvals: 0, requirements: 0, feedbacks: 0, notices: 0 }
     }
 
     console.warn(`[mock] uncovered route ${normalizedMethod.toUpperCase()} ${path}`)
