@@ -133,6 +133,13 @@ export const routes: RouteRecordRaw[] = [
           meta: { titleKey: 'matter.title', group: 'groupPortal' },
         },
         {
+          // D6 帮助中心
+          path: 'help',
+          name: 'help',
+          component: () => import('@/views/help/HelpView.vue'),
+          meta: { titleKey: 'help.title', group: 'groupPortal' },
+        },
+        {
           path: 'assistant',
           name: 'assistant',
           component: () => import('@/views/assistant/AssistantView.vue'),

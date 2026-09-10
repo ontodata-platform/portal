@@ -67,7 +67,7 @@ describe('MainLayout v2', () => {
     vi.mocked(personalApi.unreadCount).mockResolvedValue({ unread: 3 })
   })
 
-  it('侧栏仅 4 个用户入口，开发模式显示管理端，不展示开发模式字样', async () => {
+  it('侧栏展示 6 个门户入口，开发模式显示管理端，不展示开发模式字样', async () => {
     const wrapper = mountLayout()
     await flushPromises()
 

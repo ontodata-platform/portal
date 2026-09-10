@@ -9,6 +9,7 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  QuestionCircleOutlined,
   RobotOutlined,
   SafetyCertificateOutlined,
   SearchOutlined,
@@ -153,6 +154,7 @@ const commandResults = computed(() => {
 const navItems = computed(() => {
   const items = [
     { key: '/home', label: t('menu.home'), icon: HomeOutlined },
+    { key: '/help', label: t('help.title'), icon: QuestionCircleOutlined },
     { key: '/assistant', label: t('menu.assistant'), icon: RobotOutlined },
     { key: '/personal', label: t('menu.personal'), icon: UserOutlined },
     { key: '/data-workbench', label: t('menu.marketplace'), icon: DatabaseOutlined },
@@ -315,7 +317,7 @@ onUnmounted(() => {
         class="portal-nav-menu"
         @click="handleMenuClick"
       >
-        <a-menu-item v-for="item in navItems.slice(0, 5)" :key="item.key">
+        <a-menu-item v-for="item in navItems.slice(0, 6)" :key="item.key">
           <template #icon>
             <component :is="item.icon" />
           </template>
@@ -337,6 +339,12 @@ onUnmounted(() => {
               <SafetyCertificateOutlined />
             </template>
             <span>{{ t('menu.admin') }}</span>
+          </a-menu-item>
+          <a-menu-item key="/help">
+            <template #icon>
+              <QuestionCircleOutlined />
+            </template>
+            <span>{{ t('help.title') }}</span>
           </a-menu-item>
         </a-menu>
       </div>
