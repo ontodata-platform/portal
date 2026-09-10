@@ -187,6 +187,12 @@ export const personalApi = {
   todos: () => client.get<PersonalTodo>('/personal/todos').then((r) => r.data),
   notifications: (params: Partial<ListParams> = {}) =>
     client.get<PageResponse<PortalNotification>>('/personal/notifications', { params }).then((r) => r.data),
+  /**
+   * C3-3 SSE 契约预留（后端 T2-4）：
+   *   GET /api/v1/personal/notifications/stream  → text/event-stream
+   *   事件：notice.created { id, title, body }；客户端 EventSource 订阅后驱动红点与弹窗。
+   * 演示注入：mock 模式 ?demoPush=1 时 90 秒后注入一条新通知（见 portalMockApi）。
+   */
   /** C2 待办中心：跨审批/任务等域的待办聚合（后端落地时对齐 GET /todos/aggregate）。 */
   aggregateTodos: () =>
     client.get<{ items: TodoAggregateItem[] }>('/todos/aggregate').then((r) => r.data),
