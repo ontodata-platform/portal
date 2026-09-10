@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRightOutlined, BellOutlined, FileDoneOutlined } from '@ant-design/icons-vue'
+import { ArrowRightOutlined, BellOutlined, BulbOutlined, FileDoneOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -101,7 +101,7 @@ onMounted(() => {
         </div>
       </div>
       <div class="week-foot">
-        <span class="chart-tip">💡 点击柱体可直接查看当日任务明细</span>
+        <span class="chart-tip"><BulbOutlined class="chart-tip-icon" /> 点击柱体可直接查看当日任务明细</span>
         <a class="drilldown-link" @click="router.push('/personal/tasks')">
           {{ t('personal.overview.weeklyLink') }}
           <ArrowRightOutlined />
