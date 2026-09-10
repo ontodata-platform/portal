@@ -158,6 +158,12 @@ export const routes: RouteRecordRaw[] = [
               component: () => import('@/views/personal/sections/NotificationSection.vue'),
               meta: { titleKey: 'menu.notifications', group: 'groupPortal' },
             },
+            {
+              path: 'favorites',
+              name: 'personal-favorites',
+              component: () => import('@/views/personal/sections/FavoritesSection.vue'),
+              meta: { titleKey: 'menu.favorites', group: 'groupPortal' },
+            },
           ],
         },
         {

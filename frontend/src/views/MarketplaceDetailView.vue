@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { KeyOutlined } from '@ant-design/icons-vue'
+import { KeyOutlined, StarFilled, StarOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -9,6 +9,7 @@ import { marketplaceApi } from '@/api/portal'
 import { catalogItem } from '@/catalog'
 import ApplyWizardModal from '@/components/data-workbench/ApplyWizardModal.vue'
 import DescriptorSection from '@/components/descriptor/DescriptorSection.vue'
+import { useFavoritesStore } from '@/stores/favorites'
 import { useMessageStore } from '@/stores/message'
 import type { ApplyTarget } from '@/types/application'
 import type { ProductDescriptor } from '@/types/data-workbench'
@@ -55,6 +56,8 @@ async function loadDetail() {
     aggregation.value = res
     service.value = catalogItem(res, code.value)
     notFound.value = !service.value && Boolean(res.available)
+    // B5：记录浏览历史（个人中心"收藏与历史"展示）
+    if (service.value) favoritesStore.recordVisit(code.value, service.value.name)
   } catch (error) {
     const apiError = error instanceof ApiError ? error : ApiError.from(error)
     if (apiError.status === 404 || apiError.code === 'NOT_FOUND') {
@@ -74,6 +77,13 @@ function openApplyModal() {
 
 function onApplied() {
   void loadDetail()
+}
+
+const favoritesStore = useFavoritesStore()
+const favorite = computed(() => favoritesStore.isFavorite(code.value))
+
+function toggleFavorite() {
+  if (service.value) favoritesStore.toggleFavorite(code.value, service.value.name)
 }
 
 onMounted(loadDetail)
@@ -108,6 +118,17 @@ onMounted(loadDetail)
                 </a-tag>
                 <a-tag color="blue">v{{ service.currentVersion }}</a-tag>
                 <a-tag v-if="service.classification" color="orange">{{ 中文展示(service.classification) }}</a-tag>
+                <button
+                  type="button"
+                  class="star-btn"
+                  :class="{ 'star-btn--on': favorite }"
+                  :aria-label="favorite ? t('marketplace.unfavoriteAria') : t('marketplace.favoriteAria')"
+                  @click="toggleFavorite"
+                >
+                  <StarFilled v-if="favorite" />
+                  <StarOutlined v-else />
+                  {{ t('marketplace.favoriteAction') }}
+                </button>
               </a-space>
             </div>
 
@@ -249,6 +270,22 @@ onMounted(loadDetail)
 }
 
 .service-header {
+  /* B5 收藏按钮（标题行内） */
+  .star-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--od-gray-500, #64748b);
+  }
+
+  .star-btn--on {
+    color: #f59e0b;
+  }
+
   display: flex;
   justify-content: space-between;
   align-items: center;

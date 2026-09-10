@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import { ArrowRightOutlined, CheckCircleOutlined, DatabaseOutlined, KeyOutlined } from '@ant-design/icons-vue'
+import { ArrowRightOutlined, CheckCircleOutlined, DatabaseOutlined, KeyOutlined, StarFilled, StarOutlined } from '@ant-design/icons-vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import type { CatalogEntry } from '@/types/portal'
+import { useFavoritesStore } from '@/stores/favorites'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const props = defineProps<{ item: CatalogEntry }>()
 const { t } = useI18n()
 const router = useRouter()
+const favoritesStore = useFavoritesStore()
 
 const subscribed = computed(() => Boolean(props.item.subscribed))
+const favorite = computed(() => favoritesStore.isFavorite(props.item.code))
+
+/** 收藏星标：阻止冒泡，避免触发卡片打开详情。 */
+function toggleFavorite() {
+  favoritesStore.toggleFavorite(props.item.code, props.item.name)
+}
 
 const tone = computed(() => {
   const raw = String(props.item.classification ?? props.item.status ?? '')
@@ -45,6 +53,16 @@ function open() {
         <a-tag v-else color="default" class="sub-tag">
           {{ t('marketplace.card.unsubscribed') }}
         </a-tag>
+        <button
+          type="button"
+          class="star-btn"
+          :class="{ 'star-btn--on': favorite }"
+          :aria-label="favorite ? t('marketplace.unfavoriteAria') : t('marketplace.favoriteAria')"
+          @click.stop="toggleFavorite"
+        >
+          <StarFilled v-if="favorite" />
+          <StarOutlined v-else />
+        </button>
       </div>
     </div>
 
@@ -142,6 +160,20 @@ function open() {
   font-size: 11px;
   font-weight: 600;
   border-radius: 4px;
+}
+
+/* B5 收藏星标：悬停/选中态金色高亮 */
+.star-btn {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--od-gray-400, #94a3b8);
+  padding: 2px 4px;
+}
+
+.star-btn--on {
+  color: #f59e0b;
 }
 
 .name {

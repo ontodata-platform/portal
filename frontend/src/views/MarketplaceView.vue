@@ -20,6 +20,7 @@ import { marketplaceApi } from '@/api/portal'
 import { downloadBlob } from '@/utils/download'
 import { catalogItems, catalogTotal } from '@/catalog'
 import ApplyWizardModal from '@/components/data-workbench/ApplyWizardModal.vue'
+import CompareDrawer from '@/components/marketplace/CompareDrawer.vue'
 import MarketServiceCard from '@/components/marketplace/MarketServiceCard.vue'
 import TableFilterBar from '@/ui-kit/TableFilterBar.vue'
 import { useMessageStore } from '@/stores/message'
@@ -87,6 +88,7 @@ const catalogFilterSpecs = computed(() => [
 const selectedCodes = ref<string[]>([])
 const wizardOpen = ref(false)
 const wizardTargets = ref<ApplyTarget[]>([])
+const compareOpen = ref(false)
 
 function toggleSelect(item: CatalogEntry, checked: boolean) {
   selectedCodes.value = checked
@@ -417,14 +419,18 @@ onMounted(() => {
       </a-tab-pane>
     </a-tabs>
 
-    <!-- B3-2：合并申请浮条（选中 >0 时出现） -->
+    <!-- B3-2：合并申请浮条（选中 >0 时出现），支持对比（2~4 项） -->
     <div v-if="selectedCodes.length > 0" class="bulk-bar">
       <span class="bulk-hint">{{ t('marketplace.bulkSelected', { count: selectedCodes.length }) }}</span>
       <a-button size="small" @click="selectedCodes = []">{{ t('marketplace.bulkClear') }}</a-button>
+      <a-button size="small" :disabled="selectedCodes.length < 2 || selectedCodes.length > 4" @click="compareOpen = true">
+        {{ t('marketplace.bulkCompare') }}
+      </a-button>
       <a-button type="primary" size="small" @click="openBulkApply">{{ t('marketplace.bulkApply') }}</a-button>
     </div>
 
     <ApplyWizardModal v-model:open="wizardOpen" :targets="wizardTargets" @submitted="onBulkSubmitted" />
+    <CompareDrawer v-model:open="compareOpen" :codes="selectedCodes" />
   </div>
 </template>
 

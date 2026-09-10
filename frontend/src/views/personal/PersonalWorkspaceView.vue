@@ -9,6 +9,7 @@ import {
   RobotOutlined,
   SettingOutlined,
   SolutionOutlined,
+  StarOutlined,
   SyncOutlined,
 } from '@ant-design/icons-vue'
 import { computed, onMounted, ref } from 'vue'
@@ -61,6 +62,7 @@ const tabs = [
   { key: '/personal/requirements', name: 'personal-requirements', labelKey: 'personal.overview.tabRequirements', icon: SolutionOutlined },
   { key: '/personal/results', name: 'personal-results', labelKey: 'personal.overview.tabResults', icon: FileDoneOutlined },
   { key: '/personal/notifications', name: 'personal-notifications', labelKey: 'personal.overview.tabNotifications', icon: BellOutlined },
+  { key: '/personal/favorites', name: 'personal-favorites', labelKey: 'personal.overview.tabFavorites', icon: StarOutlined },
 ]
 
 const activeKey = computed(() => {
