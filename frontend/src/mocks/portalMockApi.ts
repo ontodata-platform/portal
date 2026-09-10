@@ -7,6 +7,7 @@
  */
 
 import { demoIdentity, relativeIso, seedDataServices } from './seed'
+import { productDescriptorOf } from './seed.products'
 import {
   createSeedApprovals,
   createSeedRequirements,
@@ -183,7 +184,7 @@ export function createPortalMockApi(): PortalMockApi {
   ]
   const notices: RecordValue[] = hydrateNotices()
   const notifications: RecordValue[] = hydrateNotifications()
-  const services: RecordValue[] = seedDataServices.map((item) => ({
+  const services: RecordValue[] = seedDataServices.map((item, index) => ({
     code: item.code,
     name: item.name,
     status: 'ONLINE',
@@ -191,6 +192,7 @@ export function createPortalMockApi(): PortalMockApi {
     classification: item.classification,
     subscribed: item.subscribed,
     description: `${item.name}，东海示范区遥感海洋业务目录产品。`,
+    descriptor: productDescriptorOf(item, index),
   }))
   const capabilities: RecordValue[] = [
     { code: 'cap-maritime-target-feature', name: '海上目标特性提取能力', status: 'ADMITTED', currentVersion: 3, description: '已准入的海上目标特性提取算法能力。' },

@@ -3,6 +3,7 @@ export interface ApplyTarget {
   name: string
   source: 'SERVICE' | 'DATASET'
   fields?: string[]
+  applyRequirements?: string[]
 }
 
 export interface ApplicationSummary {

@@ -36,6 +36,7 @@ const stubs = {
   'a-form': { template: '<form><slot /></form>' },
   'a-form-item': { props: ['label', 'extra'], template: '<div><slot /></div>' },
   'a-input': { props: ['value'], emits: ['update:value'], template: '<input :value="value" />' },
+  'a-table': { props: ['columns', 'dataSource'], template: '<div class="table" />' },
   'a-steps': { template: '<div><slot /></div>' },
   'a-step': { props: ['title'], template: '<div>{{ title }}</div>' },
 }
@@ -55,6 +56,14 @@ describe('MarketplaceDetailView', () => {
         status: 'ONLINE',
         currentVersion: '1.2.0',
         description: '东海示范区光学影像服务',
+        descriptor: {
+          overview: '东海示范区光学影像服务，按周更发布。',
+          fieldSpecs: [{ name: 'scene_id', type: 'string', desc: '景号' }],
+          sample: { columns: ['scene_id'], rows: [{ scene_id: 'GF1-001' }] },
+          updateCycle: '周更',
+          applyRequirements: ['密级：内部，登录门户即可申请'],
+          delivery: { formats: ['GeoTIFF', 'CSV'], channel: '门户订阅签页在线领取', sla: '周更窗口关闭后 1 个工作日可申请' },
+        },
       },
     })
     vi.mocked(marketplaceApi.apply).mockResolvedValue({
@@ -70,6 +79,12 @@ describe('MarketplaceDetailView', () => {
     expect(wrapper.text()).toContain('高分光学影像服务')
     expect(wrapper.text()).toContain('dsv-test-100')
     expect(wrapper.text()).toContain('v1.2.0')
+    expect(wrapper.text()).toContain('数据信息')
+    expect(wrapper.text()).toContain('字段与口径')
+    expect(wrapper.text()).toContain('数据样例')
+    expect(wrapper.text()).toContain('申请条件')
+    expect(wrapper.text()).toContain('交付方式')
+    expect(wrapper.text()).toContain('密级：内部，登录门户即可申请')
 
     const applyButton = wrapper.findAll('button').find((button) => button.text().includes('填写申请'))
     expect(applyButton).toBeTruthy()
@@ -79,7 +94,7 @@ describe('MarketplaceDetailView', () => {
     await wizard.vm.submitApply()
     await flushPromises()
 
-    expect(marketplaceApi.apply).toHaveBeenCalledWith('dsv-test-100', { grantedColumns: undefined })
+    expect(marketplaceApi.apply).toHaveBeenCalledWith('dsv-test-100', { grantedColumns: ['scene_id'] })
     expect(pushMock).not.toHaveBeenCalled()
     expect(marketplaceApi.find).toHaveBeenCalledTimes(2)
   })

@@ -8,8 +8,10 @@ import { ApiError } from '@/api/client'
 import { marketplaceApi } from '@/api/portal'
 import { catalogItem } from '@/catalog'
 import ApplyWizardModal from '@/components/data-workbench/ApplyWizardModal.vue'
+import DescriptorSection from '@/components/descriptor/DescriptorSection.vue'
 import { useMessageStore } from '@/stores/message'
 import type { ApplyTarget } from '@/types/application'
+import type { ProductDescriptor } from '@/types/data-workbench'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import PageHeader from '@/ui-kit/PageHeader.vue'
@@ -29,9 +31,17 @@ const service = ref<CatalogEntry | null>(null)
 
 const applyOpen = ref(false)
 
+const descriptor = computed(() => (service.value?.descriptor ?? null) as ProductDescriptor | null)
+
 const applyTargets = computed<ApplyTarget[]>(() => {
   if (!service.value) return []
-  return [{ code: service.value.code, name: service.value.name, source: 'SERVICE' }]
+  return [{
+    code: service.value.code,
+    name: service.value.name,
+    source: 'SERVICE',
+    fields: descriptor.value?.fieldSpecs.map((field) => field.name),
+    applyRequirements: descriptor.value?.applyRequirements,
+  }]
 })
 
 async function loadDetail() {
@@ -117,17 +127,84 @@ onMounted(loadDetail)
 
           <a-divider style="margin: 20px 0" />
 
-          <a-descriptions :title="t('marketplace.details')" bordered :column="2" size="middle">
-            <a-descriptions-item :label="t('common.stableCode')">
-              <span class="mono-text">{{ service.code }}</span>
-            </a-descriptions-item>
-            <a-descriptions-item :label="t('common.name')">{{ service.name }}</a-descriptions-item>
-            <a-descriptions-item :label="t('common.currentVersion')">v{{ service.currentVersion }}</a-descriptions-item>
-            <a-descriptions-item :label="t('common.status')">{{ 中文展示(service.status) }}</a-descriptions-item>
-            <a-descriptions-item v-if="service.description" :label="t('scenarios.description')" :span="2">
-              {{ service.description }}
-            </a-descriptions-item>
-          </a-descriptions>
+          <div class="product-sections">
+            <DescriptorSection :title="t('marketplace.details')">
+              <a-descriptions bordered :column="2" size="middle">
+                <a-descriptions-item :label="t('common.stableCode')">
+                  <span class="mono-text">{{ service.code }}</span>
+                </a-descriptions-item>
+                <a-descriptions-item :label="t('common.name')">{{ service.name }}</a-descriptions-item>
+                <a-descriptions-item :label="t('common.currentVersion')">v{{ service.currentVersion }}</a-descriptions-item>
+                <a-descriptions-item :label="t('common.status')">{{ 中文展示(service.status) }}</a-descriptions-item>
+                <a-descriptions-item :label="t('marketplace.updateCycle')">
+                  {{ descriptor?.updateCycle ?? '—' }}
+                </a-descriptions-item>
+                <a-descriptions-item :label="t('scenarios.description')" :span="2">
+                  {{ descriptor?.overview ?? service.description }}
+                </a-descriptions-item>
+              </a-descriptions>
+            </DescriptorSection>
+
+            <DescriptorSection
+              :title="t('marketplace.sectionFields')"
+              :empty="!descriptor?.fieldSpecs.length"
+              :empty-title="t('marketplace.emptySection', { section: t('marketplace.sectionFields') })"
+            >
+              <a-table
+                :columns="[
+                  { title: t('marketplace.fieldName'), dataIndex: 'name' },
+                  { title: t('marketplace.fieldType'), dataIndex: 'type' },
+                  { title: t('marketplace.fieldDesc'), dataIndex: 'desc' },
+                ]"
+                :data-source="descriptor?.fieldSpecs ?? []"
+                :pagination="false"
+                row-key="name"
+                size="small"
+              />
+            </DescriptorSection>
+
+            <DescriptorSection
+              :title="t('marketplace.sectionSample')"
+              :empty="!descriptor?.sample.rows.length"
+              :empty-title="t('marketplace.emptySection', { section: t('marketplace.sectionSample') })"
+            >
+              <a-table
+                :columns="(descriptor?.sample.columns ?? []).map((column) => ({ title: column, dataIndex: column }))"
+                :data-source="(descriptor?.sample.rows ?? []).map((row, index) => ({ ...row, __row: index }))"
+                :pagination="false"
+                row-key="__row"
+                size="small"
+              />
+            </DescriptorSection>
+
+            <DescriptorSection
+              :title="t('marketplace.sectionRequirements')"
+              :empty="!descriptor?.applyRequirements.length"
+              :empty-title="t('marketplace.emptySection', { section: t('marketplace.sectionRequirements') })"
+            >
+              <ul class="requirement-list">
+                <li v-for="item in descriptor?.applyRequirements ?? []" :key="item">{{ item }}</li>
+              </ul>
+            </DescriptorSection>
+
+            <DescriptorSection
+              :title="t('marketplace.sectionDelivery')"
+              :empty="!descriptor?.delivery"
+              :empty-title="t('marketplace.emptySection', { section: t('marketplace.sectionDelivery') })"
+            >
+              <a-descriptions bordered :column="1" size="small">
+                <a-descriptions-item :label="t('marketplace.deliveryFormats')">
+                  {{ descriptor?.delivery.formats.join('、') }}
+                </a-descriptions-item>
+                <a-descriptions-item :label="t('marketplace.deliveryChannel')">
+                  {{ descriptor?.delivery.channel }}
+                </a-descriptions-item>
+                <a-descriptions-item :label="t('marketplace.deliverySla')">
+                  {{ descriptor?.delivery.sla }}
+                </a-descriptions-item>
+              </a-descriptions>
+            </DescriptorSection>
+          </div>
         </template>
         <template v-else-if="!loading && (notFound || aggregation?.available)">
           <EmptyState
@@ -177,5 +254,17 @@ onMounted(loadDetail)
   border-radius: 8px;
   font-weight: 600;
   padding: 0 24px;
+}
+
+.product-sections {
+  display: grid;
+  gap: 16px;
+}
+
+.requirement-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--od-color-ink-soft, #334e68);
+  line-height: 1.8;
 }
 </style>

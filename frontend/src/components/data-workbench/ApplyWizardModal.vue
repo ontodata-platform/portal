@@ -142,6 +142,9 @@ defineExpose({ submitApply })
         <a-descriptions-item :label="t('marketplace.grantedColumns')">
           {{ applyForm.grantedColumns.join('、') || t('marketplace.applyDefaultFields') }}
         </a-descriptions-item>
+        <a-descriptions-item v-if="primary?.applyRequirements?.length" :label="t('marketplace.sectionRequirements')">
+          {{ primary.applyRequirements.join('；') }}
+        </a-descriptions-item>
       </a-descriptions>
     </a-form>
     <template #footer>
