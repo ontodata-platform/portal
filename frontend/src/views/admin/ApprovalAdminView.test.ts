@@ -89,7 +89,7 @@ describe('ApprovalAdminView', () => {
     await flushPromises()
 
     const tableNode = wrapper.find('.table')
-    const columns = JSON.parse(tableNode.attributes('data-columns')) as Array<{ width?: number; key: string; fixed?: string }>
+    const columns = JSON.parse(tableNode.attributes('data-columns') ?? '[]') as Array<{ width?: number; key: string; fixed?: string }>
     const widthTotal = columns.reduce((sum, column) => sum + (column.width ?? 0), 0)
     expect(widthTotal).toBeLessThanOrEqual(900)
     expect(columns.find((column) => column.key === 'action')?.fixed).toBe('right')
