@@ -36,7 +36,7 @@ const retrievalDef: AgentDetail = {
   id: 'agent-platform-assistant',
   tenantId: 'default',
   name: '平台助手',
-  description: '只读检索演示。输入「更新」可打出 R2/R3 确认卡。',
+  description: '检索门户目录与办理状态。输入「更新」可确认写入类操作。',
   owner: 'platform-team',
   createdAt: timestamp,
   versions: [{ agentId: 'agent-platform-assistant', version: 1, riskLevel: 'R1', status: 'published', createdAt: timestamp }],
@@ -46,7 +46,7 @@ const qualityDef: AgentDetail = {
   id: 'agent-quality-assistant',
   tenantId: 'default',
   name: '质量分析助手',
-  description: '3B 确认流样板：提问 → 提交工作流 → R4 审批 → 结果。',
+  description: '提交质量分析后需审批，通过后返回执行结果。',
   owner: 'platform-team',
   createdAt: timestamp,
   versions: [{ agentId: 'agent-quality-assistant', version: 1, riskLevel: 'R4', status: 'published', createdAt: timestamp }],
@@ -226,7 +226,7 @@ export function createLocalAgentMockApi() {
     resumeAfterApproval: async (sessionId: string, approvalCode: string) => {
       requireSession(sessionId)
       const turnNo = nextTurn(sessionId)
-      const answer = `质量分析工作流已受理（本地样板）。审批单 ${approvalCode} 已通过，执行编码 exe-sample-1。`
+      const answer = `质量分析工作流已受理。审批单 ${approvalCode} 已通过，执行编码 exe-quality-001。`
       const message = pushMessage(sessionId, 'assistant', answer, turnNo)
       const run = [...runs.values()].find((item) => item.sessionId === sessionId && item.waitRef === approvalCode)
       if (run) {
