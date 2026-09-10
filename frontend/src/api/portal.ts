@@ -204,6 +204,8 @@ export const adminIamApi = {
   users: (params: Partial<ListParams> = {}) =>
     client.get<PageResponse<IamUser>>('/admin/iam/users', { params }).then((r) => r.data),
   roles: () => client.get<{ items: IamRole[] }>('/admin/iam/roles').then((r) => r.data),
+  createUser: (body: { name: string; username: string; tenantId: string; roles: string[] }) =>
+    client.post<IamUser>('/admin/iam/users', body).then((r) => r.data),
   updateUserRoles: (userId: string, body: { roles: string[] }) =>
     client.put<IamUser>(`/admin/iam/users/${userId}/roles`, body).then((r) => r.data),
   updateUserStatus: (userId: string, status: IamUser['status']) =>

@@ -43,6 +43,13 @@ export async function authGuard(
       if (!identityStore.devMode && !identityStore.roles.some((r) => requiredRoles.includes(r))) {
         return { path: '/personal' }
       }
+      // D5-3：管理端路由额外校验权限矩阵中的 ADMIN.ACCESS 资源（IAM 开启语义）
+      if (to.path.startsWith('/admin') && !identityStore.devMode) {
+        const { rolesHaveResource } = await import('@/mocks/permissionMatrix')
+        if (!rolesHaveResource(identityStore.roles, 'ADMIN.ACCESS')) {
+          return { path: '/personal' }
+        }
+      }
     } catch {
       // 忽略异常，继续放行
     }

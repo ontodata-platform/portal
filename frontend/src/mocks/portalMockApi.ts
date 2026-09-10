@@ -258,6 +258,11 @@ export function createPortalMockApi(): PortalMockApi {
       notifications.unshift(notification)
       return { ok: true, code: item.code }
     }
+    if (normalizedMethod === 'post' && path === '/admin/iam/users') {
+      const user = { id: `usr-${Date.now().toString(36)}`, name: body.name, username: body.username, tenantId: body.tenantId ?? 'default', roles: body.roles ?? [], status: 'ACTIVE', createdAt: timestamp }
+      iamUsers.unshift(user)
+      return clone(user)
+    }
     if (normalizedMethod === 'get' && path === '/admin/iam/users') {
       const role = stringValue(params.role)
       const scopedUsers = role

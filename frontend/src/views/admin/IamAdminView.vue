@@ -3,7 +3,9 @@ import { EditOutlined, PoweroffOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { adminIamApi } from '@/api/portal'
+import { adminIamApi, approvalApi } from '@/api/portal'
+import OrgTreeView from '@/components/iam/OrgTreeView.vue'
+import PermissionMatrix from '@/components/iam/PermissionMatrix.vue'
 import { useMessageStore } from '@/stores/message'
 import type { AbacPolicy, IamAuditLog, IamRole, IamUser } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
@@ -24,6 +26,49 @@ const policies = ref<AbacPolicy[]>([])
 const auditLogs = ref<IamAuditLog[]>([])
 const query = reactive({ keyword: '', status: '', role: '' })
 const actionLoading = ref('')
+const createOpen = ref(false)
+const creating = ref(false)
+const createForm = reactive({ name: '', username: '', tenantId: 'default', roles: [] as string[] })
+
+async function createUser() {
+  if (!createForm.name.trim() || !createForm.username.trim()) return
+  creating.value = true
+  try {
+    await adminIamApi.createUser({ ...createForm })
+    messageStore.success(t('admin.iam.userCreated'))
+    createOpen.value = false
+    createForm.name = ''
+    createForm.username = ''
+    createForm.roles = []
+    await load()
+  } catch (error) {
+    messageStore.reportError(error)
+  } finally {
+    creating.value = false
+  }
+}
+
+// D5-4：外部系统权限副本（分系统返回的非权威数据，演示固定三条）
+const externalPermissions = [
+  { user: '陈晓', system: '管理平台', role: '数据使用人', resource: '目录检索/订阅', expires: '2026-12-31', syncedAt: '2026-09-11 08:00' },
+  { user: 'alice', system: '算法重组平台', role: '算法用户', resource: '已发布算法运行', expires: '2026-11-30', syncedAt: '2026-09-11 08:00' },
+  { user: '王工', system: '管理平台', role: '数据使用人', resource: 'SAR 影像订阅', expires: '2026-10-31', syncedAt: '2026-09-10 20:00' },
+]
+
+async function requestPermission() {
+  try {
+    const created = await approvalApi.create({
+      approvalType: 'SYSTEM_PERMISSION',
+      sourceSystem: 'portal',
+      sourceCode: 'role-operator',
+      title: '运营角色开通申请（自助发起）',
+    })
+    messageStore.success(t('admin.iam.permissionRequested', { code: created.code }))
+  } catch (error) {
+    messageStore.reportError(error)
+  }
+}
+
 const roleEditorOpen = ref(false)
 const editingUser = ref<IamUser | null>(null)
 const roleForm = reactive({ roles: [] as string[] })
@@ -197,6 +242,9 @@ onMounted(load)
       </section>
 
       <a-card :bordered="false" class="admin-card" :title="t('admin.iam.users')">
+        <template #extra>
+          <a-button size="small" type="primary" @click="createOpen = true">{{ t('admin.iam.createUser') }}</a-button>
+        </template>
         <div class="toolbar-area">
           <TableFilterBar
             :query="query"
@@ -363,6 +411,60 @@ onMounted(load)
         </ul>
       </template>
     </a-drawer>
+
+    <!-- D5-1 新增用户 -->
+    <a-modal v-model:open="createOpen" :title="t('admin.iam.createUser')" :confirm-loading="creating" @ok="createUser">
+      <a-form layout="vertical">
+        <a-form-item :label="t('common.name')" required>
+          <a-input v-model:value="createForm.name" />
+        </a-form-item>
+        <a-form-item :label="t('admin.iam.username')" required>
+          <a-input v-model:value="createForm.username" />
+        </a-form-item>
+        <a-form-item :label="t('common.role')">
+          <a-select v-model:value="createForm.roles" mode="multiple" :options="roleOptions" allow-clear />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <!-- D5-2 组织管理 -->
+    <a-card :bordered="false" class="admin-card" :title="t('admin.iam.orgTitle')">
+      <OrgTreeView />
+    </a-card>
+
+    <!-- D5-3 门户权限矩阵（路由守卫消费） -->
+    <a-card :bordered="false" class="admin-card" :title="t('admin.iam.matrixTitle')">
+      <PermissionMatrix />
+    </a-card>
+
+    <!-- D5-4 外部系统权限副本（只读） + 权限申请 -->
+    <a-card :bordered="false" class="admin-card" :title="t('admin.iam.externalTitle')">
+      <template #extra>
+        <a-button size="small" type="primary" @click="requestPermission">{{ t('admin.iam.requestPermission') }}</a-button>
+      </template>
+      <table class="external-table">
+        <thead>
+          <tr>
+            <th>{{ t('common.applicant') }}</th>
+            <th>{{ t('personal.profileTab.externalCopy') }}</th>
+            <th>{{ t('common.role') }}</th>
+            <th>{{ t('admin.iam.externalResource') }}</th>
+            <th>{{ t('personal.profileTab.expires') }}</th>
+            <th>{{ t('personal.profileTab.syncedAt') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in externalPermissions" :key="`${item.user}-${item.system}-${item.resource}`">
+            <td>{{ item.user }}</td>
+            <td>{{ item.system }}</td>
+            <td>{{ item.role }}</td>
+            <td>{{ item.resource }}</td>
+            <td>{{ item.expires }}</td>
+            <td class="cell-mono">{{ item.syncedAt }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </a-card>
   </div>
 </template>
 
@@ -491,5 +593,18 @@ onMounted(load)
   .role-select-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.external-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.external-table th,
+.external-table td {
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  padding: 6px 10px;
+  text-align: left;
 }
 </style>
