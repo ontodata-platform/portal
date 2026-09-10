@@ -15,6 +15,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import type { MenuProps } from 'ant-design-vue'
+import { notification as antdNotification } from 'ant-design-vue'
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -224,7 +225,39 @@ function handleCommandKeydown(event: KeyboardEvent) {
 }
 
 function goNotifications() {
-  void router.push('/personal/notifications')
+  void router.push('/todos')
+}
+
+// ── C3 消息感知：30s 轮询未读（页面可见时），新增通知弹窗提醒 ──
+let unreadTimer: ReturnType<typeof setInterval> | undefined
+let lastSeenUnread: number | null = null
+
+async function pollUnread(): Promise<void> {
+  if (document.visibilityState === 'hidden') return
+  const before = lastSeenUnread
+  await loadUnread()
+  lastSeenUnread = unread.value
+  if (before !== null && unread.value > before) {
+    antdNotification.open({
+      message: t('layout.newNoticeTitle'),
+      description: t('layout.newNoticeDesc', { count: unread.value }),
+      onClick: () => {
+        router.push('/todos')
+        antdNotification.destroy()
+      },
+    })
+  }
+}
+
+function startPolling(): void {
+  if (unreadTimer) return
+  unreadTimer = setInterval(() => void pollUnread(), 30_000)
+  void pollUnread()
+}
+
+function stopPolling(): void {
+  if (unreadTimer) clearInterval(unreadTimer)
+  unreadTimer = undefined
 }
 
 async function loadUnread() {
@@ -238,6 +271,8 @@ async function loadUnread() {
 onMounted(() => {
   void identityStore.fetchIdentity()
   void loadUnread()
+  lastSeenUnread = unread.value
+  startPolling()
   try {
     const cached = JSON.parse(localStorage.getItem('od:recent-commands') ?? '[]')
     if (Array.isArray(cached)) recentCommands.value = cached.filter((item): item is PortalCommand => typeof item?.id === 'string' && typeof item.path === 'string').slice(0, 3)
@@ -247,7 +282,10 @@ onMounted(() => {
   window.addEventListener('keydown', handleCommandKeydown)
 })
 
-onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleCommandKeydown)
+  stopPolling()
+})
 </script>
 
 <template>

@@ -112,13 +112,13 @@ describe('MainLayout v2', () => {
     expect(wrapper.text()).toContain('管理端')
   })
 
-  it('铃铛展示未读数，点击进入通知签页', async () => {
+  it('铃铛展示未读数，点击进入待办中心（C2）', async () => {
     const wrapper = mountLayout()
     await flushPromises()
 
     expect(wrapper.find('.badge').attributes('data-count')).toBe('3')
     await wrapper.find('.bell button').trigger('click')
-    expect(pushMock).toHaveBeenCalledWith('/personal/notifications')
+    expect(pushMock).toHaveBeenCalledWith('/todos')
   })
 
   it('折叠导航控件是带状态说明的原生按钮', async () => {

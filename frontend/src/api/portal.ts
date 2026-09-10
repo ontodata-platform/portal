@@ -25,6 +25,7 @@ import type {
   PersonalTodo,
   PortalIdentity,
   PortalNotification,
+  TodoAggregateItem,
   PortalResult,
   PortalTask,
   RequirementRequest,
@@ -186,6 +187,9 @@ export const personalApi = {
   todos: () => client.get<PersonalTodo>('/personal/todos').then((r) => r.data),
   notifications: (params: Partial<ListParams> = {}) =>
     client.get<PageResponse<PortalNotification>>('/personal/notifications', { params }).then((r) => r.data),
+  /** C2 待办中心：跨审批/任务等域的待办聚合（后端落地时对齐 GET /todos/aggregate）。 */
+  aggregateTodos: () =>
+    client.get<{ items: TodoAggregateItem[] }>('/todos/aggregate').then((r) => r.data),
   unreadCount: () => client.get<{ unread: number }>('/personal/notifications/unread-count').then((r) => r.data),
   markRead: (id: string) =>
     client.post<PortalNotification>(`/personal/notifications/${id}/read`).then((r) => r.data),

@@ -460,6 +460,33 @@ export function createPortalMockApi(): PortalMockApi {
     if (normalizedMethod === 'post' && feedbackAction) return clone(update(find(feedbacks, 'code', feedbackAction[1], path), { status: 'HANDLED', handleNote: body.handleNote, handledAt: timestamp }))
     if (normalizedMethod === 'get' && path === '/operations/statistics') return { noticeTotal: notices.length, publishedNotices: notices.filter((item) => item.status === 'PUBLISHED').length, pendingFeedbacks: feedbacks.filter((item) => item.status === 'PENDING').length }
 
+    // C2 待办中心聚合：审批待办 + 异常任务（补正/催办后续域接入）
+    if (normalizedMethod === 'get' && path === '/todos/aggregate') {
+      const items = [
+        ...approvals
+          .filter((item) => item.status === 'PENDING')
+          .map((item) => ({
+            kind: 'APPROVAL',
+            code: String(item.code),
+            title: String(item.title),
+            deadline: item.slaDeadline ? String(item.slaDeadline) : null,
+            slaStatus: String(item.slaStatus ?? 'ON_TIME'),
+            route: `/matter/approval/${item.code}`,
+          })),
+        ...tasks
+          .filter((item) => item.status === 'FAILED')
+          .map((item) => ({
+            kind: 'ANOMALY',
+            code: String(item.taskId),
+            title: `任务异常：${String(item.stage ?? item.taskId)}`,
+            deadline: null,
+            slaStatus: null,
+            route: `/matter/task/${item.taskId}`,
+          })),
+      ]
+      return { items }
+    }
+
     // C1 统一事项详情：按单号聚合审批/需求/任务/结果，输出统一时间轴。
     const matterMatch = path.match(/^\/matter\/(approval|requirement|task|result)\/([^/]+)$/)
     if (normalizedMethod === 'get' && matterMatch) {

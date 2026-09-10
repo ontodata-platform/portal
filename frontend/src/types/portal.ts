@@ -176,6 +176,16 @@ export interface Notice {
   updatedAt: string
 }
 
+/** 待办中心聚合项（C2）。 */
+export interface TodoAggregateItem {
+  kind: 'APPROVAL' | 'CORRECTION' | 'URGE' | 'ANOMALY'
+  code: string
+  title: string
+  deadline: string | null
+  slaStatus: string | null
+  route: string
+}
+
 /** 统一事项详情（C1）：跨审批/需求/任务/结果的单一单据视图。 */
 export interface MatterTimelineItem {
   time: string

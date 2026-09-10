@@ -112,6 +112,13 @@ export const routes: RouteRecordRaw[] = [
           meta: { titleKey: 'menu.home', group: 'groupPortal' },
         },
         {
+          // C2 待办中心：铃铛落地页
+          path: 'todos',
+          name: 'todo-center',
+          component: () => import('@/views/todos/TodoCenterView.vue'),
+          meta: { titleKey: 'todos.title', group: 'groupPortal' },
+        },
+        {
           // C1 统一事项详情：审批/申请/需求/任务/结果共用
           path: 'matter/:type/:code',
           name: 'matter-detail',
