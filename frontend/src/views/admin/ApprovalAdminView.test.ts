@@ -75,7 +75,7 @@ describe('ApprovalAdminView', () => {
     await flushPromises()
 
     expect(listMock).toHaveBeenCalled()
-    expect(wrapper.text()).toContain('审批监管')
+    expect(wrapper.find('.page-header').exists()).toBe(false)
     expect(wrapper.text()).toContain('待审批')
     expect(wrapper.text()).toContain('超时')
     expect(wrapper.text()).toContain('今日已决')

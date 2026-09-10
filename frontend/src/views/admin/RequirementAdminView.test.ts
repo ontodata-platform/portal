@@ -92,7 +92,7 @@ describe('RequirementAdminView', () => {
     ])
   })
 
-  it('挂载后加载全量需求且不展示新建与页头说明', async () => {
+  it('挂载后加载全量需求且不重复渲染内容区页头', async () => {
     const wrapper = mountView()
     await flushPromises()
 
@@ -103,7 +103,7 @@ describe('RequirementAdminView', () => {
       type: undefined,
       keyword: undefined,
     })
-    expect(wrapper.text()).toContain('需求管理')
+    expect(wrapper.find('.page-header').exists()).toBe(false)
     expect(wrapper.text()).toContain('req-002')
     expect(wrapper.text()).not.toContain('登记需求')
     expect(wrapper.text()).not.toContain('新建需求')
@@ -127,6 +127,8 @@ describe('RequirementAdminView', () => {
     expect(overlapCandidatesMock).toHaveBeenCalledWith('req-002')
     expect(wrapper.text()).toContain('相似需求候选')
     expect(wrapper.text()).toContain('数据对象一致')
+    expect(wrapper.find('.overlap-candidate__reasons').exists()).toBe(true)
+    expect(wrapper.find('.overlap-candidate__reasons').findAll('span')).toHaveLength(2)
     expect(wrapper.findAll('button').find((button) => button.text() === '整合到当前需求')).toBeUndefined()
 
     await wrapper.find('textarea[name="analysisConclusion"]').setValue('可由高分辨率光学影像满足港区目标特性提取需求。')

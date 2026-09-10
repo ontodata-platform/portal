@@ -59,7 +59,7 @@ describe('IamAdminView', () => {
 
     expect(usersMock).toHaveBeenCalled()
     expect(policiesMock).toHaveBeenCalled()
-    expect(wrapper.text()).toContain('用户与权限')
+    expect(wrapper.find('.page-header').exists()).toBe(false)
     expect(wrapper.text()).toContain('陈晓')
     expect(wrapper.text()).toContain('alice')
     expect(wrapper.text()).toContain('登录用户')

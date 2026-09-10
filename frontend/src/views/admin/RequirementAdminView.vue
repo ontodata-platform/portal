@@ -16,7 +16,6 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const ASSIGN_TARGETS = [
@@ -384,8 +383,6 @@ onMounted(load)
 
 <template>
   <div class="requirement-admin-view">
-    <PageHeader :eyebrow="t('menu.admin')" :title="t('menu.adminRequirements')" />
-
     <ErrorState
       v-if="loadError"
       :reason="loadError"
@@ -596,7 +593,9 @@ onMounted(load)
                     <span class="overlap-score">{{ candidate.score }}% {{ t('requirements.matchDegree') }}</span>
                   </div>
                   <p>{{ candidate.code }} · {{ candidate.requester }} · {{ statusText[candidate.status] ?? candidate.status }}</p>
-                  <a-space size="small" wrap><a-tag v-for="reason in candidate.reasons" :key="reason" color="blue">{{ reason }}</a-tag></a-space>
+                  <div class="overlap-candidate__reasons">
+                    <a-tag v-for="reason in candidate.reasons" :key="reason" color="blue">{{ reason }}</a-tag>
+                  </div>
                   <p class="overlap-candidate__restriction">{{ t('requirements.analyzeBeforeConsolidation') }}</p>
                 </article>
               </section>
@@ -622,7 +621,9 @@ onMounted(load)
                     <span class="overlap-score">{{ candidate.score }}% {{ t('requirements.matchDegree') }}</span>
                   </div>
                   <p>{{ candidate.code }} · {{ candidate.requester }} · {{ statusText[candidate.status] ?? candidate.status }}</p>
-                  <a-space size="small" wrap><a-tag v-for="reason in candidate.reasons" :key="reason" color="blue">{{ reason }}</a-tag></a-space>
+                  <div class="overlap-candidate__reasons">
+                    <a-tag v-for="reason in candidate.reasons" :key="reason" color="blue">{{ reason }}</a-tag>
+                  </div>
                   <div class="overlap-candidate__actions">
                     <a-button size="small" type="primary" ghost @click="openConsolidation(candidate.code, current.code)">{{ t('requirements.consolidateToCurrent') }}</a-button>
                     <a-button size="small" @click="openConsolidation(current.code, candidate.code)">{{ t('requirements.mergeCurrentIntoCandidate') }}</a-button>
@@ -980,6 +981,18 @@ onMounted(load)
 
   .overlap-candidate p {
     margin: 0.375rem 0;
+  }
+
+  .overlap-candidate__reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-width: 0;
+    margin: 0.625rem 0 0.75rem;
+  }
+
+  .overlap-candidate__restriction {
+    margin: 0;
   }
 
   .overlap-candidate__actions,

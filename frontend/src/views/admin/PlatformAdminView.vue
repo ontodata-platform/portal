@@ -6,7 +6,6 @@ import { useI18n } from 'vue-i18n'
 import { platformApi } from '@/api/portal'
 import { useMessageStore } from '@/stores/message'
 import type { ProjectionRebuildSummary, RetentionCleanupResult, RetentionStatus } from '@/types/portal'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 
 const { t } = useI18n()
 const messageStore = useMessageStore()
@@ -61,7 +60,6 @@ void loadStatus()
 
 <template>
   <div class="platform-admin-view">
-    <PageHeader :eyebrow="t('menu.admin')" :title="t('menu.adminPlatform')" />
     <a-row :gutter="16">
       <a-col :xs="24" :lg="12">
         <a-card :title="t('admin.rebuildTitle')" class="admin-card">

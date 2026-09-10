@@ -9,7 +9,6 @@ import type { AbacPolicy, IamUser } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import OdTable from '@/ui-kit/OdTable.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const KEYCLOAK_CONSOLE = 'http://localhost:8180/admin/master/console/'
@@ -80,8 +79,6 @@ onMounted(load)
 
 <template>
   <div class="iam-admin-view">
-    <PageHeader :eyebrow="t('menu.admin')" :title="t('menu.adminIam')" />
-
     <ErrorState
       v-if="loadError"
       :reason="loadError"

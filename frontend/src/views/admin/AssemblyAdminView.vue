@@ -11,7 +11,6 @@ import type { CatalogEntry, PortalScenario, ScenarioBinding, ScenarioOntologyRef
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import OdTable from '@/ui-kit/OdTable.vue'
-import PageHeader from '@/ui-kit/PageHeader.vue'
 import {
   WIDGET_KINDS,
   bindingAliasSet,
@@ -382,11 +381,6 @@ onMounted(load)
 
 <template>
   <div class="assembly-admin-view">
-    <PageHeader
-      :eyebrow="t('menu.groupCollab')"
-      :title="t('menu.scenarios')"
-    />
-
     <ErrorState
       v-if="loadError"
       :reason="loadError"
