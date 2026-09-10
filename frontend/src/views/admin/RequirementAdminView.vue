@@ -701,7 +701,7 @@ onMounted(load)
         <a-space wrap>
           <a-button @click="drawerOpen = false">{{ t('common.close') }}</a-button>
           <a-button v-if="current && current.status !== 'COMPLETED' && current.status !== 'CANCELED'" danger :loading="acting" @click="cancel">
-            {{ t('requirements.cancel') }}
+            {{ t('requirements.cancelRequirement') }}
           </a-button>
         </a-space>
       </template>
