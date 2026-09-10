@@ -55,14 +55,10 @@ function withQuickReplies(reply: AssistantReply): AssistantTurnResult {
 function lookupReply(ctx: TemplateContext, code: string): AssistantReply | null {
   const matter = ctx.lookupMatter(code)
   if (!matter) return null
-  const target =
-    matter.kind === 'approval'
-      ? '/personal/approvals'
-      : matter.kind === 'requirement'
-        ? '/personal/requirements'
-        : '/personal/tasks'
+  // C1：直达统一事项详情
+  const target = `/matter/${matter.kind}/${matter.code}`
   return {
-    text: `单据 ${matter.code} 当前状态「${matter.status}」：《${matter.title}》。可进入对应工作台查看详情与办理入口。`,
+    text: `单据 ${matter.code} 当前状态「${matter.status}」：《${matter.title}》。可进入事项详情查看时间轴与办理入口。`,
     actions: [
       { label: '去查看', kind: 'navigate', target },
       { label: '看今日待办', kind: 'navigate', target: '/personal/approvals' },

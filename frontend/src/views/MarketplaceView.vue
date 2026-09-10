@@ -302,7 +302,16 @@ onMounted(() => {
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'code'">
-                <span class="mono-code">{{ record.code }}</span>
+                <button
+                  v-if="String(record.code).startsWith('apr-')"
+                  type="button"
+                  class="mono-code link-code"
+                  :title="t('matter.title')"
+                  @click="router.push(`/matter/approval/${encodeURIComponent(record.code)}`)"
+                >
+                  {{ record.code }}
+                </button>
+                <span v-else class="mono-code">{{ record.code }}</span>
               </template>
               <template v-else-if="column.key === 'status'">
                 <a-tag v-if="record.status === 'DELIVERED'" color="success">
@@ -446,6 +455,15 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+/* C1：可点击单号（直达事项详情） */
+.link-code {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline dotted;
 }
 
 /* B3-2：合并申请 */

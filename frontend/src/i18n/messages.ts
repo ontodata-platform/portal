@@ -238,6 +238,13 @@ export const zhCn = {
     quickResult: '领交付结果',
     quickPermission: '申请权限',
   },
+  matter: {
+    title: '事项详情',
+    baseInfo: '基础信息',
+    kindLabel: '事项类型',
+    timeline: '进度时间轴',
+    detail: '补充信息',
+  },
   scenarios: {
     statusPlaceholder: '状态',
     keywordPlaceholder: '按名称/编码搜索',
@@ -1141,6 +1148,13 @@ export const enUs: MessageSchema = {
     quickAlgorithm: 'Run algorithm',
     quickResult: 'Pick up results',
     quickPermission: 'Apply for permission',
+  },
+  matter: {
+    title: 'Matter Detail',
+    baseInfo: 'Basic Info',
+    kindLabel: 'Kind',
+    timeline: 'Timeline',
+    detail: 'Details',
   },
   scenarios: {
     statusPlaceholder: 'Status',

@@ -112,6 +112,13 @@ export const routes: RouteRecordRaw[] = [
           meta: { titleKey: 'menu.home', group: 'groupPortal' },
         },
         {
+          // C1 统一事项详情：审批/申请/需求/任务/结果共用
+          path: 'matter/:type/:code',
+          name: 'matter-detail',
+          component: () => import('@/views/matter/MatterDetailView.vue'),
+          meta: { titleKey: 'matter.title', group: 'groupPortal' },
+        },
+        {
           path: 'assistant',
           name: 'assistant',
           component: () => import('@/views/assistant/AssistantView.vue'),

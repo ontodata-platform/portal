@@ -460,6 +460,41 @@ export function createPortalMockApi(): PortalMockApi {
     if (normalizedMethod === 'post' && feedbackAction) return clone(update(find(feedbacks, 'code', feedbackAction[1], path), { status: 'HANDLED', handleNote: body.handleNote, handledAt: timestamp }))
     if (normalizedMethod === 'get' && path === '/operations/statistics') return { noticeTotal: notices.length, publishedNotices: notices.filter((item) => item.status === 'PUBLISHED').length, pendingFeedbacks: feedbacks.filter((item) => item.status === 'PENDING').length }
 
+    // C1 统一事项详情：按单号聚合审批/需求/任务/结果，输出统一时间轴。
+    const matterMatch = path.match(/^\/matter\/(approval|requirement|task|result)\/([^/]+)$/)
+    if (normalizedMethod === 'get' && matterMatch) {
+      const kind = matterMatch[1]
+      const code = decodeURIComponent(matterMatch[2])
+      const source =
+        kind === 'approval'
+          ? approvals.find((item) => item.code === code)
+          : kind === 'requirement'
+            ? requirements.find((item) => item.code === code)
+            : kind === 'task'
+              ? tasks.find((item) => item.taskId === code)
+              : results.find((item) => item.code === code)
+      if (!source) throw error(404, 'NOT_FOUND', '未找到对应单据', path)
+      const title = String(source.title ?? source.taskId ?? code)
+      const status = String(source.status)
+      const base = { code: String(source.code ?? source.taskId ?? code), title, status, kind }
+      const timeline: Array<{ time: string; title: string; state: string }> = [
+        { time: String(source.createdAt ?? ''), title: '登记/受理', state: 'done' },
+      ]
+      if (source.updatedAt) timeline.push({ time: String(source.updatedAt), title: kind === 'approval' ? '最近审批动作' : '最近进展', state: status === 'PENDING' || status === 'RUNNING' ? 'current' : 'done' })
+      if (source.decisionAt) timeline.push({ time: String(source.decisionAt), title: `审批决定（${String(source.decisionBy ?? '—')}）`, state: 'done' })
+      if (['APPROVED', 'SUCCESS', 'COMPLETED', 'DELIVERED'].includes(status)) timeline.push({ time: String(source.updatedAt ?? ''), title: '已办结', state: 'done' })
+      if (['REJECTED', 'FAILED', 'CANCELED', 'CANCELLED'].includes(status)) timeline.push({ time: String(source.updatedAt ?? ''), title: '已终止', state: 'blocked' })
+      const mattersActions = status === 'PENDING' ? ['办理', '催办'] : status === 'RUNNING' ? ['取消'] : []
+      return {
+        ...base,
+        slaStatus: source.slaStatus ?? null,
+        requester: source.requester ?? source.operator ?? null,
+        detail: source.detail ?? null,
+        timeline,
+        actions: mattersActions,
+      }
+    }
+
     // B1 首页聚合：已发布公告 + 跨域待办摘要 + 推荐入口位。
     // 推荐位当前为内置配置，D4 内容运营上线后改由 cms/entry 配置数据驱动。
     if (normalizedMethod === 'get' && path === '/content/home') {

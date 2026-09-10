@@ -176,6 +176,25 @@ export interface Notice {
   updatedAt: string
 }
 
+/** 统一事项详情（C1）：跨审批/需求/任务/结果的单一单据视图。 */
+export interface MatterTimelineItem {
+  time: string
+  title: string
+  state: 'done' | 'current' | 'blocked'
+}
+
+export interface MatterDetail {
+  kind: 'approval' | 'requirement' | 'task' | 'result'
+  code: string
+  title: string
+  status: string
+  slaStatus?: string | null
+  requester?: string | null
+  detail?: Record<string, unknown> | null
+  timeline: MatterTimelineItem[]
+  actions: string[]
+}
+
 /** 首页跨域待办聚合（B1）：口径=审批 PENDING / 任务 RUNNING / 需求未终态 / 通知未读。 */
 export interface HomeTodoAggregate {
   pendingApprovals: number
