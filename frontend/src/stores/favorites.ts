@@ -24,7 +24,15 @@ export interface HistoryRef {
 
 const FAVORITES_KEY = 'od-favorites'
 const HISTORY_KEY = 'od-browse-history'
+const DOWNLOADS_KEY = 'od-download-history'
 const HISTORY_LIMIT = 50
+
+export interface DownloadRef {
+  code: string
+  name: string
+  source: 'service' | 'algorithm'
+  downloadedAt: string
+}
 
 function load<T>(key: string): T[] {
   try {
@@ -46,6 +54,13 @@ function save<T>(key: string, items: T[]): void {
 export const useFavoritesStore = defineStore('favorites', () => {
   const favorites = ref<FavoriteRef[]>(load(FAVORITES_KEY))
   const history = ref<HistoryRef[]>(load(HISTORY_KEY))
+  const downloads = ref<DownloadRef[]>(load(DOWNLOADS_KEY))
+
+  /** C6-3：领取/下载动作记录（结果签页展示）。 */
+  function recordDownload(code: string, name: string, source: 'service' | 'algorithm'): void {
+    downloads.value = [{ code, name, source, downloadedAt: new Date().toISOString() }, ...downloads.value].slice(0, 50)
+    save(DOWNLOADS_KEY, downloads.value)
+  }
 
   function isFavorite(code: string): boolean {
     return favorites.value.some((item) => item.code === code)
@@ -82,5 +97,5 @@ export const useFavoritesStore = defineStore('favorites', () => {
     save(HISTORY_KEY, history.value)
   }
 
-  return { favorites, history, isFavorite, toggleFavorite, removeFavorite, recordVisit, clearHistory }
+  return { favorites, history, downloads, isFavorite, toggleFavorite, removeFavorite, recordVisit, recordDownload, clearHistory }
 })

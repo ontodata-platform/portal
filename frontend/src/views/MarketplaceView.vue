@@ -23,6 +23,7 @@ import ApplyWizardModal from '@/components/data-workbench/ApplyWizardModal.vue'
 import CompareDrawer from '@/components/marketplace/CompareDrawer.vue'
 import MarketServiceCard from '@/components/marketplace/MarketServiceCard.vue'
 import TableFilterBar from '@/ui-kit/TableFilterBar.vue'
+import { useFavoritesStore } from '@/stores/favorites'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
 import type { ApplyTarget } from '@/types/application'
@@ -37,6 +38,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const messageStore = useMessageStore()
+const favoritesStore = useFavoritesStore()
 
 const allowedTabs = new Set(['services', 'applications', 'subscriptions'])
 const queryTab = String(route.query.tab ?? '')
@@ -174,6 +176,7 @@ async function downloadSubscription(record: DataSubscription) {
   try {
     const file = await marketplaceApi.downloadDeliverable(record.code)
     downloadBlob(file.filename, file.mime, file.blob)
+    favoritesStore.recordDownload(record.code, String(record.serviceName ?? record.code), 'service')
   } catch (error) {
     messageStore.reportError(error)
   }

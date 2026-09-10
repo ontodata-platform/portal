@@ -2,6 +2,7 @@
 import { CopyOutlined, EyeOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useFavoritesStore } from '@/stores/favorites'
 import { useRouter } from 'vue-router'
 
 import { resultApi } from '@/api/portal'
@@ -14,6 +15,7 @@ import OdTable from '@/ui-kit/OdTable.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
+const favoritesStore = useFavoritesStore()
 const router = useRouter()
 const messageStore = useMessageStore()
 
@@ -280,6 +282,19 @@ onMounted(load)
         </a-descriptions>
       </a-modal>
     </a-card>
+
+    <!-- C6-3：领取/下载记录 -->
+    <a-card :bordered="false" class="result-card">
+      <h3 class="download-title">{{ t('personal.downloadsTitle') }}</h3>
+      <a-empty v-if="favoritesStore.downloads.length === 0" :description="t('personal.downloadsEmpty')" />
+      <ul v-else class="download-list">
+        <li v-for="(item, index) in favoritesStore.downloads" :key="`${item.code}-${index}`" class="download-row">
+          <span class="download-name">{{ item.name }}</span>
+          <span class="cell-mono download-code">{{ item.code }}</span>
+          <span class="download-time">{{ item.downloadedAt.slice(0, 16).replace('T', ' ') }}</span>
+        </li>
+      </ul>
+    </a-card>
   </div>
 </template>
 
@@ -341,5 +356,36 @@ onMounted(load)
   max-height: 160px;
   overflow: auto;
   margin: 0;
+}
+
+.download-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.download-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.download-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 2px;
+  border-bottom: 1px dashed var(--od-gray-200, #e2e8f0);
+  font-size: 13px;
+}
+
+.download-name {
+  flex: 1;
+}
+
+.download-code,
+.download-time {
+  font-size: 11px;
+  color: var(--od-gray-500, #64748b);
 }
 </style>

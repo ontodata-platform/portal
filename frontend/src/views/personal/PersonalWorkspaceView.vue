@@ -64,6 +64,7 @@ const tabs = [
   { key: '/personal/notifications', name: 'personal-notifications', labelKey: 'personal.overview.tabNotifications', icon: BellOutlined },
   { key: '/personal/favorites', name: 'personal-favorites', labelKey: 'personal.overview.tabFavorites', icon: StarOutlined },
   { key: '/personal/qa', name: 'personal-qa', labelKey: 'personal.overview.tabQa', icon: RobotOutlined },
+  { key: '/personal/profile', name: 'personal-profile', labelKey: 'personal.overview.tabProfile', icon: SettingOutlined },
 ]
 
 const activeKey = computed(() => {

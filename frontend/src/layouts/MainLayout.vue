@@ -25,6 +25,7 @@ import { searchApi, type GlobalSearchResult, type SearchHit } from '@/api/search
 import { authState, clearSession } from '@/auth/session'
 import { setLocale } from '@/i18n'
 import { useIdentityStore } from '@/stores/identity'
+import { useProfileStore } from '@/stores/profile'
 import { useMessageStore } from '@/stores/message'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
@@ -32,6 +33,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const messageStore = useMessageStore()
+const profileStore = useProfileStore()
 const identityStore = useIdentityStore()
 
 const collapsed = ref(false)
@@ -238,6 +240,8 @@ async function pollUnread(): Promise<void> {
   await loadUnread()
   lastSeenUnread = unread.value
   if (before !== null && unread.value > before) {
+    // C6-1 偏好开关：关闭弹窗提醒时仅累计红点
+    if (!profileStore.profile.prefs.popupOnArrival) return
     antdNotification.open({
       message: t('layout.newNoticeTitle'),
       description: t('layout.newNoticeDesc', { count: unread.value }),

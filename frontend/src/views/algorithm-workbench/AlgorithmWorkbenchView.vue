@@ -24,10 +24,12 @@ import OdTable from '@/ui-kit/OdTable.vue'
 import SkeletonList from '@/ui-kit/SkeletonList.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 import { downloadBlob } from '@/utils/download'
+import { useFavoritesStore } from '@/stores/favorites'
 
 const { t } = useI18n()
 const router = useRouter()
 const messageStore = useMessageStore()
+const favoritesStore = useFavoritesStore()
 
 const activeTab = ref<'discover' | 'runs' | 'artifacts'>(routeTab())
 
@@ -181,6 +183,7 @@ async function download(taskId: string, artifactName: string, ready = true) {
   try {
     const file = await algorithmWorkbenchApi.downloadArtifact(taskId, artifactName)
     downloadBlob(file.filename, file.mime, file.blob)
+    favoritesStore.recordDownload(taskId, artifactName, 'algorithm')
   } catch (error) {
     messageStore.reportError(error)
   }
