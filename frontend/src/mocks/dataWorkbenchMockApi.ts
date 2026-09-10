@@ -14,7 +14,7 @@ import {
 const relativeDate = (hoursAgo: number) => relativeIso(hoursAgo).slice(0, 10)
 
 export interface DataWorkbenchMockApi {
-  request: (method: string, path: string, params?: Record<string, unknown>) => Promise<unknown>
+  request: (method: string, path: string, params?: Record<string, unknown>, body?: unknown) => Promise<unknown>
 }
 
 export interface DatasetSummary {
@@ -125,6 +125,7 @@ function datasetDescriptor(item: SeedDataset): ServiceDescriptor {
     ],
     actions: [
       { id: 'apply', label: '申请使用', kind: 'flow', flow: 'apply' },
+      { id: 'preview', label: '查看样例', kind: 'navigate' },
     ],
   }
 }
@@ -148,35 +149,64 @@ function toDatasetRecord(item: SeedDataset): DatasetRecord {
 
 const datasets: DatasetRecord[] = seedDatasets.map(toDatasetRecord)
 
-const applications: DataApplication[] = seedDatasetApplications.map((item) => ({
-  code: item.code,
-  serviceCode: item.serviceCode,
-  serviceName: item.serviceName,
-  status: item.status,
-  submittedAt: relativeIso(item.submittedHoursAgo),
-  deliveredAt: item.deliveredHoursAgo === undefined ? undefined : relativeIso(item.deliveredHoursAgo),
-  currentApprover: item.currentApprover,
-  rejectReason: item.rejectReason,
-  remark: item.remark,
-}))
-
-const subscriptions: DataSubscription[] = seedDatasetSubscriptions.map((item) => ({
-  code: item.code,
-  serviceCode: item.serviceCode,
-  serviceName: item.serviceName,
-  version: item.version,
-  snapshotDate: relativeDate(item.snapshotHoursAgo),
-  expiresAt: relativeDate(item.expiresHoursAgo),
-  isExpiringSoon: item.isExpiringSoon,
-  deliveryType: item.deliveryType,
-  rowsCount: item.rowsCount,
-  previewUrl: item.previewUrl,
-}))
+function toApplication(item: (typeof seedDatasetApplications)[number]): DataApplication {
+  return {
+    code: item.code,
+    serviceCode: item.serviceCode,
+    serviceName: item.serviceName,
+    status: item.status,
+    submittedAt: relativeIso(item.submittedHoursAgo),
+    deliveredAt: item.deliveredHoursAgo === undefined ? undefined : relativeIso(item.deliveredHoursAgo),
+    currentApprover: item.currentApprover,
+    rejectReason: item.rejectReason,
+    remark: item.remark,
+  }
+}
 
 export function createDataWorkbenchMockApi(): DataWorkbenchMockApi {
-  async function request(method: string, path: string, params: Record<string, unknown> = {}): Promise<unknown> {
+  const applications: DataApplication[] = seedDatasetApplications.map(toApplication)
+  const subscriptions: DataSubscription[] = seedDatasetSubscriptions.map((item) => ({
+    code: item.code,
+    serviceCode: item.serviceCode,
+    serviceName: item.serviceName,
+    version: item.version,
+    snapshotDate: relativeDate(item.snapshotHoursAgo),
+    expiresAt: relativeDate(item.expiresHoursAgo),
+    isExpiringSoon: item.isExpiringSoon,
+    deliveryType: item.deliveryType,
+    rowsCount: item.rowsCount,
+    previewUrl: item.previewUrl,
+  }))
+  let sequence = seedDatasetApplications.length
+
+  async function request(method: string, path: string, params: Record<string, unknown> = {}, body?: unknown): Promise<unknown> {
     const normalizedMethod = method.toUpperCase()
     await Promise.resolve()
+
+    if (normalizedMethod === 'POST' && path === '/applications') {
+      const record = (body ?? {}) as {
+        source?: string
+        serviceCode?: string
+        serviceName?: string
+        grantedColumns?: string[]
+        remark?: string
+      }
+      const serviceCode = String(record.serviceCode ?? '')
+      const serviceName = String(record.serviceName ?? serviceCode)
+      if (!serviceCode) throw error(422, 'VALIDATION_FAILED', '申请对象不能为空', path)
+      sequence += 1
+      const created: DataApplication = {
+        code: `app-2026-${String(sequence).padStart(3, '0')}`,
+        serviceCode,
+        serviceName,
+        status: 'PENDING',
+        submittedAt: relativeIso(0),
+        currentApprover: '王主管（数据管理部）',
+        remark: record.remark ?? (record.source === 'DATASET' ? '自数据集详情申请使用' : '自数据目录申请使用'),
+      }
+      applications.unshift(created)
+      return clone(created)
+    }
 
     if (normalizedMethod === 'GET' && path === '/datasets') {
       const keyword = String(params.keyword ?? '').toLowerCase()

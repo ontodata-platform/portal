@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import {
   dataWorkbenchApi,
@@ -32,10 +32,13 @@ import SkeletonList from '@/ui-kit/SkeletonList.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const messageStore = useMessageStore()
 
-const activeTab = ref('services')
+const allowedTabs = new Set(['services', 'datasets', 'applications', 'subscriptions'])
+const queryTab = String(route.query.tab ?? '')
+const activeTab = ref(allowedTabs.has(queryTab) ? queryTab : 'services')
 
 // ── 数据服务签（目录） ──
 const loading = ref(false)
@@ -171,7 +174,10 @@ const subscriptionColumns = [
   { title: t('common.action'), key: 'action', width: 160 },
 ]
 
-onMounted(load)
+onMounted(() => {
+  void load()
+  if (activeTab.value !== 'services') onTabChange(activeTab.value)
+})
 </script>
 
 <template>

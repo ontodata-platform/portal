@@ -47,4 +47,23 @@ describe('数据工作台 mock API（数据集）', () => {
     const res = (await api.request('GET', '/dataset-domains')) as { items: string[] }
     expect(res.items).toContain('光学影像')
   })
+
+  it('数据集申请写入我的申请列表', async () => {
+    const created = (await api.request('POST', '/applications', {}, {
+      source: 'DATASET',
+      serviceCode: 'dset-optical-snapshot',
+      serviceName: '高分光学影像快照',
+      grantedColumns: ['scene_id'],
+    })) as { code: string; status: string; serviceCode: string }
+
+    expect(created.serviceCode).toBe('dset-optical-snapshot')
+    expect(created.status).toBe('PENDING')
+    expect(created.code).toMatch(/^app-2026-/)
+
+    const listed = (await api.request('GET', '/my/applications')) as {
+      items: Array<{ code: string; serviceCode: string }>
+    }
+    expect(listed.items[0].code).toBe(created.code)
+    expect(listed.items.some((item) => item.serviceCode === 'dset-optical-snapshot')).toBe(true)
+  })
 })

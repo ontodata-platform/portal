@@ -16,6 +16,11 @@ const descriptor: ServiceDescriptor = {
     { type: 'summary', title: '基本信息', fields: [{ label: '服务编码', value: 'tpl-quality-weekly' }] },
     { type: 'richtext', title: '服务说明', text: '对高分光学影像做目标特性提取。' },
     { type: 'mystery-block', title: '未来新区块' },
+    {
+      type: 'sample',
+      title: '数据样例',
+      sample: { columns: ['scene_id'], rows: [['GF1-001']] },
+    },
     { type: 'inputs', title: '输入要求', inputs: [
       { key: 'opticalScene', label: '高分光学影像快照', kind: 'dataset-ref', required: true },
       { key: 'qualityThreshold', label: '质量合格阈值', kind: 'number', defaultValue: '0.8' },
@@ -77,6 +82,11 @@ describe('DescriptorRenderer', () => {
     const wrapper = mountRenderer()
     expect(wrapper.text()).toContain('未来新区块')
     expect(wrapper.text()).toContain('该区块类型暂不支持图形化渲染')
+  })
+
+  it('样例节带锚点供详情页滚动', () => {
+    const wrapper = mountRenderer()
+    expect(wrapper.find('#descriptor-sample').exists()).toBe(true)
   })
 
   it('动作按钮触发 action 事件', async () => {

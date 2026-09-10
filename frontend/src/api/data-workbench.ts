@@ -57,4 +57,17 @@ export const dataWorkbenchApi = {
       () => localDataWorkbenchMockApi.request('GET', '/my/subscriptions') as Promise<DatasetPage<DataSubscription>>,
       () => client.get('/my/data-subscriptions').then((r) => r.data),
     ),
+
+  /** 数据集来源申请。真实模式：POST /api/v1/marketplace/applications（source=DATASET，对齐后端 T0-2）。 */
+  apply: (body: {
+    source: 'DATASET' | 'SERVICE'
+    serviceCode: string
+    serviceName: string
+    grantedColumns?: string[]
+    remark?: string
+  }): Promise<DataApplication> =>
+    viaMock(
+      () => localDataWorkbenchMockApi.request('POST', '/applications', {}, body) as Promise<DataApplication>,
+      () => client.post('/marketplace/applications', body).then((r) => r.data),
+    ),
 }

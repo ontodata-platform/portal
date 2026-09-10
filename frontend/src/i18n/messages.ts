@@ -34,6 +34,9 @@ export const zhCn = {
     description: '描述',
     submittedAt: '提交时间',
     remark: '备注/用途',
+    cancel: '取消',
+    nextStep: '下一步',
+    prevStep: '上一步',
   },
   odTable: {
     emptyTitle: '暂无记录',
@@ -62,6 +65,8 @@ export const zhCn = {
     applicationCode: '申请编号',
     currentApprover: '当前审批人',
     reapply: '重新申请',
+    applyBanner: '申请已提交，单号 {code}。可在「我的申请」中查看进度。',
+    viewApplications: '查看我的申请',
   },
   descriptor: {
     section: {
@@ -311,6 +316,11 @@ export const zhCn = {
     grantedColumns: '申请字段',
     grantedColumnsPlaceholder: '输入需要的字段名，按回车添加（留空表示申请整条数据）',
     applySuccess: '申请已提交，审批单号 {code}',
+    applyStepFields: '选择字段',
+    applyStepConfirm: '确认申请',
+    applyDefaultFields: '按服务默认字段申请',
+    columnInputPlaceholder: '例如：景号、过境时间、云量（回车添加）',
+    submitApply: '提交申请',
     retryDelivery: '重试投递',
     retryDeliverySuccess: '数据投递已重新触发',
     deliveryStatus: '投递状态',
@@ -838,6 +848,9 @@ export const enUs: MessageSchema = {
     description: 'Description',
     submittedAt: 'Submitted At',
     remark: 'Remark',
+    cancel: 'Cancel',
+    nextStep: 'Next',
+    prevStep: 'Back',
   },
   odTable: {
     emptyTitle: 'No records',
@@ -866,6 +879,8 @@ export const enUs: MessageSchema = {
     applicationCode: 'Application Code',
     currentApprover: 'Current Approver',
     reapply: 'Reapply',
+    applyBanner: 'Request submitted, ticket {code}. Track it in My Applications.',
+    viewApplications: 'View my applications',
   },
   descriptor: {
     section: {
@@ -1116,6 +1131,11 @@ export const enUs: MessageSchema = {
     grantedColumns: 'Requested Columns',
     grantedColumnsPlaceholder: 'Enter column names and press enter (leave empty for the whole dataset)',
     applySuccess: 'Request submitted, approval code {code}',
+    applyStepFields: 'Select fields',
+    applyStepConfirm: 'Confirm request',
+    applyDefaultFields: 'Apply with the service default fields',
+    columnInputPlaceholder: 'e.g. scene id, pass time, cloud cover (press Enter to add)',
+    submitApply: 'Submit request',
     retryDelivery: 'Retry Delivery',
     retryDeliverySuccess: 'Data delivery re-triggered',
     deliveryStatus: 'Delivery Status',

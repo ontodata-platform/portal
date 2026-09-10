@@ -10,6 +10,7 @@ const dataServicesMock = vi.fn()
 const pushMock = vi.fn()
 
 vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: {} }),
   useRouter: () => ({ push: pushMock }),
 }))
 

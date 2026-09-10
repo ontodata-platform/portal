@@ -53,7 +53,12 @@ function onAction(action: DescriptorAction) {
       </a-space>
     </div>
 
-    <section v-for="section in knownSections" :key="`${section.type}-${section.title ?? ''}`" class="descriptor-section">
+    <section
+      v-for="section in knownSections"
+      :id="section.type === 'sample' ? 'descriptor-sample' : undefined"
+      :key="`${section.type}-${section.title ?? ''}`"
+      class="descriptor-section"
+    >
       <h3 class="section-title">{{ sectionTitle(section) }}</h3>
 
       <a-descriptions v-if="section.type === 'summary'" :column="2" size="small" bordered>

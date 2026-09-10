@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { marketplaceApi } from '@/api/portal'
+import ApplyWizardModal from '@/components/data-workbench/ApplyWizardModal.vue'
 import { i18n } from '@/i18n'
 import MarketplaceDetailView from './MarketplaceDetailView.vue'
 
@@ -31,10 +32,12 @@ const stubs = {
   'a-descriptions': { props: ['title', 'bordered', 'column', 'size'], template: '<div class="descriptions"><slot /></div>' },
   'a-descriptions-item': { props: ['label', 'span'], template: '<div class="desc-item">{{ label }}: <slot /></div>' },
   'a-empty': { props: ['description'], template: '<div>{{ description }}</div>' },
-  'a-modal': { props: ['open', 'title', 'confirmLoading'], emits: ['ok'], template: '<div><slot /></div>' },
+  'a-modal': { props: ['open', 'title', 'confirmLoading'], template: '<div v-if="open"><slot /><slot name="footer" /></div>' },
   'a-form': { template: '<form><slot /></form>' },
   'a-form-item': { props: ['label', 'extra'], template: '<div><slot /></div>' },
   'a-input': { props: ['value'], emits: ['update:value'], template: '<input :value="value" />' },
+  'a-steps': { template: '<div><slot /></div>' },
+  'a-step': { props: ['title'], template: '<div>{{ title }}</div>' },
 }
 
 describe('MarketplaceDetailView', () => {
@@ -42,7 +45,7 @@ describe('MarketplaceDetailView', () => {
     vi.clearAllMocks()
   })
 
-  it('成功加载数据服务详情并提交申请', async () => {
+  it('成功加载数据服务详情并提交申请后停留本页刷新', async () => {
     vi.mocked(marketplaceApi.find).mockResolvedValue({
       sourceSystem: 'data-platform',
       available: true,
@@ -68,12 +71,17 @@ describe('MarketplaceDetailView', () => {
     expect(wrapper.text()).toContain('dsv-test-100')
     expect(wrapper.text()).toContain('v1.2.0')
 
-    // 触发申请
-    await (wrapper.vm as unknown as { submitApply: () => Promise<void> }).submitApply()
+    const applyButton = wrapper.findAll('button').find((button) => button.text().includes('填写申请'))
+    expect(applyButton).toBeTruthy()
+    await applyButton!.trigger('click')
+
+    const wizard = wrapper.findComponent(ApplyWizardModal)
+    await wizard.vm.submitApply()
     await flushPromises()
 
     expect(marketplaceApi.apply).toHaveBeenCalledWith('dsv-test-100', { grantedColumns: undefined })
-    expect(pushMock).toHaveBeenCalledWith('/personal')
+    expect(pushMock).not.toHaveBeenCalled()
+    expect(marketplaceApi.find).toHaveBeenCalledTimes(2)
   })
 
   it('上游不可用时展示降级警告', async () => {
