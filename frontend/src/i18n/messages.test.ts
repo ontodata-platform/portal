@@ -40,6 +40,14 @@ describe('国际化（M5）', () => {
     expect(i18n.global.locale.value).toBe(DEFAULT_LOCALE)
   })
 
+  it('审批类型对外不出现 R4 内部术语', () => {
+    expect(zhCn.approvals.r4ToolCall).toBe('工具服务开通')
+    expect(zhCn.agentChat.qualityHint).not.toMatch(/R4/)
+    expect(zhCn.agentChat.approvalTitle).not.toMatch(/R4/)
+    expect(zhCn.approvals.typePlaceholder).not.toMatch(/R4/)
+    expect(enUs.approvals.r4ToolCall).not.toMatch(/R4/)
+  })
+
   it('插值消息按语言解析（含参数）', () => {
     setLocale('zh-CN')
     expect(i18n.global.t('operations.noticePublished', { code: 'ntc-1' })).toBe('公告 ntc-1 已发布')

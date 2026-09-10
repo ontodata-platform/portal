@@ -9,6 +9,7 @@ describe('中文展示', () => {
     expect(中文展示('WORKFLOW_EXECUTION')).toBe('工作流执行')
     expect(中文展示('portal-user')).toBe('门户用户')
     expect(中文展示('named-approver')).toBe('指定审批人')
+    expect(中文展示('R4_TOOL_CALL')).toBe('工具服务开通')
   })
 
   it('保留未知的后端新增值，避免掩盖联调问题', () => {

@@ -58,7 +58,7 @@ const 中文枚举: Record<string, string> = {
   PORTAL_USER: '门户用户',
   PUBLISHED: '已发布',
   QUALITY_REPORT: '质量报告',
-  R4_TOOL_CALL: '高风险工具调用',
+  R4_TOOL_CALL: '工具服务开通',
   RECOMBINE: '算法重组平台',
   REJECTED: '已拒绝',
   WITHDRAWN: '已撤回',
