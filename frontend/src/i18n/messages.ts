@@ -10,6 +10,11 @@ export const zhCn = {
   common: {
     query: '查询',
     keyword: '关键字',
+  attachment: {
+    upload: '上传附件',
+    download: '下载',
+    remove: '删除',
+  },
     role: '角色',
     close: '关闭',
     status: '状态',
@@ -393,6 +398,7 @@ export const zhCn = {
     intentTimeTo2: '至',
     intentDelivery: '交付要求',
     intentDeliveryNote: '交付备注（可选）',
+    intentAttachments: '申请材料（可选）',
     intentFrequencyOnce: '一次性交付',
     intentFrequencyPeriodic: '周期性交付',
     intentIncomplete: '请先补全申请要素',
@@ -992,6 +998,11 @@ export const enUs: MessageSchema = {
   common: {
     query: 'Search',
     keyword: 'Keyword',
+  attachment: {
+    upload: 'Upload',
+    download: 'Download',
+    remove: 'Remove',
+  },
     role: 'Role',
     close: 'Close',
     status: 'Status',
@@ -1376,6 +1387,7 @@ export const enUs: MessageSchema = {
     intentTimeTo2: 'to',
     intentDelivery: 'Delivery requirements',
     intentDeliveryNote: 'Delivery note (optional)',
+    intentAttachments: 'Attachments (optional)',
     intentFrequencyOnce: 'One-off',
     intentFrequencyPeriodic: 'Periodic',
     intentIncomplete: 'Please complete the use intent first',

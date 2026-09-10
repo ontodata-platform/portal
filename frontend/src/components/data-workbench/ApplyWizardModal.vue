@@ -13,6 +13,7 @@ import { dataWorkbenchApi } from '@/api/data-workbench'
 import { marketplaceApi } from '@/api/portal'
 import { useIdentityStore } from '@/stores/identity'
 import { useMessageStore } from '@/stores/message'
+import AttachmentUpload from '@/components/attachment/AttachmentUpload.vue'
 import {
   APPLICATION_REGIONS,
   DELIVERY_FORMATS,
@@ -230,6 +231,9 @@ defineExpose({ submitApply, goToConfirm, applyStep })
           </a-radio-group>
           <a-input v-model:value="applyForm.deliveryNote" :placeholder="t('marketplace.intentDeliveryNote')" />
         </div>
+      </a-form-item>
+      <a-form-item :label="t('marketplace.intentAttachments')">
+        <AttachmentUpload biz-type="application" :biz-code="`draft:${primary?.code ?? 'new'}`" />
       </a-form-item>
     </a-form>
 
