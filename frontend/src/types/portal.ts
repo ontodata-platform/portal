@@ -269,8 +269,12 @@ export interface PortalIdentity {
 }
 
 /** 数据工作台申请请求体。 */
+import type { ApplicationUseIntent } from './application'
+
 export interface ApplyDataServiceRequest {
   grantedColumns?: string[]
+  /** 申请四要素（B3-1）：使用目的/范围/时间/交付，审批人决策依据 */
+  useIntent?: ApplicationUseIntent
 }
 
 /** 数据工作台申请响应。 */

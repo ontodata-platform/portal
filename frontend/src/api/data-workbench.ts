@@ -10,6 +10,7 @@ import {
   type DatasetSummary,
 } from '@/mocks/dataWorkbenchMockApi'
 import { useLocalMock } from '@/mocks/localMode'
+import type { ApplicationUseIntent } from '@/types/application'
 import type { ServiceDescriptor } from '@/types/descriptor'
 
 export type { DataApplication, DataSubscription, DatasetSummary }
@@ -65,6 +66,7 @@ export const dataWorkbenchApi = {
     serviceName: string
     grantedColumns?: string[]
     remark?: string
+    useIntent?: ApplicationUseIntent
   }): Promise<DataApplication> =>
     viaMock(
       () => localDataWorkbenchMockApi.request('POST', '/applications', {}, body) as Promise<DataApplication>,

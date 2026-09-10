@@ -94,7 +94,10 @@ describe('MarketplaceDetailView', () => {
     await wizard.vm.submitApply()
     await flushPromises()
 
-    expect(marketplaceApi.apply).toHaveBeenCalledWith('dsv-test-100', { grantedColumns: ['scene_id'] })
+    expect(marketplaceApi.apply).toHaveBeenCalledWith('dsv-test-100', {
+      grantedColumns: ['scene_id'],
+      useIntent: expect.objectContaining({ deliveryFrequency: 'ONCE' }),
+    })
     expect(pushMock).not.toHaveBeenCalled()
     expect(marketplaceApi.find).toHaveBeenCalledTimes(2)
   })

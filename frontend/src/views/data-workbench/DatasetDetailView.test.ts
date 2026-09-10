@@ -106,12 +106,13 @@ describe('DatasetDetailView', () => {
     await wizard.vm.submitApply()
     await flushPromises()
 
-    expect(dataWorkbenchApi.apply).toHaveBeenCalledWith({
+    expect(dataWorkbenchApi.apply).toHaveBeenCalledWith(expect.objectContaining({
       source: 'DATASET',
       serviceCode: 'dset-optical-snapshot',
       serviceName: '高分光学影像快照',
       grantedColumns: ['scene_id'],
-    })
+      useIntent: expect.objectContaining({ deliveryFrequency: 'ONCE' }),
+    }))
     expect(wrapper.text()).toContain('app-2026-004')
     expect(wrapper.text()).toContain('查看我的申请')
   })

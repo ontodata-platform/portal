@@ -66,8 +66,8 @@ function onAction(action: DescriptorAction) {
   }
 }
 
-function onApplied(app: ApplicationSummary) {
-  lastApplication.value = app
+function onApplied(apps: ApplicationSummary[]) {
+  lastApplication.value = apps[apps.length - 1] ?? null
 }
 
 onMounted(load)

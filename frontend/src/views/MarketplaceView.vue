@@ -19,10 +19,12 @@ import {
 import { marketplaceApi } from '@/api/portal'
 import { downloadBlob } from '@/utils/download'
 import { catalogItems, catalogTotal } from '@/catalog'
+import ApplyWizardModal from '@/components/data-workbench/ApplyWizardModal.vue'
 import MarketServiceCard from '@/components/marketplace/MarketServiceCard.vue'
 import TableFilterBar from '@/ui-kit/TableFilterBar.vue'
 import { useMessageStore } from '@/stores/message'
 import type { CatalogEntry, UpstreamAggregation } from '@/types/portal'
+import type { ApplyTarget } from '@/types/application'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDate, formatDateTime, formatNumber } from '@/ui-kit/format'
@@ -80,6 +82,29 @@ const catalogFilterSpecs = computed(() => [
     width: 120,
   },
 ])
+
+// ── B3-2：多产品合并申请 ──
+const selectedCodes = ref<string[]>([])
+const wizardOpen = ref(false)
+const wizardTargets = ref<ApplyTarget[]>([])
+
+function toggleSelect(item: CatalogEntry, checked: boolean) {
+  selectedCodes.value = checked
+    ? [...selectedCodes.value, item.code]
+    : selectedCodes.value.filter((code) => code !== item.code)
+}
+
+function openBulkApply() {
+  wizardTargets.value = visibleRows.value
+    .filter((item) => selectedCodes.value.includes(item.code))
+    .map((item) => ({ code: item.code, name: item.name, source: 'SERVICE' as const }))
+  wizardOpen.value = true
+}
+
+function onBulkSubmitted() {
+  selectedCodes.value = []
+  void load()
+}
 
 // ── 我的申请签 ──
 const applicationsLoading = ref(false)
@@ -228,7 +253,18 @@ onMounted(() => {
             :description="t('marketplace.emptyDesc')"
           />
           <div v-else class="card-grid">
-            <MarketServiceCard v-for="item in visibleRows" :key="item.code" :item="item" />
+            <div v-for="item in visibleRows" :key="item.code" class="card-select-wrap">
+              <label class="card-select">
+                <a-checkbox
+                  :checked="selectedCodes.includes(item.code)"
+                  :aria-label="t('marketplace.bulkSelect', { name: item.name })"
+                  @update:checked="(checked: boolean) => toggleSelect(item, checked)"
+                >
+                  {{ t('marketplace.bulkSelectShort') }}
+                </a-checkbox>
+              </label>
+              <MarketServiceCard :item="item" />
+            </div>
           </div>
           <div v-if="total > query.size" class="pager">
             <a-pagination
@@ -380,6 +416,15 @@ onMounted(() => {
         </a-card>
       </a-tab-pane>
     </a-tabs>
+
+    <!-- B3-2：合并申请浮条（选中 >0 时出现） -->
+    <div v-if="selectedCodes.length > 0" class="bulk-bar">
+      <span class="bulk-hint">{{ t('marketplace.bulkSelected', { count: selectedCodes.length }) }}</span>
+      <a-button size="small" @click="selectedCodes = []">{{ t('marketplace.bulkClear') }}</a-button>
+      <a-button type="primary" size="small" @click="openBulkApply">{{ t('marketplace.bulkApply') }}</a-button>
+    </div>
+
+    <ApplyWizardModal v-model:open="wizardOpen" :targets="wizardTargets" @submitted="onBulkSubmitted" />
   </div>
 </template>
 
@@ -395,6 +440,40 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+/* B3-2：合并申请 */
+.card-select-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-select {
+  font-size: 12px;
+  color: var(--od-gray-500, #64748b);
+}
+
+.bulk-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--od-shadow-2, 0 8px 24px rgba(15, 23, 42, 0.16));
+  z-index: 20;
+}
+
+.bulk-hint {
+  font-size: 13px;
+  color: var(--od-primary, #2563eb);
+  font-weight: 500;
 }
 
 .card-grid {
