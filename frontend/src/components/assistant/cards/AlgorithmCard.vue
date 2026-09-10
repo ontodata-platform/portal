@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { 中文展示 } from '@/ui-kit/展示文本'
@@ -8,13 +9,19 @@ const props = defineProps<{
 }>()
 defineEmits<{ action: [kind: string] }>()
 const router = useRouter()
+const { t } = useI18n()
 
 function open() {
   if (props.payload.kind === 'template') {
-    void router.push(`/workbench/templates/${props.payload.code}`)
+    void router.push(`/algorithm-workbench/${props.payload.code}/run`)
     return
   }
-  void router.push('/workbench')
+  void router.push('/algorithm-workbench')
+}
+
+// C5-1：直达运行向导
+function run() {
+  void router.push(`/algorithm-workbench/${props.payload.code}/run`)
 }
 </script>
 
@@ -22,6 +29,9 @@ function open() {
   <a-card size="small" class="card" @click="open">
     <div class="name">{{ payload.name }}</div>
     <div class="meta"><span class="cell-mono">{{ payload.code }}</span> · {{ 中文展示(payload.kind) }} · {{ payload.version }} · {{ 中文展示(payload.status) }}</div>
+    <a-button size="small" type="link" @click.stop="run">
+      {{ t('assistant.card.run') }}
+    </a-button>
   </a-card>
 </template>
 

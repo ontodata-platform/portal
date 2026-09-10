@@ -58,6 +58,8 @@ async function loadDetail() {
     notFound.value = !service.value && Boolean(res.available)
     // B5：记录浏览历史（个人中心"收藏与历史"展示）
     if (service.value) favoritesStore.recordVisit(code.value, service.value.name)
+    // C5-2：助手确认卡带入 → ?apply=1 自动打开申请向导
+    if (route.query.apply === '1') openApplyModal()
   } catch (error) {
     const apiError = error instanceof ApiError ? error : ApiError.from(error)
     if (apiError.status === 404 || apiError.code === 'NOT_FOUND') {

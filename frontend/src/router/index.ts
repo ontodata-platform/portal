@@ -173,6 +173,12 @@ export const routes: RouteRecordRaw[] = [
               meta: { titleKey: 'menu.notifications', group: 'groupPortal' },
             },
             {
+              path: 'qa',
+              name: 'personal-qa',
+              component: () => import('@/views/personal/sections/QaHistorySection.vue'),
+              meta: { titleKey: 'menu.qa', group: 'groupPortal' },
+            },
+            {
               path: 'favorites',
               name: 'personal-favorites',
               component: () => import('@/views/personal/sections/FavoritesSection.vue'),

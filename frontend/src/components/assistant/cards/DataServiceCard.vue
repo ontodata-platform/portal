@@ -22,15 +22,26 @@ function open() {
   emit('action', 'navigate')
   void router.push(`/data-workbench/${props.payload.code}`)
 }
+
+// C5-1：直达申请（带 apply 标记，详情页自动打开申请向导）
+function apply() {
+  emit('action', 'apply')
+  void router.push({ path: `/data-workbench/${props.payload.code}`, query: { apply: '1' } })
+}
 </script>
 
 <template>
   <a-card size="small" class="card" @click="open">
     <div class="name">{{ payload.name }}</div>
     <div class="meta"><span class="cell-mono">{{ payload.code }}</span> · {{ payload.version }} · {{ 中文展示(payload.classification) }}</div>
-    <a-tag :color="payload.subscribed ? 'green' : 'default'">
-      {{ payload.subscribed ? t('assistant.card.subscribed') : t('assistant.card.unsubscribed') }}
-    </a-tag>
+    <div class="card-foot">
+      <a-tag :color="payload.subscribed ? 'green' : 'default'">
+        {{ payload.subscribed ? t('assistant.card.subscribed') : t('assistant.card.unsubscribed') }}
+      </a-tag>
+      <a-button size="small" type="link" @click.stop="apply">
+        {{ t('assistant.card.apply') }}
+      </a-button>
+    </div>
   </a-card>
 </template>
 
@@ -42,5 +53,6 @@ function open() {
   box-shadow: none;
 }
 .name { font-weight: 600; }
+.card-foot { display: flex; align-items: center; justify-content: space-between; }
 .meta { color: var(--od-gray-500, #64748b); font-size: 12px; margin: 4px 0 8px; }
 </style>

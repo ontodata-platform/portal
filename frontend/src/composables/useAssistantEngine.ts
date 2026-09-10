@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { agentApi, streamSession } from '@/api/agent'
 import { i18n } from '@/i18n'
@@ -27,6 +28,7 @@ function persist(sessions: AssistantSession[]) {
 }
 
 export function useAssistantEngine() {
+  const router = useRouter()
   const sessions = ref<AssistantSession[]>(loadSessions())
   const currentId = ref(sessions.value[0]?.id ?? '')
   const intents = ref<IntentSuggestion[]>(listIntentSuggestions())
@@ -215,6 +217,14 @@ export function useAssistantEngine() {
         confirmToken: payload.confirmToken,
         decision,
       })
+      // C5-2：批准后按工具类型带入对应向导（申请预填/运行配置）
+      if (decision === 'approve') {
+        if (payload.tool === 'marketplace.apply' && payload.summary.code) {
+          void router.push({ path: `/data-workbench/${payload.summary.code}`, query: { apply: '1' } })
+        } else if (payload.tool === 'recombine.submit_workflow' && payload.summary.code) {
+          void router.push(`/algorithm-workbench/${payload.summary.code}/run`)
+        }
+      }
     } catch {
       // 降级卡仍要给出明确反馈：接口失败不阻断本地收口
     } finally {
