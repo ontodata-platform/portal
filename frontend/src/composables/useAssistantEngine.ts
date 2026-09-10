@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { agentApi, streamSession } from '@/api/agent'
 import { i18n } from '@/i18n'
 import { useLocalMock } from '@/mocks/localMode'
-import { listIntentSuggestions, routeAssistantIntent, streamAssistantText } from '@/mocks/assistantMockApi'
+import { listIntentSuggestions, resetAssistantContext, routeAssistantIntent, streamAssistantText } from '@/mocks/assistantMockApi'
 import type { AssistantMessage, AssistantSession, IntentSuggestion } from '@/types/assistant'
 import type { ConfirmRequiredEvent } from '@/types/agent'
 
@@ -51,6 +51,7 @@ export function useAssistantEngine() {
     const session: AssistantSession = { id: uid('sess'), title, updatedAt: Date.now(), messages: [] }
     sessions.value = [session, ...sessions.value]
     currentId.value = session.id
+    resetAssistantContext()
     save()
     return session
   }

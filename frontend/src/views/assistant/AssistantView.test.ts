@@ -77,7 +77,7 @@ describe('AssistantView', () => {
     await wrapper.find('textarea.hero-input').setValue('提交质量分析跑一遍')
     await wrapper.find('button.send-btn').trigger('click')
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('提交港区目标特性提取-周批')
+      expect(wrapper.text()).toContain('提交「目标特性提取-周批」运行任务')
     })
 
     const approve = wrapper.findAll('button').find((button) => button.text() === '确认执行')
@@ -96,7 +96,7 @@ describe('AssistantView', () => {
     await wrapper.find('textarea.hero-input').setValue('提交质量分析跑一遍')
     await wrapper.find('button.send-btn').trigger('click')
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('提交港区目标特性提取-周批')
+      expect(wrapper.text()).toContain('提交「目标特性提取-周批」运行任务')
     })
 
     const reject = wrapper.findAll('button').find((button) => button.text() === '拒绝')
@@ -112,7 +112,7 @@ describe('AssistantView', () => {
     routeQuery.value = { q: '我有哪些待办审批' }
     const wrapper = mountView()
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('事项汇总')
+      expect(wrapper.text()).toContain('待我审批')
     })
   })
 })

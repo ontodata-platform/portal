@@ -27,12 +27,13 @@ describe('assistantMockApi 意图路由', () => {
     expect(result.actions?.some((action) => action.target === '/personal/approvals')).toBe(true)
   })
 
-  it('申请/权限/开通 → guide', () => {
+  it('申请开通X → 数据服务申请向导确认卡（A7：guide 升级为可直接办理）', () => {
     const result = routeAssistantIntent('申请开通载荷遥测权限')
-    expect(result.cards?.[0]?.type).toBe('guide')
-    if (result.cards?.[0]?.type === 'guide') {
-      expect(result.cards[0].payload.target).toContain('/data-workbench/')
+    expect(result.cards?.[0]?.type).toBe('data-service')
+    if (result.cards?.[0]?.type === 'data-service') {
+      expect(result.cards[0].payload.code).toBe('ds-payload-telemetry')
     }
+    expect(result.confirm?.tool).toBe('marketplace.apply')
   })
 
   it('未命中走兜底建议', () => {
