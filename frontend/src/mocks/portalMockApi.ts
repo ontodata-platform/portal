@@ -7,6 +7,16 @@
  */
 
 import { demoIdentity, relativeIso, seedDataServices } from './seed'
+import {
+  createSeedApprovals,
+  createSeedRequirements,
+  createSeedTasks,
+  hydrateFeedbacks,
+  hydrateNotices,
+  hydrateNotifications,
+  hydrateResults,
+  hydrateUsers,
+} from './seed.volume'
 
 type RecordValue = Record<string, unknown>
 
@@ -129,106 +139,10 @@ function overlapFor(source: RecordValue, candidate: RecordValue): RecordValue | 
 }
 
 export function createPortalMockApi(): PortalMockApi {
-  const approvals: RecordValue[] = [
-    {
-      code: 'apr-data-001', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-gaofen-optical',
-      title: '东海高分光学影像服务使用申请', requester: '张晓明', status: 'PENDING', slaStatus: 'ON_TIME',
-      detail: { serviceCode: 'ds-gaofen-optical', grantedColumns: ['scene_id', 'acquisition_time', 'cloud_cover'] }, createdAt: timestamp, updatedAt: timestamp,
-    },
-    {
-      code: 'apr-r4-sample', approvalType: 'R4_TOOL_CALL', sourceSystem: 'mcp-gateway', sourceCode: 'cfm-sample',
-      title: '调用工作流提交工具需要审批', requester: demoIdentity.name, status: 'PENDING', slaStatus: 'ON_TIME',
-      detail: { tool: 'workflow.submit_execution', riskLevel: 'R4' }, createdAt: timestamp, updatedAt: timestamp,
-    },
-    {
-      code: 'apr-delivery-002', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-payload-telemetry',
-      title: '卫星载荷遥测服务订阅', requester: demoIdentity.name, status: 'APPROVED', slaStatus: 'MET',
-      detail: { serviceCode: 'ds-payload-telemetry', deliveryStatus: 'FAILED', deliveryError: '等待管理平台重新投递' },
-      createdAt: timestamp, updatedAt: timestamp, decisionAt: timestamp, decisionBy: '陈晓',
-    },
-    {
-      code: 'apr-overdue-003', approvalType: 'DATA_GRANT', sourceSystem: 'data-platform', sourceCode: 'ds-sar-maritime',
-      title: 'SAR海面目标检测辅助数据超期未批', requester: '王工', status: 'PENDING', slaStatus: 'OVERDUE',
-      slaDeadline: relativeIso(30), detail: { serviceCode: 'ds-sar-maritime' }, createdAt: relativeIso(48), updatedAt: relativeIso(6),
-    },
-    {
-      code: 'apr-due-004', approvalType: 'R4_TOOL_CALL', sourceSystem: 'mcp-gateway', sourceCode: 'cfm-due-soon',
-      title: '临期工具调用审批', requester: 'alice', status: 'PENDING', slaStatus: 'DUE_SOON',
-      slaDeadline: relativeIso(-4), detail: { tool: 'dataset.export', riskLevel: 'R4' }, createdAt: relativeIso(20), updatedAt: relativeIso(2),
-    },
-    {
-      code: 'apr-today-005', approvalType: 'SYSTEM_PERMISSION', sourceSystem: 'portal', sourceCode: 'role-operator',
-      title: '运营角色开通申请', requester: 'bob', status: 'APPROVED', slaStatus: 'MET',
-      decisionBy: '陈晓', decisionAt: relativeIso(2), createdAt: relativeIso(10), updatedAt: relativeIso(2),
-    },
-  ]
-
-/** 我的运行（近 7 天分布的演示数据）：时间用相对偏移，保证图表随当前日期滚动 */
- const tasks: RecordValue[] = [
-   {
-     taskId: 'tsk-run-001', taskType: 'WORKFLOW_EXECUTION', sourceSystem: 'algorithm-recombine', status: 'RUNNING', stage: '执行节点 2/3', progress: 62,
-     resourceRefs: ['tpl-maritime-target-flow@1', 'ds-gaofen-optical@v2026.09'], resultRefs: [], traceId: 'mock-trace-run-001', createdAt: relativeIso(2), updatedAt: relativeIso(1),
-   },
-   {
-     taskId: 'tsk-import-002', taskType: 'DATA_IMPORT', sourceSystem: 'data-platform', status: 'SUCCESS', stage: '质量校验完成', progress: 100,
-     resourceRefs: ['ds-sar-maritime@v1.4.2'], resultRefs: ['result-quality-002'], traceId: 'mock-trace-import-002', createdAt: relativeIso(28), updatedAt: relativeIso(27),
-   },
-   {
-     taskId: 'tsk-run-003', taskType: 'WORKFLOW_EXECUTION', sourceSystem: 'algorithm-recombine', status: 'SUCCESS', stage: '已完成', progress: 100,
-     resourceRefs: ['cap-infrared-weak-target@2', 'ds-payload-telemetry@v2026.09.01'], resultRefs: ['result-anomaly-001'], traceId: 'mock-trace-run-003', createdAt: relativeIso(50), updatedAt: relativeIso(49),
-   },
-   {
-     taskId: 'tsk-run-004', taskType: 'WORKFLOW_EXECUTION', sourceSystem: 'algorithm-recombine', status: 'FAILED', stage: '预检未通过', progress: 0,
-     resourceRefs: ['tpl-orbit-anomaly@1'], resultRefs: [], traceId: 'mock-trace-run-004', createdAt: relativeIso(74), updatedAt: relativeIso(74),
-   },
-   {
-     taskId: 'tsk-import-005', taskType: 'DATA_IMPORT', sourceSystem: 'data-platform', status: 'SUCCESS', stage: '交付完成', progress: 100,
-     resourceRefs: ['ds-payload-telemetry@v3.0.1'], resultRefs: ['result-payload-001'], traceId: 'mock-trace-import-005', createdAt: relativeIso(98), updatedAt: relativeIso(97),
-   },
- ]
-   const requirements: RecordValue[] = [
-     {
-       code: 'req-001', requirementType: 'COMPREHENSIVE', title: '海上目标态势研判场景', description: '整合光学影像、目标检测算法和海上目标本体规则。', requester: '陈晓',
-       status: 'IN_PROGRESS', assigneeSystem: 'algorithm-recombine', assigneeRef: 'tpl-maritime-target-flow', createdAt: timestamp, updatedAt: timestamp,
-     },
-    {
-      code: 'req-002', requirementType: 'DATA', title: '高分辨率光学影像目标特性提取', description: '申请东海重点海域高分光学卫星影像，用于港区舰船与设施目标特性提取。', requester: 'alice',
-      status: 'OPEN',
-      dataProfile: {
-        businessDomain: '遥感目标识别', dataObject: '高分辨率光学卫星影像', scope: '东海重点海域', granularity: '0.5 米空间分辨率', period: '近 6 个月', frequency: '按过境批次',
-        fields: ['scene_id', 'acquisition_time', 'orbit_id', 'sensor_type', 'cloud_cover', 'image_uri'], useCase: '港区目标特性提取', sensitivity: 'INTERNAL',
-      },
-      createdAt: timestamp, updatedAt: timestamp,
-    },
-    {
-      code: 'req-006', requirementType: 'DATA', title: '东海港区目标特性识别影像需求', description: '需要同海域同分辨率光学影像用于港区目标特性识别。', requester: 'bob',
-      status: 'OPEN',
-      dataProfile: {
-        businessDomain: '遥感目标识别', dataObject: '高分辨率光学卫星影像', scope: '东海重点海域', granularity: '0.5 米空间分辨率', period: '近 6 个月', frequency: '按过境批次',
-        fields: ['scene_id', 'acquisition_time', 'orbit_id', 'sensor_type', 'cloud_cover', 'image_uri'], useCase: '港区目标特性提取', sensitivity: 'INTERNAL',
-      },
-      createdAt: timestamp, updatedAt: timestamp,
-     },
-     {
-       code: 'req-003', requirementType: 'ALGORITHM', title: '红外弱小目标检测轨次处理', description: '将载荷红外影像接入弱小目标检测能力，形成轨次级处理结果。', requester: 'bob',
-       status: 'ANALYZING', createdAt: timestamp, updatedAt: timestamp,
-     },
-     {
-       code: 'req-004', requirementType: 'DATA', title: 'SAR海面目标检测辅助数据', description: '申请SAR影像及海况辅助要素，用于海面目标检测结果复核。', requester: '王工',
-       status: 'ASSIGNED', assigneeSystem: 'data-platform', assigneeRef: 'ds-sar-maritime', createdAt: timestamp, updatedAt: timestamp,
-     },
-     {
-       code: 'req-005', requirementType: 'COMPREHENSIVE', title: '卫星载荷效能评估看板', description: '汇总载荷工作状态、目标识别效果和轨次处理效能。', requester: '李工',
-       status: 'COMPLETED', assigneeSystem: 'portal', closedNote: '载荷效能看板已上线并完成验收', createdAt: timestamp, updatedAt: timestamp,
-     },
-   ]
-  const iamUsers: RecordValue[] = [
-    { id: 'u-chen', name: '陈晓', username: 'chenxiao', tenantId: 'default', roles: ['operator', 'user'], status: 'ACTIVE' },
-    { id: 'u-alice', name: 'alice', username: 'alice', tenantId: 'default', roles: ['user', 'data-manager'], status: 'ACTIVE' },
-    { id: 'u-bob', name: 'bob', username: 'bob', tenantId: 'default', roles: ['user', 'algorithm-operator'], status: 'ACTIVE' },
-    { id: 'u-wang', name: '王工', username: 'wanggong', tenantId: 'default', roles: ['user', 'data-manager'], status: 'ACTIVE' },
-    { id: 'u-li', name: '李工', username: 'ligong', tenantId: 'default', roles: ['portal-admin', 'approval-approver'], status: 'ACTIVE' },
-  ]
+  const approvals: RecordValue[] = createSeedApprovals()
+  const tasks: RecordValue[] = createSeedTasks()
+  const requirements: RecordValue[] = createSeedRequirements()
+  const iamUsers: RecordValue[] = hydrateUsers()
   const iamRoles: RecordValue[] = [
     {
       code: 'user',
@@ -267,14 +181,8 @@ export function createPortalMockApi(): PortalMockApi {
     { id: 'p-admin', name: '管理端访问', resource: '/admin/**', action: 'access', effect: 'PERMIT', roles: ['portal-operator', 'portal-admin', 'operator', 'admin'] },
     { id: 'p-approval', name: '审批决策', resource: '/approvals/*/decision', action: 'decide', effect: 'PERMIT', roles: ['named-approver'] },
   ]
-  const notices: RecordValue[] = [
-    { code: 'ntc-001', title: '东海港区目标特性提取批次已开放', content: '港区目标特性提取流程已对空间信息应用团队开放，可在算法工作台提交。', section: '公告', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
-    { code: 'ntc-002', title: '遥感数据服务目录更新', content: '新增SAR海面目标检测辅助数据，支持申请后审批投递。', section: '服务动态', status: 'PUBLISHED', publishedAt: timestamp, createdAt: timestamp, updatedAt: timestamp },
-  ]
-  const notifications: RecordValue[] = [
-    { id: 'ntf-001', type: 'APPROVAL_DECIDED', title: '有一项数据服务申请待审批', body: '请在审批中心处理东海高分光学影像服务申请。', resourceRef: 'apr-data-001', createdAt: timestamp },
-    { id: 'ntf-002', type: 'TASK_COMPLETED', title: '数据导入任务已完成', body: 'SAR海面目标检测辅助数据质量校验已通过。', resourceRef: 'tsk-import-002', readAt: timestamp, createdAt: timestamp },
-  ]
+  const notices: RecordValue[] = hydrateNotices()
+  const notifications: RecordValue[] = hydrateNotifications()
   const services: RecordValue[] = seedDataServices.map((item) => ({
     code: item.code,
     name: item.name,
@@ -282,12 +190,7 @@ export function createPortalMockApi(): PortalMockApi {
     currentVersion: item.version,
     classification: item.classification,
     subscribed: item.subscribed,
-    description:
-      item.code === 'ds-gaofen-optical'
-        ? '东海重点海域高分光学卫星影像，支持目标特性提取与按场景订阅。'
-        : item.code === 'ds-sar-maritime'
-          ? 'SAR海面目标检测辅助数据，含敏感空间要素，审批后开通。'
-          : '卫星载荷遥测轨次增量，支持载荷效能评估与异常研判。',
+    description: `${item.name}，东海示范区遥感海洋业务目录产品。`,
   }))
   const capabilities: RecordValue[] = [
     { code: 'cap-maritime-target-feature', name: '海上目标特性提取能力', status: 'ADMITTED', currentVersion: 3, description: '已准入的海上目标特性提取算法能力。' },
@@ -297,10 +200,8 @@ export function createPortalMockApi(): PortalMockApi {
     { code: 'tpl-maritime-target-flow', name: '海上目标态势研判流程', status: 'PUBLISHED', currentVersion: 2, description: '光学影像输入、目标特性提取和本体规则研判。' },
     { code: 'tpl-payload-quality', name: '卫星载荷遥测质量校验流程', status: 'PUBLISHED', currentVersion: 1, description: '载荷遥测轨次数据质量校验。' },
   ]
-  const results: RecordValue[] = [
-    { resultId: 'result-quality-002', sourceSystem: 'data-platform', resultType: 'QUALITY_REPORT', resourceRefs: ['ds-sar-maritime@v1.4.2'], metadata: { qualityScore: 98 }, sourceTaskId: 'tsk-import-002', traceId: 'mock-trace-import-002', createdAt: timestamp, updatedAt: timestamp },
-  ]
-  const feedbacks: RecordValue[] = []
+  const results: RecordValue[] = hydrateResults()
+  const feedbacks: RecordValue[] = hydrateFeedbacks()
   const scenarios: RecordValue[] = [
     {
       code: 'scn-maritime-target-001', version: '1.0.0', name: '海上目标态势研判', description: '已发布的海上目标态势研判场景。', status: 'PUBLISHED', tenantId: 'default', createdBy: demoIdentity.name,

@@ -61,6 +61,8 @@ const 中文枚举: Record<string, string> = {
   R4_TOOL_CALL: '高风险工具调用',
   RECOMBINE: '算法重组平台',
   REJECTED: '已拒绝',
+  WITHDRAWN: '已撤回',
+  QUEUED: '排队中',
   REPORT: '分析报告',
   RUNNING: '运行中',
   SNAPSHOT: '数据快照',

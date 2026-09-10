@@ -168,7 +168,7 @@ export interface AlgorithmRun {
   taskId: string
   serviceCode: string
   serviceName: string
-  status: 'SUCCEEDED' | 'RUNNING' | 'FAILED' | 'CANCELLED' | 'BLOCKED'
+  status: 'SUCCEEDED' | 'RUNNING' | 'QUEUED' | 'FAILED' | 'CANCELLED' | 'BLOCKED'
   stage: string
   startedAt: string
   duration: string

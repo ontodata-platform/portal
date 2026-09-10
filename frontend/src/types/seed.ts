@@ -59,3 +59,53 @@ export interface SeedDataSubscription {
   rowsCount: number
   previewUrl?: string
 }
+
+export interface SeedUser {
+  id: string
+  name: string
+  username: string
+  tenantId: string
+  roles: string[]
+  status: 'ACTIVE' | 'DISABLED'
+}
+
+export interface SeedNotice {
+  code: string
+  title: string
+  content: string
+  section: '公告' | '服务动态' | '专题'
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+  publishedHoursAgo?: number
+  createdHoursAgo: number
+}
+
+export interface SeedFeedback {
+  code: string
+  title: string
+  content: string
+  contact?: string
+  status: 'PENDING' | 'HANDLED'
+  createdHoursAgo: number
+}
+
+export interface SeedNotification {
+  id: string
+  type: string
+  title: string
+  body: string
+  resourceRef?: string
+  createdHoursAgo: number
+  readHoursAgo?: number
+}
+
+export interface SeedResult {
+  resultId: string
+  sourceSystem: string
+  resultType: string
+  resourceRefs: string[]
+  metadata: Record<string, unknown>
+  sourceTaskId?: string
+  traceId?: string
+  createdHoursAgo: number
+  hasFile?: boolean
+}

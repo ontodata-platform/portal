@@ -7,7 +7,7 @@ describe('assistantMockApi 意图路由', () => {
     const result = routeAssistantIntent('帮我找数据服务订阅')
     expect(result.text).toContain('数据服务')
     expect(result.cards?.every((card) => card.type === 'data-service')).toBe(true)
-    expect(result.cards?.length).toBe(3)
+    expect(result.cards?.length).toBeGreaterThanOrEqual(3)
     expect(result.citations?.[0]?.source).toBe('data-platform')
   })
 

@@ -121,6 +121,7 @@ async function loadRuns() {
 const statusColor: Record<string, string> = {
   SUCCEEDED: 'success',
   RUNNING: 'processing',
+  QUEUED: 'default',
   FAILED: 'error',
   CANCELLED: 'default',
   BLOCKED: 'warning',

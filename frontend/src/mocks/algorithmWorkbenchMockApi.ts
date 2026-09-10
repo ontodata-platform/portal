@@ -42,7 +42,7 @@ function page<T>(items: T[], params: Record<string, unknown> = {}) {
 
 const deliveries: MyDelivery[] = [
   { serviceCode: 'dset-optical-snapshot', serviceName: '高分光学影像快照-周度', version: 'v2026.09', snapshotDate: relativeDate(24 * 7), expiresAt: relativeDate(-24 * 90), state: 'ACTIVE' },
-  { serviceCode: 'dset-optical-snapshot', serviceName: '高分光学影像快照-周度', version: 'v2026.08', snapshotDate: relativeDate(24 * 37), expiresAt: relativeDate(-24 * 60), state: 'ACTIVE' },
+  { serviceCode: 'dset-optical-snapshot', serviceName: '高分光学影像快照-周度', version: 'v2026.08', snapshotDate: relativeDate(24 * 20), expiresAt: relativeDate(-24 * 60), state: 'ACTIVE' },
   { serviceCode: 'dset-qc-report', serviceName: '影像质检报告-日增量', version: 'v2026.09.01', snapshotDate: relativeDate(8), expiresAt: relativeDate(-8), state: 'EXPIRING' },
 ]
 
@@ -91,6 +91,9 @@ const services: ServiceRecord[] = [
   { summary: { code: 'tpl-classification-train', name: '舰船目标主题分类训练', category: '主题分类', description: '基于历史标注影像训练舰船与设施主题分类模型。', inputHint: '需要：光谱或影像样本', typicalDuration: '20~40 分钟', runCount: 12, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('tpl-classification-train', '舰船目标主题分类训练', '训练舰船与港区设施主题分类模型，完成后生成模型版本与评估报告。') },
   { summary: { code: 'cap-timeseries-forecast', name: '海表温度时序预测', category: '时序预测', description: '按历史海表温度场生成下一周期预测区间。', inputHint: '需要：海表温度场', typicalDuration: '4~6 分钟', runCount: 34, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-timeseries-forecast', '海表温度时序预测', '按历史海表温度场生成下一周期预测区间，输出预测表与置信区间图。') },
   { summary: { code: 'cap-text-classify', name: '海洋通报主题分类', category: '主题分类', description: '对海洋态势与目标通报文本做主题分类与优先级识别。', inputHint: '需要：通报文本', typicalDuration: '2~4 分钟', runCount: 57, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-text-classify', '海洋通报主题分类', '对海洋态势与目标通报文本做主题分类与优先级识别，输出分类明细表。') },
+  { summary: { code: 'cap-change-detect', name: '港区光学变化检测', category: '变化检测', description: '对相邻过境光学影像做港区设施与岸线变化检测。', inputHint: '需要：光学对照对', typicalDuration: '8~12 分钟', runCount: 41, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-change-detect', '港区光学变化检测', '对相邻过境光学影像做配准与变化检测，输出差分图与变化清单。') },
+  { summary: { code: 'cap-track-associate', name: '舰船航迹关联', category: '航迹关联', description: '融合光学与 SAR 轨迹，输出跨源关联航迹。', inputHint: '需要：舰船目标轨迹库', typicalDuration: '5~8 分钟', runCount: 63, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-track-associate', '舰船航迹关联', '融合光学与 SAR 轨迹点，输出跨源关联航迹与置信度。') },
+  { summary: { code: 'cap-infrared-weak', name: '红外弱小目标检测', category: '目标特性提取', description: '对载荷红外序列做弱小目标检测与轨次汇聚。', inputHint: '需要：红外弱小目标序列', typicalDuration: '7~10 分钟', runCount: 29, status: 'PUBLISHED', badges: ['准入：已通过'] }, descriptor: serviceDescriptor('cap-infrared-weak', '红外弱小目标检测', '对红外序列做弱小目标检测，输出轨次级目标清单。') },
 ]
 
 const categories = [...new Set(services.map((item) => item.summary.category))]
@@ -121,6 +124,42 @@ const runs: AlgorithmRun[] = [
   { taskId: 'task-e5f6g7h8', serviceCode: 'cap-text-classify', serviceName: '海洋通报主题分类', status: 'CANCELLED', stage: '已取消', startedAt: relativeIso(96), duration: '1 分 10 秒', nodes: [
     { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(96), finishedAt: relativeIso(95.7) },
     { name: '文本分类', state: 'CANCELLED', startedAt: relativeIso(95.7) },
+  ], artifacts: [] },
+  { taskId: 'task-f6g7h8i9', serviceCode: 'cap-change-detect', serviceName: '港区光学变化检测', status: 'QUEUED', stage: '排队等待影像到齐', startedAt: relativeIso(1), duration: '排队中', nodes: [
+    { name: '排队', state: 'PENDING', startedAt: relativeIso(1) },
+  ], artifacts: [] },
+  { taskId: 'task-g7h8i9j0', serviceCode: 'cap-track-associate', serviceName: '舰船航迹关联', status: 'RUNNING', stage: '关联计算中', startedAt: relativeIso(1.2), duration: '已运行 2 分钟', nodes: [
+    { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(1.2), finishedAt: relativeIso(1.0) },
+    { name: '航迹关联', state: 'RUNNING', startedAt: relativeIso(1.0) },
+  ], artifacts: [] },
+  { taskId: 'task-h8i9j0k1', serviceCode: 'cap-infrared-weak', serviceName: '红外弱小目标检测', status: 'SUCCEEDED', stage: '已完成', startedAt: relativeIso(26), duration: '8 分 40 秒', nodes: [
+    { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(26), finishedAt: relativeIso(25.6) },
+    { name: '目标检测', state: 'SUCCEEDED', startedAt: relativeIso(25.6), finishedAt: relativeIso(25.1) },
+  ], artifacts: [ { name: '红外弱小目标清单.csv', kind: 'BUSINESS_DATA', size: '54 KB' } ] },
+  { taskId: 'task-i9j0k1l2', serviceCode: 'tpl-classification-train', serviceName: '舰船目标主题分类训练', status: 'FAILED', stage: '样本不足', startedAt: relativeIso(40), duration: '—', humanReason: '光谱样本覆盖的目标类别不足 3 类。', fixHint: '补充光谱库后重试。', nodes: [
+    { name: '预检', state: 'FAILED', startedAt: relativeIso(40), finishedAt: relativeIso(40), humanReason: '样本不足', fixHint: '补充光谱库' },
+  ], artifacts: [] },
+  { taskId: 'task-j0k1l2m3', serviceCode: 'cap-timeseries-forecast', serviceName: '海表温度时序预测', status: 'QUEUED', stage: '排队中', startedAt: relativeIso(0.2), duration: '刚刚提交', nodes: [
+    { name: '排队', state: 'PENDING', startedAt: relativeIso(0.2) },
+  ], artifacts: [] },
+  { taskId: 'task-k1l2m3n4', serviceCode: 'cap-change-detect', serviceName: '港区光学变化检测', status: 'SUCCEEDED', stage: '已完成', startedAt: relativeIso(36), duration: '9 分 18 秒', nodes: [
+    { name: '配准', state: 'SUCCEEDED', startedAt: relativeIso(36), finishedAt: relativeIso(35.4) },
+    { name: '变化检测', state: 'SUCCEEDED', startedAt: relativeIso(35.4), finishedAt: relativeIso(34.8) },
+  ], artifacts: [ { name: '港区变化差分图.tif', kind: 'BUSINESS_DATA', size: '2.1 MB' } ] },
+  { taskId: 'task-l2m3n4o5', serviceCode: 'cap-track-associate', serviceName: '舰船航迹关联', status: 'CANCELLED', stage: '已取消', startedAt: relativeIso(52), duration: '40 秒', nodes: [
+    { name: '数据准备', state: 'CANCELLED', startedAt: relativeIso(52) },
+  ], artifacts: [] },
+  { taskId: 'task-m3n4o5p6', serviceCode: 'tpl-quality-weekly', serviceName: '目标特性提取-周批', status: 'RUNNING', stage: '报告生成', startedAt: relativeIso(2.5), duration: '已运行 6 分钟', nodes: [
+    { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(2.5), finishedAt: relativeIso(2.1) },
+    { name: '特征提取', state: 'SUCCEEDED', startedAt: relativeIso(2.1), finishedAt: relativeIso(1.4) },
+    { name: '报告生成', state: 'RUNNING', startedAt: relativeIso(1.4) },
+  ], artifacts: [] },
+  { taskId: 'task-n4o5p6q7', serviceCode: 'cap-anomaly-detect', serviceName: '载荷遥测异常检测', status: 'SUCCEEDED', stage: '已完成', startedAt: relativeIso(16), duration: '4 分 22 秒', nodes: [
+    { name: '数据准备', state: 'SUCCEEDED', startedAt: relativeIso(16), finishedAt: relativeIso(15.7) },
+    { name: '异常检测', state: 'SUCCEEDED', startedAt: relativeIso(15.7), finishedAt: relativeIso(15.3) },
+  ], artifacts: [ { name: '异常轨次清单.csv', kind: 'BUSINESS_DATA', size: '22 KB' } ] },
+  { taskId: 'task-o5p6q7r8', serviceCode: 'cap-text-classify', serviceName: '海洋通报主题分类', status: 'FAILED', stage: '编码错误', startedAt: relativeIso(64), duration: '—', humanReason: '通报文本编码不是 UTF-8。', fixHint: '转换为 UTF-8 后重试。', nodes: [
+    { name: '预检', state: 'FAILED', startedAt: relativeIso(64), finishedAt: relativeIso(64), humanReason: '编码错误', fixHint: '转换编码' },
   ], artifacts: [] },
 ]
 
