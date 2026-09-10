@@ -30,6 +30,7 @@ const {
   pendingConfirm,
   pendingApproval,
   remoteSessionId,
+  confirming,
   createSession,
   selectSession,
   deleteSession,
@@ -39,6 +40,8 @@ const {
   regenerate,
   retryLast,
   send: sendMessage,
+  confirmDecision,
+  onConfirmResolved,
 } = useAssistantEngine()
 
 function send(text: string) {
@@ -172,15 +175,15 @@ watch(
             <AgentConfirmCard
               :session-id="remoteSessionId"
               :payload="pendingConfirm"
-              @resolved="pendingConfirm = null"
+              @resolved="onConfirmResolved"
             />
           </div>
           <div v-else-if="pendingConfirm" class="confirm">
             <a-card :title="t('assistant.confirmTitle')" class="confirm-card">
               <p>{{ pendingConfirm.summary.plan }}</p>
               <a-space>
-                <a-button type="primary" @click="pendingConfirm = null">{{ t('assistant.approve') }}</a-button>
-                <a-button @click="pendingConfirm = null">{{ t('assistant.reject') }}</a-button>
+                <a-button type="primary" :loading="confirming" @click="confirmDecision('approve')">{{ t('assistant.approve') }}</a-button>
+                <a-button :loading="confirming" @click="confirmDecision('reject')">{{ t('assistant.reject') }}</a-button>
               </a-space>
             </a-card>
           </div>

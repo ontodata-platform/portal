@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 
 import { agentApi, streamSession } from '@/api/agent'
+import { i18n } from '@/i18n'
 import { useLocalMock } from '@/mocks/localMode'
 import { listIntentSuggestions, routeAssistantIntent, streamAssistantText } from '@/mocks/assistantMockApi'
 import type { AssistantMessage, AssistantSession, IntentSuggestion } from '@/types/assistant'
@@ -36,6 +37,7 @@ export function useAssistantEngine() {
   const remoteSessionId = ref('')
   const activeController = ref<AbortController | null>(null)
   const lastSentText = ref('')
+  const confirming = ref(false)
 
   const current = computed(() => sessions.value.find((item) => item.id === currentId.value) ?? null)
   const messages = computed(() => current.value?.messages ?? [])
@@ -198,13 +200,44 @@ export function useAssistantEngine() {
     }
   }
 
+  function appendCancelledNotice() {
+    pushMessage({ role: 'assistant', text: String(i18n.global.t('assistant.confirmCancelled')) })
+  }
+
+  async function confirmDecision(decision: 'approve' | 'reject') {
+    const payload = pendingConfirm.value
+    if (!payload || confirming.value) return
+    confirming.value = true
+    const sessionId = remoteSessionId.value || current.value?.id || 'local-assistant'
+    try {
+      await agentApi.confirm(sessionId, {
+        confirmToken: payload.confirmToken,
+        decision,
+      })
+    } catch {
+      // 降级卡仍要给出明确反馈：接口失败不阻断本地收口
+    } finally {
+      pendingConfirm.value = null
+      if (decision === 'reject') appendCancelledNotice()
+      confirming.value = false
+    }
+  }
+
+  function onConfirmResolved(result: { decision: 'executed' | 'rejected' }) {
+    pendingConfirm.value = null
+    if (result.decision === 'rejected') appendCancelledNotice()
+  }
+
   function stop() {
+    const pending = pendingConfirm.value
     activeController.value?.abort()
     const session = current.value
-    if (!session) return
-    session.messages = session.messages.map((item) => (item.streaming ? { ...item, streaming: false } : item))
-    sessions.value = sessions.value.map((item) => (item.id === session.id ? { ...session, messages: [...session.messages] } : item))
-    save()
+    if (session) {
+      session.messages = session.messages.map((item) => (item.streaming ? { ...item, streaming: false } : item))
+      sessions.value = sessions.value.map((item) => (item.id === session.id ? { ...session, messages: [...session.messages] } : item))
+      save()
+    }
+    if (pending) void confirmDecision('reject')
   }
 
   async function regenerate() {
@@ -236,6 +269,9 @@ export function useAssistantEngine() {
     pendingApproval,
     remoteSessionId,
     lastSentText,
+    confirming,
+    confirmDecision,
+    onConfirmResolved,
     createSession,
     selectSession,
     renameSession,

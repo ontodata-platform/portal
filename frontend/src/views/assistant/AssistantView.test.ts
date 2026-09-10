@@ -19,6 +19,15 @@ vi.mock('@/mocks/localMode', () => ({
   apiMode: 'mock',
 }))
 
+const confirmMock = vi.fn()
+
+vi.mock('@/api/agent', () => ({
+  agentApi: {
+    confirm: (...args: unknown[]) => confirmMock(...args),
+  },
+  streamSession: vi.fn(),
+}))
+
 const stubs = {
   'a-button': { props: ['type', 'size', 'loading'], emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' },
   'a-alert': { props: ['type', 'message'], template: '<div class="alert">{{ message }}<slot name="action" /></div>' },
@@ -59,6 +68,44 @@ describe('AssistantView', () => {
     await vi.waitFor(() => {
       expect(wrapper.text()).toContain('高分光学卫星影像-东海重点海域')
     })
+  })
+
+  it('降级确认卡批准走 confirm approve', async () => {
+    confirmMock.mockResolvedValue({ status: 'executed', tool: 'recombine.submit_workflow' })
+    const wrapper = mountView()
+    await flushPromises()
+    await wrapper.find('textarea.hero-input').setValue('提交质量分析跑一遍')
+    await wrapper.find('button.send-btn').trigger('click')
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('提交港区目标特性提取-周批')
+    })
+
+    const approve = wrapper.findAll('button').find((button) => button.text() === '确认执行')
+    expect(approve).toBeTruthy()
+    await approve!.trigger('click')
+    await flushPromises()
+
+    expect(confirmMock).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ decision: 'approve' }))
+    expect(wrapper.text()).not.toContain('已取消该操作')
+  })
+
+  it('降级确认卡拒绝走 confirm reject 并追加取消说明', async () => {
+    confirmMock.mockResolvedValue({ status: 'rejected', tool: 'recombine.submit_workflow' })
+    const wrapper = mountView()
+    await flushPromises()
+    await wrapper.find('textarea.hero-input').setValue('提交质量分析跑一遍')
+    await wrapper.find('button.send-btn').trigger('click')
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('提交港区目标特性提取-周批')
+    })
+
+    const reject = wrapper.findAll('button').find((button) => button.text() === '拒绝')
+    expect(reject).toBeTruthy()
+    await reject!.trigger('click')
+    await flushPromises()
+
+    expect(confirmMock).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ decision: 'reject' }))
+    expect(wrapper.text()).toContain('已取消该操作，需要我做别的吗？')
   })
 
   it('?q= 自动作为首条消息发送', async () => {

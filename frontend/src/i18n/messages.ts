@@ -806,6 +806,7 @@ export const zhCn = {
     confirmTitle: '确认提交运行',
     approve: '确认执行',
     reject: '拒绝',
+    confirmCancelled: '已取消该操作，需要我做别的吗？',
     approvalWaiting: '已升级审批单 {code}，请在审批中心决策。',
     goApproval: '去审批中心',
     card: {
@@ -1625,6 +1626,7 @@ export const enUs: MessageSchema = {
     confirmTitle: 'Confirm run',
     approve: 'Approve',
     reject: 'Reject',
+    confirmCancelled: 'That action was cancelled. Anything else I can help with?',
     approvalWaiting: 'Escalated to approval {code}. Decide in the approval center.',
     goApproval: 'Go to approvals',
     card: {
