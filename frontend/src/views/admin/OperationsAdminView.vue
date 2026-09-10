@@ -5,6 +5,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { operationsApi } from '@/api/portal'
+import { loadContentEntries, saveContentEntries, type ContentEntry } from '@/mocks/contentConfig'
 import { useMessageStore } from '@/stores/message'
 import type { Feedback, Notice, OperationsStatistics } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
@@ -16,6 +17,23 @@ const { t } = useI18n()
 const messageStore = useMessageStore()
 
 const statistics = ref<OperationsStatistics>({ noticeTotal: 0, publishedNotices: 0, pendingFeedbacks: 0 })
+
+// ── D4 首页推荐位配置：排序（上移/下移）与启用开关，保存后首页即时生效 ──
+const contentEntries = ref<ContentEntry[]>(loadContentEntries())
+
+function moveEntry(index: number, direction: -1 | 1): void {
+  const target = index + direction
+  if (target < 0 || target >= contentEntries.value.length) return
+  const next = [...contentEntries.value]
+  ;[next[index], next[target]] = [next[target], next[index]]
+  contentEntries.value = next
+  saveContentEntries(next)
+}
+
+function toggleEntry(entry: ContentEntry, checked: boolean): void {
+  entry.enabled = checked
+  saveContentEntries(contentEntries.value)
+}
 const loadError = ref('')
 
 const noticeLoading = ref(false)
@@ -303,6 +321,17 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- D4 首页推荐位配置：排序与启用，保存后首页即时生效 -->
+      <a-card :bordered="false" class="op-card" :title="t('menu.homeConfig')">
+        <div v-for="(entry, index) in contentEntries" :key="entry.code" class="entry-config-row">
+          <a-button size="small" :disabled="index === 0" @click="moveEntry(index, -1)">↑</a-button>
+          <a-button size="small" :disabled="index === contentEntries.length - 1" @click="moveEntry(index, 1)">↓</a-button>
+          <span class="entry-config-title">{{ entry.title }}</span>
+          <span class="entry-config-desc">{{ entry.description }}</span>
+          <a-switch size="small" :checked="entry.enabled" @change="(checked: boolean) => toggleEntry(entry, checked)" />
+        </div>
+      </a-card>
+
       <!-- 公告管理 -->
       <a-card :bordered="false" class="op-card" :title="t('operations.noticeModalTitle')">
         <div class="toolbar-area">
@@ -579,6 +608,25 @@ onMounted(() => {
   padding: 16px 18px 18px;
 }
 
+.entry-config-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--od-gray-200, #e2e8f0);
+  font-size: 13px;
+}
+
+.entry-config-title {
+  font-weight: 500;
+}
+
+.entry-config-desc {
+  flex: 1;
+  font-size: 12px;
+  color: var(--od-gray-500, #64748b);
+}
+
 .toolbar-area {
   display: flex;
   align-items: center;
@@ -603,5 +651,30 @@ onMounted(() => {
     padding-left: 14px;
     padding-right: 14px;
   }
+}
+
+.config-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.entry-config-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--od-gray-200, #e2e8f0);
+  font-size: 13px;
+}
+
+.entry-config-title {
+  font-weight: 500;
+}
+
+.entry-config-desc {
+  flex: 1;
+  font-size: 12px;
+  color: var(--od-gray-500, #64748b);
 }
 </style>

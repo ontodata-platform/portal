@@ -6,6 +6,7 @@
  * 以便后续联调只替换 transport adapter，而不改写页面业务逻辑。
  */
 
+import { loadContentEntries } from './contentConfig'
 import { demoIdentity, relativeIso, seedDataServices } from './seed'
 import { productDescriptorOf } from './seed.products'
 import {
@@ -531,12 +532,9 @@ export function createPortalMockApi(): PortalMockApi {
           .filter((item) => item.status === 'PUBLISHED')
           .slice(0, 6)
           .map((item) => clone({ code: item.code, title: item.title, content: item.content, section: item.section, publishedAt: item.publishedAt ? String(item.publishedAt) : String(item.updatedAt) })),
-        entries: [
-          { code: 'data-workbench', title: '数据工作台', description: '浏览目录、申请数据服务与订阅交付', route: '/data-workbench', icon: 'database' },
-          { code: 'algorithm-workbench', title: '算法工作台', description: '运行已发布算法并查看结果', route: '/algorithm-workbench', icon: 'appstore' },
-          { code: 'assistant', title: '智能服务', description: '找数据、跑分析、看待办，一句话说清楚', route: '/assistant', icon: 'robot' },
-          { code: 'personal-results', title: '我的交付结果', description: '在线预览、领取与下载交付文件', route: '/personal/results', icon: 'file-done' },
-        ],
+        entries: loadContentEntries()
+          .filter((entry) => entry.enabled)
+          .map(({ code, title, description, route, icon }) => ({ code, title, description, route, icon })),
         todo: {
           pendingApprovals: approvals.filter((item) => item.status === 'PENDING').length,
           runningTasks: tasks.filter((item) => item.status === 'RUNNING').length,
