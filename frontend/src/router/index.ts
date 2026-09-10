@@ -215,7 +215,7 @@ export const routes: RouteRecordRaw[] = [
               component: () => import('@/views/admin/OperationsAdminView.vue'),
               meta: { titleKey: 'menu.adminOperations', roles: ADMIN_ROLES },
             },
-            // v5 裁剪：应用上架/平台运维入口下线（视图保留，路由重定向保兼容）
+            // 应用上架/平台运维视图已删除，旧路径重定向到运营页
             { path: 'assemblies', redirect: '/admin/operations' },
             { path: 'platform', redirect: '/admin/operations' },
           ],

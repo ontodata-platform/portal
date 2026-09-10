@@ -135,6 +135,8 @@ describe('IA v2 路由与旧路径重定向', () => {
     ['/operations', '/admin/operations'],
     ['/marketplace', '/data-workbench'],
     ['/search', '/assistant'],
+    ['/admin/assemblies', '/admin/operations'],
+    ['/admin/platform', '/admin/operations'],
   ])('重定向 %s → %s', async (from, to) => {
     await router.push(from)
     expect(router.currentRoute.value.path).toBe(to)
