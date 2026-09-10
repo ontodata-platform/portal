@@ -9,6 +9,8 @@
 export const zhCn = {
   common: {
     query: '查询',
+    keyword: '关键字',
+    role: '角色',
     close: '关闭',
     status: '状态',
     title: '标题',
@@ -839,6 +841,8 @@ export type MessageSchema = typeof zhCn
 export const enUs: MessageSchema = {
   common: {
     query: 'Search',
+    keyword: 'Keyword',
+    role: 'Role',
     close: 'Close',
     status: 'Status',
     title: 'Title',

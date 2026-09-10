@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BellOutlined, CheckCircleOutlined, FormOutlined, MessageOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import { BellOutlined, CheckCircleOutlined, FormOutlined, MessageOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -10,6 +10,7 @@ import type { Feedback, Notice, OperationsStatistics } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import OdTable from '@/ui-kit/OdTable.vue'
+import TableFilterBar from '@/ui-kit/TableFilterBar.vue'
 
 const { t } = useI18n()
 const messageStore = useMessageStore()
@@ -21,6 +22,27 @@ const noticeLoading = ref(false)
 const notices = ref<Notice[]>([])
 const noticeTotal = ref(0)
 const noticeQuery = reactive({ page: 1, size: 20, status: '', section: '' })
+const noticeFilterSpecs = computed(() => [
+  {
+    key: 'status',
+    label: t('common.status'),
+    options: [
+      { value: 'DRAFT', label: t('operations.draft') },
+      { value: 'PUBLISHED', label: t('operations.published') },
+      { value: 'ARCHIVED', label: t('operations.archived') },
+    ],
+  },
+])
+const feedbackFilterSpecs = computed(() => [
+  {
+    key: 'status',
+    label: t('common.status'),
+    options: [
+      { value: 'PENDING', label: t('operations.pending') },
+      { value: 'HANDLED', label: t('operations.handled') },
+    ],
+  },
+])
 const noticeColumns = computed(() => [
   { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
@@ -284,18 +306,17 @@ onMounted(() => {
       <!-- 公告管理 -->
       <a-card :bordered="false" class="op-card" :title="t('operations.noticeModalTitle')">
         <div class="toolbar-area">
-          <a-space wrap>
-            <a-select v-model:value="noticeQuery.status" :placeholder="t('operations.noticeStatusPlaceholder')" allow-clear style="width: 140px">
-              <a-select-option value="DRAFT">{{ t('operations.draft') }}</a-select-option>
-              <a-select-option value="PUBLISHED">{{ t('operations.published') }}</a-select-option>
-              <a-select-option value="ARCHIVED">{{ t('operations.archived') }}</a-select-option>
-            </a-select>
-            <a-input v-model:value="noticeQuery.section" :placeholder="t('operations.sectionPlaceholder')" style="width: 160px" allow-clear />
-            <a-button type="primary" @click="noticeQuery.page = 1; loadNotices()">
-              <template #icon><SearchOutlined /></template>
-              {{ t('operations.queryNotices') }}
-            </a-button>
-          </a-space>
+          <TableFilterBar
+            :query="noticeQuery"
+            :filters="noticeFilterSpecs"
+            search-key="section"
+            :search-label="t('common.section')"
+            :search-placeholder="t('operations.sectionPlaceholder')"
+            :search-width="160"
+            :search-text="t('operations.queryNotices')"
+            @update="Object.assign(noticeQuery, $event)"
+            @search="noticeQuery.page = 1; loadNotices()"
+          />
           <a-button type="primary" @click="noticeOpen = true">
             <template #icon><PlusOutlined /></template>
             {{ t('operations.publishNotice') }}
@@ -359,16 +380,13 @@ onMounted(() => {
       <!-- 用户反馈 -->
       <a-card :bordered="false" class="op-card op-card--feedback" :title="t('operations.userFeedback')">
         <div class="toolbar-area">
-          <a-space wrap>
-            <a-select v-model:value="feedbackQuery.status" :placeholder="t('operations.feedbackStatusPlaceholder')" allow-clear style="width: 140px">
-              <a-select-option value="PENDING">{{ t('operations.pending') }}</a-select-option>
-              <a-select-option value="HANDLED">{{ t('operations.handled') }}</a-select-option>
-            </a-select>
-            <a-button type="primary" @click="feedbackQuery.page = 1; loadFeedbacks()">
-              <template #icon><SearchOutlined /></template>
-              {{ t('operations.queryFeedbacks') }}
-            </a-button>
-          </a-space>
+          <TableFilterBar
+            :query="feedbackQuery"
+            :filters="feedbackFilterSpecs"
+            :search-text="t('operations.queryFeedbacks')"
+            @update="Object.assign(feedbackQuery, $event)"
+            @search="feedbackQuery.page = 1; loadFeedbacks()"
+          />
           <a-button @click="feedbackOpen = true">
             <template #icon><FormOutlined /></template>
             {{ t('operations.submitFeedback') }}

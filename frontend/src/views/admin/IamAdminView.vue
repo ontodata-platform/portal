@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EditOutlined, PoweroffOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import { EditOutlined, PoweroffOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -10,6 +10,7 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
+import TableFilterBar from '@/ui-kit/TableFilterBar.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
@@ -32,6 +33,17 @@ const inspectedRole = ref<IamRole | null>(null)
 const activeUserCount = computed(() => users.value.filter((user) => user.status === 'ACTIVE').length)
 const disabledUserCount = computed(() => users.value.filter((user) => user.status === 'DISABLED').length)
 const roleOptions = computed(() => roles.value.map((role) => ({ value: role.code, label: 中文展示(role.code) })))
+const userFilterSpecs = computed(() => [
+  {
+    key: 'status',
+    label: t('common.status'),
+    options: [
+      { value: 'ACTIVE', label: t('admin.iam.active') },
+      { value: 'DISABLED', label: t('admin.iam.disabled') },
+    ],
+  },
+  { key: 'role', label: t('common.role'), options: roleOptions.value },
+])
 const effectiveRolePermissions = computed(() => [
   ...new Set(roles.value.filter((role) => roleForm.roles.includes(role.code)).flatMap((role) => role.permissions)),
 ])
@@ -186,26 +198,14 @@ onMounted(load)
 
       <a-card :bordered="false" class="admin-card" :title="t('admin.iam.users')">
         <div class="toolbar-area">
-          <a-space wrap>
-            <a-input
-              v-model:value="query.keyword"
-              :placeholder="t('admin.iam.searchPlaceholder')"
-              style="width: 240px"
-              allow-clear
-              @press-enter="load"
-            />
-            <a-select v-model:value="query.status" :placeholder="t('admin.iam.allStatus')" allow-clear style="width: 116px">
-              <a-select-option value="ACTIVE">{{ t('admin.iam.active') }}</a-select-option>
-              <a-select-option value="DISABLED">{{ t('admin.iam.disabled') }}</a-select-option>
-            </a-select>
-            <a-select v-model:value="query.role" :placeholder="t('admin.iam.allRoles')" allow-clear style="width: 154px">
-              <a-select-option v-for="role in roleOptions" :key="role.value" :value="role.value">{{ role.label }}</a-select-option>
-            </a-select>
-            <a-button type="primary" @click="load">
-              <template #icon><SearchOutlined /></template>
-              {{ t('common.query') }}
-            </a-button>
-          </a-space>
+          <TableFilterBar
+            :query="query"
+            :filters="userFilterSpecs"
+            :search-placeholder="t('admin.iam.searchPlaceholder')"
+            :search-width="240"
+            @update="Object.assign(query, $event)"
+            @search="load"
+          />
         </div>
 
         <EmptyState v-if="!loading && users.length === 0" :title="t('admin.iam.users')" />

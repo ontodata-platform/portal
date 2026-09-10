@@ -3,7 +3,6 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   FieldTimeOutlined,
-  SearchOutlined,
   SyncOutlined,
 } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -16,6 +15,7 @@ import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import { formatDateTime } from '@/ui-kit/format'
 import OdTable from '@/ui-kit/OdTable.vue'
+import TableFilterBar from '@/ui-kit/TableFilterBar.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const ASSIGN_TARGETS = [
@@ -36,6 +36,30 @@ const loadError = ref('')
 const rows = ref<RequirementRequest[]>([])
 const total = ref(0)
 const query = reactive({ page: 1, size: 20, status: '', type: '', keyword: '' })
+
+const filterSpecs = computed(() => [
+  {
+    key: 'status',
+    label: t('common.status'),
+    options: [
+      { value: 'OPEN', label: t('requirements.open') },
+      { value: 'ANALYZING', label: t('requirements.analyzing') },
+      { value: 'ASSIGNED', label: t('requirements.assigned') },
+      { value: 'IN_PROGRESS', label: t('requirements.inProgress') },
+      { value: 'COMPLETED', label: t('requirements.completed') },
+      { value: 'CANCELED', label: t('requirements.canceled') },
+    ],
+  },
+  {
+    key: 'type',
+    label: t('common.type'),
+    options: [
+      { value: 'DATA', label: t('requirements.dataRequirement') },
+      { value: 'ALGORITHM', label: t('requirements.algorithmRequirement') },
+      { value: 'COMPREHENSIVE', label: t('requirements.comprehensiveRequirement') },
+    ],
+  },
+])
 
 const drawerOpen = ref(false)
 const current = ref<RequirementRequest | null>(null)
@@ -393,32 +417,13 @@ onMounted(load)
 
     <a-card v-else :bordered="false" class="admin-card">
       <div class="toolbar-area">
-        <a-space wrap>
-          <a-select v-model:value="query.status" :placeholder="t('requirements.statusPlaceholder')" allow-clear style="width: 140px">
-            <a-select-option value="OPEN">{{ t('requirements.open') }}</a-select-option>
-            <a-select-option value="ANALYZING">{{ t('requirements.analyzing') }}</a-select-option>
-            <a-select-option value="ASSIGNED">{{ t('requirements.assigned') }}</a-select-option>
-            <a-select-option value="IN_PROGRESS">{{ t('requirements.inProgress') }}</a-select-option>
-            <a-select-option value="COMPLETED">{{ t('requirements.completed') }}</a-select-option>
-            <a-select-option value="CANCELED">{{ t('requirements.canceled') }}</a-select-option>
-          </a-select>
-          <a-select v-model:value="query.type" :placeholder="t('requirements.typePlaceholder')" allow-clear style="width: 140px">
-            <a-select-option value="DATA">{{ t('requirements.dataRequirement') }}</a-select-option>
-            <a-select-option value="ALGORITHM">{{ t('requirements.algorithmRequirement') }}</a-select-option>
-            <a-select-option value="COMPREHENSIVE">{{ t('requirements.comprehensiveRequirement') }}</a-select-option>
-          </a-select>
-          <a-input
-            v-model:value="query.keyword"
-            :placeholder="t('admin.requirements.keywordPlaceholder')"
-            style="width: 200px"
-            allow-clear
-            @press-enter="query.page = 1; load()"
-          />
-          <a-button type="primary" @click="query.page = 1; load()">
-            <template #icon><SearchOutlined /></template>
-            {{ t('common.query') }}
-          </a-button>
-        </a-space>
+        <TableFilterBar
+          :query="query"
+          :filters="filterSpecs"
+          :search-placeholder="t('admin.requirements.keywordPlaceholder')"
+          @update="Object.assign(query, $event)"
+          @search="query.page = 1; load()"
+        />
       </div>
 
       <EmptyState

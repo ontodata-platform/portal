@@ -2,7 +2,6 @@
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
-  SearchOutlined,
   SyncOutlined,
 } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -15,6 +14,7 @@ import type { ApprovalRequest } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
 import ErrorState from '@/ui-kit/ErrorState.vue'
 import OdTable from '@/ui-kit/OdTable.vue'
+import TableFilterBar from '@/ui-kit/TableFilterBar.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
@@ -26,6 +26,38 @@ const loadError = ref('')
 const rows = ref<ApprovalRequest[]>([])
 const total = ref(0)
 const query = reactive({ page: 1, size: 20, status: '', type: '', sla: '', keyword: '' })
+
+const filterSpecs = computed(() => [
+  {
+    key: 'status',
+    label: t('common.status'),
+    options: [
+      { value: 'PENDING', label: t('approvals.pendingApproval') },
+      { value: 'APPROVED', label: t('approvals.approved') },
+      { value: 'REJECTED', label: t('approvals.rejected') },
+    ],
+  },
+  {
+    key: 'type',
+    label: t('common.type'),
+    options: [
+      { value: 'DATA_GRANT', label: t('approvals.dataGrant') },
+      { value: 'R4_TOOL_CALL', label: t('approvals.r4ToolCall') },
+      { value: 'SYSTEM_PERMISSION', label: t('approvals.systemPermission') },
+    ],
+  },
+  {
+    key: 'sla',
+    label: t('admin.approvals.slaPlaceholder'),
+    options: [
+      { value: 'ON_TIME', label: t('approvals.slaOnTime') },
+      { value: 'DUE_SOON', label: t('approvals.slaDueSoon') },
+      { value: 'OVERDUE', label: t('approvals.slaOverdue') },
+      { value: 'MET', label: t('approvals.slaMet') },
+      { value: 'MISSED', label: t('approvals.slaMissed') },
+    ],
+  },
+])
 const stats = reactive({ pending: 0, overdue: 0, decidedToday: 0 })
 
 const drawerOpen = ref(false)
@@ -183,36 +215,14 @@ onMounted(load)
 
       <a-card :bordered="false" class="admin-card">
         <div class="toolbar-area">
-          <a-space wrap>
-            <a-select v-model:value="query.status" :placeholder="t('common.status')" allow-clear style="width: 130px">
-              <a-select-option value="PENDING">{{ t('approvals.pendingApproval') }}</a-select-option>
-              <a-select-option value="APPROVED">{{ t('approvals.approved') }}</a-select-option>
-              <a-select-option value="REJECTED">{{ t('approvals.rejected') }}</a-select-option>
-            </a-select>
-            <a-select v-model:value="query.type" :placeholder="t('common.type')" allow-clear style="width: 150px">
-              <a-select-option value="DATA_GRANT">{{ t('approvals.dataGrant') }}</a-select-option>
-              <a-select-option value="R4_TOOL_CALL">{{ t('approvals.r4ToolCall') }}</a-select-option>
-              <a-select-option value="SYSTEM_PERMISSION">{{ t('approvals.systemPermission') }}</a-select-option>
-            </a-select>
-            <a-select v-model:value="query.sla" :placeholder="t('admin.approvals.slaPlaceholder')" allow-clear style="width: 120px">
-              <a-select-option value="ON_TIME">{{ t('approvals.slaOnTime') }}</a-select-option>
-              <a-select-option value="DUE_SOON">{{ t('approvals.slaDueSoon') }}</a-select-option>
-              <a-select-option value="OVERDUE">{{ t('approvals.slaOverdue') }}</a-select-option>
-              <a-select-option value="MET">{{ t('approvals.slaMet') }}</a-select-option>
-              <a-select-option value="MISSED">{{ t('approvals.slaMissed') }}</a-select-option>
-            </a-select>
-            <a-input
-              v-model:value="query.keyword"
-              :placeholder="t('admin.approvals.keywordPlaceholder')"
-              style="width: 220px"
-              allow-clear
-              @press-enter="query.page = 1; load()"
-            />
-            <a-button type="primary" @click="query.page = 1; load()">
-              <template #icon><SearchOutlined /></template>
-              {{ t('common.query') }}
-            </a-button>
-          </a-space>
+          <TableFilterBar
+            :query="query"
+            :filters="filterSpecs"
+            :search-placeholder="t('admin.approvals.keywordPlaceholder')"
+            :search-width="220"
+            @update="Object.assign(query, $event)"
+            @search="query.page = 1; load()"
+          />
         </div>
 
         <EmptyState
