@@ -27,7 +27,7 @@ describe('AdminLayout', () => {
     expect(wrapper.text()).toContain('审批监管')
     expect(wrapper.text()).toContain('用户与权限')
     expect(wrapper.text()).toContain('内容运营')
-    expect(wrapper.findAll('.admin-item')).toHaveLength(4)
+    expect(wrapper.findAll('.admin-item')).toHaveLength(6)
     expect(wrapper.text()).toContain('返回用户视图')
     expect(wrapper.find('.admin-badge').exists()).toBe(false)
 
