@@ -2,6 +2,8 @@
 import {
   ArrowLeftOutlined,
   AuditOutlined,
+  BarChartOutlined,
+  FileDoneOutlined,
   FileSearchOutlined,
   SettingOutlined,
   TeamOutlined,
