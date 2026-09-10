@@ -33,13 +33,13 @@ const current = ref<ApprovalRequest | null>(null)
 const nudging = ref(false)
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 150, odEllipsis: true, odSortable: true, mono: true },
-  { title: t('common.type'), dataIndex: 'approvalType', key: 'approvalType', width: 130, odEllipsis: true, odSortable: true },
-  { title: t('common.title'), dataIndex: 'title', key: 'title', width: 220, odEllipsis: true, odSortable: true },
-  { title: t('common.applicant'), dataIndex: 'requester', key: 'requester', width: 110, odEllipsis: true, odSortable: true },
-  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110, odSortable: true },
-  { title: t('approvals.slaStatus'), dataIndex: 'slaStatus', key: 'slaStatus', width: 110, odSortable: true },
-  { title: t('common.action'), dataIndex: 'action', key: 'action', width: 160 },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 130, odEllipsis: true, odSortable: true, mono: true },
+  { title: t('common.type'), dataIndex: 'approvalType', key: 'approvalType', width: 100, odEllipsis: true, odSortable: true },
+  { title: t('common.title'), dataIndex: 'title', key: 'title', width: 200, odEllipsis: true, odSortable: true },
+  { title: t('common.applicant'), dataIndex: 'requester', key: 'requester', width: 100, odEllipsis: true, odSortable: true },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 100, odSortable: true },
+  { title: t('approvals.slaStatus'), dataIndex: 'slaStatus', key: 'slaStatus', width: 100, odSortable: true },
+  { title: t('common.action'), dataIndex: 'action', key: 'action', width: 140, fixed: 'right' },
 ])
 
 const statusColor: Record<string, string> = {
@@ -226,6 +226,7 @@ onMounted(load)
           :columns="columns"
           :data-source="rows"
           :loading="loading"
+          :scroll="{ x: 870 }"
           row-key="code"
           :pagination="{ current: query.page, pageSize: query.size, total, showTotal: (tot: number) => `共 ${tot} 项` }"
           @change="

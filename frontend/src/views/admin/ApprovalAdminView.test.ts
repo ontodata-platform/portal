@@ -31,7 +31,7 @@ const stubs = {
   'a-table': {
     props: ['columns', 'dataSource', 'loading', 'rowKey', 'pagination'],
     template:
-      '<div class="table"><div v-for="record in dataSource" :key="record.code" class="table-row"><slot name="bodyCell" :column="{ key: \'code\' }" :record="record" /><slot name="bodyCell" :column="{ key: \'action\' }" :record="record" /></div></div>',
+      '<div class="table" :data-columns="JSON.stringify(columns)" :data-scroll="JSON.stringify($attrs.scroll ?? null)"><div v-for="record in dataSource" :key="record.code" class="table-row"><slot name="bodyCell" :column="{ key: \'code\' }" :record="record" /><slot name="bodyCell" :column="{ key: \'action\' }" :record="record" /></div></div>',
   },
   'a-space': { template: '<div><slot /></div>' },
   'a-button': { props: ['type', 'size', 'danger', 'ghost'], emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' },
@@ -82,6 +82,20 @@ describe('ApprovalAdminView', () => {
     expect(wrapper.text()).not.toContain('批准')
     expect(wrapper.text()).not.toContain('驳回')
     expect(wrapper.text()).not.toContain('批量通过')
+  })
+
+  it('审批表格列宽受控且操作列固定右侧（A6-5：1440 内无横滚）', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    const tableNode = wrapper.find('.table')
+    const columns = JSON.parse(tableNode.attributes('data-columns')) as Array<{ width?: number; key: string; fixed?: string }>
+    const widthTotal = columns.reduce((sum, column) => sum + (column.width ?? 0), 0)
+    expect(widthTotal).toBeLessThanOrEqual(900)
+    expect(columns.find((column) => column.key === 'action')?.fixed).toBe('right')
+
+    const scroll = JSON.parse(tableNode.attributes('data-scroll') ?? '{}') as { x?: number }
+    expect(scroll.x).toBe(widthTotal)
   })
 
   it('对 PENDING 单催办并提供工作台深链', async () => {
