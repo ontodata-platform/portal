@@ -20,6 +20,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { personalApi } from '@/api/portal'
+import { searchApi, type GlobalSearchResult, type SearchHit } from '@/api/search'
 import { authState, clearSession } from '@/auth/session'
 import { setLocale } from '@/i18n'
 import { useIdentityStore } from '@/stores/identity'
@@ -36,6 +37,83 @@ const collapsed = ref(false)
 const searchKeyword = ref('')
 const unread = ref(0)
 const commandOpen = ref(false)
+
+// ── B4 全局搜索面板状态 ──
+const searchResults = ref<GlobalSearchResult>({ services: [], algorithms: [], matters: [] })
+const searchOpen = ref(false)
+const activeIndex = ref(0)
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+interface SearchGroup {
+  key: string
+  label: string
+  hits: SearchHit[]
+  offset: number
+}
+
+const searchGroups = computed<SearchGroup[]>(() => {
+  const groups: SearchGroup[] = [
+    { key: 'services', label: t('dataWorkbench.tabServices'), hits: searchResults.value.services, offset: 0 },
+    { key: 'algorithms', label: t('menu.algorithmWorkbench'), hits: searchResults.value.algorithms, offset: 0 },
+    { key: 'matters', label: t('menu.personal'), hits: searchResults.value.matters, offset: 0 },
+  ]
+  let offset = 0
+  for (const group of groups) {
+    group.offset = offset
+    offset += group.hits.length
+  }
+  return groups
+})
+
+const flatHits = computed<SearchHit[]>(() => searchGroups.value.flatMap((group) => group.hits))
+
+const searchDebounced = (keyword: string) => {
+  if (keyword.trim().length < 2) {
+    searchOpen.value = false
+    return
+  }
+  void searchApi.globalSearch(keyword).then((result) => {
+    searchResults.value = result
+    activeIndex.value = 0
+    searchOpen.value = true
+  })
+}
+
+function onSearchInput(): void {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => searchDebounced(searchKeyword.value), 250)
+}
+
+function onSearchClick(): void {
+  if (!searchKeyword.value.trim()) openCommandPalette()
+}
+
+function closeSearch(): void {
+  searchOpen.value = false
+}
+
+function moveActive(direction: 1 | -1): void {
+  if (flatHits.value.length === 0) return
+  activeIndex.value = (activeIndex.value + direction + flatHits.value.length) % flatHits.value.length
+}
+
+function openActive(): void {
+  const hit = flatHits.value[activeIndex.value]
+  if (hit) goHit(hit)
+}
+
+function goHit(hit: SearchHit): void {
+  searchOpen.value = false
+  searchKeyword.value = ''
+  router.push(hit.route)
+}
+
+function askAssistant(): void {
+  const question = searchKeyword.value.trim()
+  searchOpen.value = false
+  router.push(question ? { path: '/assistant', query: { q: question } } : '/assistant')
+}
+
 const commandQuery = ref('')
 const commandInput = ref<{ focus?: () => void } | null>(null)
 
@@ -239,14 +317,18 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
         </div>
 
         <div class="header-right">
-          <!-- 快捷智能搜索栏：点击/CTRL+K 就地展开命令面板（不再聚焦跳转） -->
+          <!-- B4 全局搜索：输入 ≥2 字即时分组检索（数据/算法/事项）；Ctrl+K 仍开命令面板 -->
           <div class="search-wrap">
             <a-input
               v-model:value="searchKeyword"
               class="global-search"
               :placeholder="t('layout.searchPlaceholder')"
-              readonly
-              @click="openCommandPalette"
+              @click="onSearchClick"
+              @input="onSearchInput"
+              @keydown.down.prevent="moveActive(1)"
+              @keydown.up.prevent="moveActive(-1)"
+              @keydown.enter.prevent="openActive"
+              @keydown.esc="closeSearch"
             >
               <template #prefix>
                 <SearchOutlined style="color: #94a3b8" />
@@ -255,6 +337,29 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
                 <span class="kbd-badge">快捷键</span>
               </template>
             </a-input>
+            <div v-if="searchOpen" class="search-panel">
+              <template v-for="group in searchGroups" :key="group.key">
+                <div v-if="group.hits.length > 0" class="search-group">
+                  <div class="search-group-title">{{ group.label }}</div>
+                  <button
+                    v-for="(hit, hitIndex) in group.hits"
+                    :key="hit.code"
+                    type="button"
+                    class="search-hit"
+                    :class="{ 'search-hit--active': activeIndex === group.offset + hitIndex }"
+                    @click="goHit(hit)"
+                    @mouseenter="activeIndex = group.offset + hitIndex"
+                  >
+                    <span class="search-hit-name">{{ hit.name }}</span>
+                    <span class="cell-mono search-hit-code">{{ hit.code }}</span>
+                  </button>
+                </div>
+              </template>
+              <div v-if="flatHits.length === 0" class="search-empty">{{ t('layout.searchNoResults') }}</div>
+              <button type="button" class="search-hit search-ask" @click="askAssistant">
+                {{ t('layout.searchAsk', { q: searchKeyword.trim() }) }}
+              </button>
+            </div>
           </div>
 
           <!-- 待办/通知铃铛 -->
@@ -553,6 +658,69 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
 
 .search-wrap {
   width: 260px;
+  position: relative;
+}
+
+/* B4 搜索结果面板：分组下拉，键盘可达 */
+.search-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 420px;
+  max-height: 420px;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 10px;
+  box-shadow: var(--od-shadow-2, 0 8px 24px rgba(15, 23, 42, 0.16));
+  z-index: 30;
+}
+
+.search-group-title {
+  padding: 8px 14px 2px;
+  font-size: 11px;
+  color: var(--od-gray-500, #64748b);
+}
+
+.search-hit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.search-hit--active,
+.search-hit:hover {
+  background: var(--od-gray-50, #f1f5f9);
+}
+
+.search-hit-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.search-hit-code {
+  font-size: 11px;
+  color: var(--od-gray-500, #64748b);
+}
+
+.search-empty {
+  padding: 14px;
+  font-size: 13px;
+  color: var(--od-gray-500, #64748b);
+}
+
+.search-ask {
+  color: var(--od-primary, #2563eb);
+  border-top: 1px dashed var(--od-gray-200, #e2e8f0);
 }
 
 .global-search {

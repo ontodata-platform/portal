@@ -183,6 +183,8 @@ export const zhCn = {
     currentUser: '当前用户',
     roles: '角色',
     searchPlaceholder: '搜索数据、算法或事项',
+    searchNoResults: '没有匹配的数据、算法或事项',
+    searchAsk: '问智能服务：{q}',
   },
   menu: {
     groupPortal: '服务门户',
@@ -1066,6 +1068,8 @@ export const enUs: MessageSchema = {
     currentUser: 'Current User',
     roles: 'Roles',
     searchPlaceholder: 'Search data, algorithms, or work items',
+    searchNoResults: 'No matching data, algorithms or items',
+    searchAsk: 'Ask assistant: {q}',
   },
   menu: {
     groupPortal: 'Services',
