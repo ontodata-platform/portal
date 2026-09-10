@@ -2,6 +2,7 @@
 import {
   AppstoreOutlined,
   BellOutlined,
+  CheckOutlined,
   DatabaseOutlined,
   GlobalOutlined,
   LogoutOutlined,
@@ -262,11 +263,9 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
             </a-badge>
           </div>
 
-          <!-- 当前登录角色由身份服务返回，并与路由访问控制保持一致。 -->
-          <div v-if="identityStore.roles.length > 0" class="header-role-tags" aria-label="当前角色">
-            <a-tag v-for="role in identityStore.roles" :key="role" color="blue" class="header-role-tag">
-              {{ 中文展示(role) }}
-            </a-tag>
+          <!-- 顶栏只展示一个当前角色（roles 队首）；完整角色在用户菜单内，devMode 下可切换。 -->
+          <div v-if="identityStore.currentRole" class="header-role-tags" aria-label="当前角色">
+            <a-tag color="blue" class="header-role-tag">{{ 中文展示(identityStore.currentRole) }}</a-tag>
           </div>
 
           <!-- 个人头像与操作下拉 -->
@@ -298,6 +297,14 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
                     />
                   </div>
                 </a-menu-item>
+                <a-menu-item-group v-if="identityStore.devMode && identityStore.roles.length > 1" key="role-switch" :title="t('layout.switchRole')">
+                  <a-menu-item v-for="role in identityStore.roles" :key="`role-${role}`" @click="identityStore.switchRole(role)">
+                    <span class="role-switch-item">
+                      <CheckOutlined v-if="role === identityStore.currentRole" class="role-switch-check" />
+                      <span>{{ 中文展示(role) }}</span>
+                    </span>
+                  </a-menu-item>
+                </a-menu-item-group>
                 <a-menu-item v-if="authState.session" key="logout" danger @click="handleLogout">
                   <LogoutOutlined />
                   <span>{{ t('layout.logout') }}</span>
@@ -648,6 +655,16 @@ onUnmounted(() => window.removeEventListener('keydown', handleCommandKeydown))
   font-size: 12px;
   color: var(--od-gray-500, #64748b);
   margin-top: 2px;
+}
+
+.role-switch-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-switch-check {
+  color: var(--od-primary, #2563eb);
 }
 
 .locale-row {

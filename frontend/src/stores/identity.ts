@@ -48,6 +48,16 @@ export const useIdentityStore = defineStore('identity', () => {
     loaded.value = true
   }
 
+  /** 顶栏只展示一个"当前角色"：约定 roles 队首为当前角色。 */
+  const currentRole = computed(() => identity.value.roles[0] ?? '')
+
+  /** 演示角色切换（仅 devMode 暴露入口）：把所选角色移到队首，角色相关展示与判定即时生效。 */
+  function switchRole(role: string) {
+    const rest = identity.value.roles.filter((item) => item !== role)
+    if (rest.length === identity.value.roles.length) return
+    identity.value = { ...identity.value, roles: [role, ...rest] }
+  }
+
   function reset() {
     identity.value = { ...DEFAULT_IDENTITY }
     loaded.value = false
@@ -60,11 +70,13 @@ export const useIdentityStore = defineStore('identity', () => {
     name,
     tenantId,
     roles,
+    currentRole,
     devMode,
     canAccessOperations,
     hasRole,
     fetchIdentity,
     setIdentity,
+    switchRole,
     reset,
   }
 })
