@@ -18,6 +18,8 @@ const items = [
   { key: '/admin/requirements', labelKey: 'menu.adminRequirements', icon: FileSearchOutlined },
   { key: '/admin/approvals', labelKey: 'menu.adminApprovals', icon: AuditOutlined },
   { key: '/admin/iam', labelKey: 'menu.adminIam', icon: TeamOutlined },
+  { key: '/admin/approval-config', labelKey: 'menu.approvalConfig', icon: FileDoneOutlined },
+  { key: '/admin/statistics', labelKey: 'menu.statistics', icon: BarChartOutlined },
   { key: '/admin/operations', labelKey: 'menu.adminOperations', icon: SettingOutlined },
 ]
 
