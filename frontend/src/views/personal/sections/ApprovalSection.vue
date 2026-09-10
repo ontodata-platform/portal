@@ -13,6 +13,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { approvalApi } from '@/api/portal'
+import ApprovalDecisionDrawer from '@/components/approval/ApprovalDecisionDrawer.vue'
 import { useMessageStore } from '@/stores/message'
 import type { ApprovalRequest } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
@@ -46,9 +47,7 @@ const selectedCodes = ref<string[]>([])
 const batching = ref(false)
 
 const decideOpen = ref(false)
-const deciding = ref(false)
 const decideTarget = ref<ApprovalRequest | null>(null)
-const decideForm = reactive({ decision: 'APPROVED' as 'APPROVED' | 'REJECTED', decisionNote: '' })
 
 const columns = computed(() => [
   { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true, mono: true },
@@ -134,35 +133,14 @@ async function create() {
 
 function openDecide(record: ApprovalRequest) {
   decideTarget.value = record
-  decideForm.decision = 'APPROVED'
-  decideForm.decisionNote = ''
   decideOpen.value = true
 }
 
-async function decide() {
-  if (!decideTarget.value) {
-    return
-  }
-  deciding.value = true
-  try {
-    await approvalApi.decide(decideTarget.value.code, {
-      decision: decideForm.decision,
-      decisionNote: decideForm.decisionNote || undefined,
-    })
-    messageStore.success(
-      decideForm.decision === 'APPROVED'
-        ? t('approvals.decidedApproved', { code: decideTarget.value.code })
-        : t('approvals.decidedRejected', { code: decideTarget.value.code }),
-    )
-    decideOpen.value = false
-    await load()
-    if (route.query.from === 'agent' && decideTarget.value) {
-      await router.push({ path: '/assistant', query: { resume: decideTarget.value.code } })
-    }
-  } catch (error) {
-    messageStore.reportError(error)
-  } finally {
-    deciding.value = false
+// C4：决定逻辑收敛到 ApprovalDecisionDrawer，这里只负责刷新与 agent 续接。
+async function onDecided() {
+  await load()
+  if (route.query.from === 'agent' && decideTarget.value) {
+    await router.push({ path: '/assistant', query: { resume: decideTarget.value.code } })
   }
 }
 
@@ -427,34 +405,11 @@ onMounted(async () => {
       </a-modal>
 
       <!-- 快速决策审批弹窗 -->
-      <a-modal v-model:open="decideOpen" :title="t('approvals.decideModal')" :confirm-loading="deciding" @ok="decide">
-        <div v-if="decideTarget" class="decide-target-info">
-          <div class="target-row">
-            <span class="target-label">申请单号:</span>
-            <span class="mono-code">{{ decideTarget.code }}</span>
-          </div>
-          <div class="target-row">
-            <span class="target-label">申请事项:</span>
-            <span class="target-title">{{ decideTarget.title }}</span>
-          </div>
-          <div class="target-row">
-            <span class="target-label">申请人:</span>
-            <span>{{ decideTarget.requester }}（{{ 中文展示(decideTarget.sourceSystem) }}）</span>
-          </div>
-        </div>
-
-        <a-form layout="vertical" style="margin-top: 16px">
-          <a-form-item name="decision" :label="t('approvals.conclusion')" required>
-            <a-radio-group v-model:value="decideForm.decision" button-style="solid">
-              <a-radio-button value="APPROVED">同意通过</a-radio-button>
-              <a-radio-button value="REJECTED">予以驳回</a-radio-button>
-            </a-radio-group>
-          </a-form-item>
-          <a-form-item name="decisionNote" :label="t('approvals.decisionNote')">
-            <a-textarea v-model:value="decideForm.decisionNote" :placeholder="t('approvals.decisionNotePlaceholder')" :rows="3" />
-          </a-form-item>
-        </a-form>
-      </a-modal>
+      <ApprovalDecisionDrawer
+        v-model:open="decideOpen"
+        :approval-code="decideTarget?.code ?? ''"
+        @decided="onDecided"
+      />
     </a-card>
   </div>
 </template>

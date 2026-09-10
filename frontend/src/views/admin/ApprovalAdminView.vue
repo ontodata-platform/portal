@@ -9,6 +9,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { approvalApi } from '@/api/portal'
+import ApprovalDecisionDrawer from '@/components/approval/ApprovalDecisionDrawer.vue'
 import { useMessageStore } from '@/stores/message'
 import type { ApprovalRequest } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
@@ -61,6 +62,18 @@ const filterSpecs = computed(() => [
 const stats = reactive({ pending: 0, overdue: 0, decidedToday: 0 })
 
 const drawerOpen = ref(false)
+// C4：行内办理（监管页直接处理审批待办）
+const decideOpen = ref(false)
+const decideCode = ref('')
+
+function openDecide(record: ApprovalRequest) {
+  decideCode.value = record.code
+  decideOpen.value = true
+}
+
+function onDecided() {
+  void load()
+}
 const current = ref<ApprovalRequest | null>(null)
 const nudging = ref(false)
 
@@ -275,6 +288,14 @@ onMounted(load)
                   v-if="record.status === 'PENDING'"
                   size="small"
                   type="primary"
+                  @click="openDecide(record)"
+                >
+                  {{ t('approvals.decideButton') }}
+                </a-button>
+                <a-button
+                  v-if="record.status === 'PENDING'"
+                  size="small"
+                  type="primary"
                   ghost
                   :loading="nudging"
                   @click="nudge(record)"
@@ -310,6 +331,8 @@ onMounted(load)
         </a-button>
       </template>
     </a-drawer>
+
+    <ApprovalDecisionDrawer v-model:open="decideOpen" :approval-code="decideCode" @decided="onDecided" />
   </div>
 </template>
 

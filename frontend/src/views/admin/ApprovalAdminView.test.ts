@@ -79,8 +79,8 @@ describe('ApprovalAdminView', () => {
     expect(wrapper.text()).toContain('待审批')
     expect(wrapper.text()).toContain('超时')
     expect(wrapper.text()).toContain('今日已决')
-    expect(wrapper.text()).not.toContain('批准')
-    expect(wrapper.text()).not.toContain('驳回')
+    // C4 起：监管页允许行内办理（不再禁止办理入口），但批量决策仍只在个人工作台提供
+    expect(wrapper.text()).toContain('办理')
     expect(wrapper.text()).not.toContain('批量通过')
   })
 

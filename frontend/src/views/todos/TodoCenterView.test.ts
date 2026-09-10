@@ -3,7 +3,6 @@ import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { i18n } from '@/i18n'
-import { personalApi } from '@/api/portal'
 import TodoCenterView from './TodoCenterView.vue'
 
 const pushMock = vi.fn()
