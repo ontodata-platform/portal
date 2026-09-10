@@ -92,12 +92,17 @@ function save(): void {
             <td><span class="cell-mono">{{ field.key }}</span></td>
             <td><a-input v-model:value="field.label" size="small" /></td>
             <td>
-              <a-select v-model:value="field.type" size="small" style="width: 110px" :options="[
-                { value: 'text', label: t('admin.approvalConfig.typeText') },
-                { value: 'textarea', label: t('admin.approvalConfig.typeTextarea') },
-                { value: 'date', label: t('admin.approvalConfig.typeDate') },
-                { value: 'number', label: t('admin.approvalConfig.typeNumber') },
-              ]" />
+              <a-select
+                v-model:value="field.type"
+                size="small"
+                style="width: 110px"
+                :options="[
+                  { value: 'text', label: t('admin.approvalConfig.typeText') },
+                  { value: 'textarea', label: t('admin.approvalConfig.typeTextarea') },
+                  { value: 'date', label: t('admin.approvalConfig.typeDate') },
+                  { value: 'number', label: t('admin.approvalConfig.typeNumber') },
+                ]"
+              />
             </td>
             <td><a-switch size="small" :checked="field.required" @change="(checked: boolean) => (field.required = checked)" /></td>
             <td><a-button size="small" danger @click="removeField(index)">{{ t('common.delete') }}</a-button></td>
