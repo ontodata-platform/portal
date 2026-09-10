@@ -36,10 +36,10 @@ const detailOpen = ref(false)
 const detail = ref<PortalResult | null>(null)
 
 const columns = computed(() => [
-  { title: t('results.resultId'), dataIndex: 'resultId', key: 'resultId', width: 220, odEllipsis: true, odSortable: true },
+  { title: t('results.resultId'), dataIndex: 'resultId', key: 'resultId', width: 220, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 160, odEllipsis: true, odSortable: true },
   { title: t('common.type'), dataIndex: 'resultType', key: 'resultType', width: 140, odEllipsis: true, odSortable: true },
-  { title: t('results.relatedTask'), dataIndex: 'sourceTaskId', key: 'sourceTaskId', width: 200, odEllipsis: true, odSortable: true },
+  { title: t('results.relatedTask'), dataIndex: 'sourceTaskId', key: 'sourceTaskId', width: 200, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 180, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 100 },
 ])
@@ -305,8 +305,7 @@ onMounted(load)
 }
 
 .mono-text {
-  font-family: var(--od-font-mono, monospace);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .icon-btn {

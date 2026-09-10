@@ -29,7 +29,7 @@ const detailOpen = ref(false)
 const detail = ref<PortalTask | null>(null)
 
 const columns = computed(() => [
-  { title: t('tasks.taskId'), dataIndex: 'taskId', key: 'taskId', width: 200, odEllipsis: true, odSortable: true },
+  { title: t('tasks.taskId'), dataIndex: 'taskId', key: 'taskId', width: 200, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.type'), dataIndex: 'taskType', key: 'taskType', width: 140, odEllipsis: true, odSortable: true },
   { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 150, odEllipsis: true, odSortable: true },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120, odSortable: true },
@@ -372,10 +372,10 @@ onMounted(load)
 }
 
 .task-id-text {
-  font-family: var(--od-font-mono, monospace);
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--od-gray-900, #0f172a);
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-weight: 400;
 }
 
 .icon-btn {

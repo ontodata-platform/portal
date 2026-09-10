@@ -39,8 +39,8 @@ const roleRows = computed(() => roles.value.map((role) => ({ ...role, memberCoun
 
 const userColumns = computed(() => [
   { title: t('common.name'), dataIndex: 'name', key: 'name', width: 120, odEllipsis: true, odSortable: true },
-  { title: t('admin.iam.username'), dataIndex: 'username', key: 'username', width: 140, odEllipsis: true, odSortable: true },
-  { title: t('admin.iam.tenant'), dataIndex: 'tenantId', key: 'tenantId', width: 120, odEllipsis: true, odSortable: true },
+  { title: t('admin.iam.username'), dataIndex: 'username', key: 'username', width: 140, odEllipsis: true, odSortable: true, mono: true },
+  { title: t('admin.iam.tenant'), dataIndex: 'tenantId', key: 'tenantId', width: 120, odEllipsis: true, odSortable: true, mono: true },
   { title: t('admin.iam.roles'), dataIndex: 'roles', key: 'roles', odEllipsis: true },
   { title: t('admin.iam.userStatus'), dataIndex: 'status', key: 'status', width: 96, odSortable: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 184 },
@@ -56,7 +56,7 @@ const roleColumns = computed(() => [
 
 const policyColumns = computed(() => [
   { title: t('common.name'), dataIndex: 'name', key: 'name', width: 160, odEllipsis: true, odSortable: true },
-  { title: t('common.code'), dataIndex: 'resource', key: 'resource', odEllipsis: true, odSortable: true },
+  { title: t('common.code'), dataIndex: 'resource', key: 'resource', odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 110, odEllipsis: true, odSortable: true },
   { title: t('admin.iam.roles'), dataIndex: 'roles', key: 'roles', odEllipsis: true },
 ])
@@ -260,7 +260,7 @@ onMounted(load)
             <template v-if="column.key === 'role'">
               <div class="role-name-cell">
                 <strong>{{ 中文展示(record.code) }}</strong>
-                <span>{{ record.code }}</span>
+                <span class="cell-mono">{{ record.code }}</span>
               </div>
             </template>
             <template v-else-if="column.key === 'permissions'">

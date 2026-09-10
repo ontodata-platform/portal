@@ -196,7 +196,7 @@ function scrollLogToEnd(element: unknown) {
 }
 
 const runsColumns = computed(() => [
-  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 180, odEllipsis: true, odSortable: true },
+  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 180, odEllipsis: true, odSortable: true, mono: true },
   { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName', width: 180, odEllipsis: true, odSortable: true },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120, odSortable: true },
   { title: t('algoWorkbench.colStage'), dataIndex: 'stage', key: 'stage', width: 160, odEllipsis: true, odSortable: true },
@@ -208,7 +208,7 @@ const runsColumns = computed(() => [
 const artifactColumns = computed(() => [
   { title: t('common.name'), dataIndex: 'name', key: 'name', odEllipsis: true, odSortable: true },
   { title: t('algoWorkbench.colService'), dataIndex: 'serviceName', key: 'serviceName', width: 180, odEllipsis: true, odSortable: true },
-  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 200, odEllipsis: true, odSortable: true },
+  { title: t('algoWorkbench.colTask'), dataIndex: 'taskId', key: 'taskId', width: 200, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.updatedAt'), dataIndex: 'startedAtText', key: 'startedAtText', width: 200, odSortable: true },
   { title: t('algoWorkbench.colActions'), key: 'actions', width: 120 },
 ])
@@ -287,6 +287,7 @@ onMounted(() => {
                 <a-tag class="cat-badge">{{ 中文展示(service.category) }}</a-tag>
                 <a-tag color="blue" class="status-badge">{{ 中文展示(service.status) }}</a-tag>
               </div>
+              <div class="cell-mono service-code">{{ service.code }}</div>
               <p class="service-desc">{{ service.description }}</p>
 
               <div class="service-meta-grid">
@@ -570,6 +571,10 @@ onMounted(() => {
   text-overflow: ellipsis;
 }
 
+.service-code {
+  margin-top: -4px;
+}
+
 .status-badge {
   font-size: 11px;
   font-weight: 600;
@@ -642,11 +647,6 @@ onMounted(() => {
 }
 
 .run-btn {
-  font-weight: 600;
-}
-
-.mono-code {
-  font-family: var(--od-font-mono, monospace);
   font-weight: 600;
 }
 

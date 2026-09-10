@@ -83,7 +83,7 @@ async function decide(decision: 'approve' | 'reject') {
     <a-descriptions :column="1" size="small" bordered>
       <a-descriptions-item :label="t('agentChat.confirmTool')">{{ 中文展示(payload.tool) }}</a-descriptions-item>
       <a-descriptions-item v-if="payload.summary.code" :label="t('agentChat.confirmCode')">
-        {{ payload.summary.code }}
+        <span class="cell-mono">{{ payload.summary.code }}</span>
       </a-descriptions-item>
       <a-descriptions-item v-if="payload.summary.plan" :label="t('agentChat.confirmPlan')">
         {{ payload.summary.plan }}

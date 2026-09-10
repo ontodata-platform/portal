@@ -168,7 +168,7 @@ function onTabChange(tab: string | number) {
 }
 
 const applicationColumns = [
-  { title: t('dataWorkbench.applicationCode'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('dataWorkbench.applicationCode'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.name'), dataIndex: 'serviceName', key: 'serviceName', odEllipsis: true, odSortable: true },
   { title: t('common.status'), key: 'status', width: 120, odSortable: true },
   { title: t('common.submittedAt'), dataIndex: 'submittedAt', key: 'submittedAt', width: 180, odSortable: true },
@@ -177,7 +177,7 @@ const applicationColumns = [
 ]
 
 const subscriptionColumns = [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 120, odEllipsis: true, odSortable: true },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 120, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.name'), dataIndex: 'serviceName', key: 'serviceName', odEllipsis: true, odSortable: true },
   { title: t('dataWorkbench.deliveryType'), dataIndex: 'deliveryType', key: 'deliveryType', width: 120, odSortable: true },
   { title: t('dataWorkbench.expiresAt'), dataIndex: 'expiresAt', key: 'expiresAt', width: 220, odSortable: true },
@@ -297,7 +297,7 @@ onMounted(() => {
                 <div class="dataset-titles">
                   <div class="dataset-name">{{ dataset.name }}</div>
                   <div class="dataset-code">
-                    <span class="mono-code">{{ dataset.code }}</span>
+                    <span class="cell-mono">{{ dataset.code }}</span>
                     <a-tag>{{ dataset.version }}</a-tag>
                   </div>
                 </div>
@@ -413,7 +413,7 @@ onMounted(() => {
                 </div>
               </template>
               <template v-else-if="column.key === 'rowsCount'">
-                <span class="mono-code">{{ formatNumber(record.rowsCount) }}</span>
+                <span class="od-num">{{ formatNumber(record.rowsCount) }}</span>
               </template>
               <template v-else-if="column.key === 'action'">
                 <a-space size="small">
@@ -511,12 +511,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.mono-code {
-  font-family: var(--od-font-mono, monospace);
-  font-size: 12px;
-  color: var(--od-gray-500, #64748b);
 }
 
 .dataset-desc {

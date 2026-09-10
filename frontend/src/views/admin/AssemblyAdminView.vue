@@ -133,7 +133,7 @@ function onBindingRefChange(item: FormBindingItem, code: string) {
 }
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 160 },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 160, mono: true },
   { title: t('common.currentVersion'), dataIndex: 'version', key: 'version', width: 110 },
   { title: t('common.name'), dataIndex: 'name', key: 'name' },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
@@ -702,11 +702,6 @@ onMounted(load)
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
-}
-
-.mono-code {
-  font-family: var(--od-font-mono, monospace);
-  font-weight: 600;
 }
 
 .binding-row {

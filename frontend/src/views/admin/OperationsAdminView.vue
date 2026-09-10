@@ -22,7 +22,7 @@ const notices = ref<Notice[]>([])
 const noticeTotal = ref(0)
 const noticeQuery = reactive({ page: 1, size: 20, status: '', section: '' })
 const noticeColumns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
   { title: t('common.section'), dataIndex: 'section', key: 'section', width: 150, odEllipsis: true, odSortable: true },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110, odSortable: true },
@@ -39,7 +39,7 @@ const feedbacks = ref<Feedback[]>([])
 const feedbackTotal = ref(0)
 const feedbackQuery = reactive({ page: 1, size: 20, status: '' })
 const feedbackColumns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110, odSortable: true },
   { title: t('common.handleNote'), dataIndex: 'handleNote', key: 'handleNote', odEllipsis: true, odSortable: true },
@@ -573,11 +573,6 @@ onMounted(() => {
 .op-card--feedback :deep(.od-empty) {
   min-height: 176px;
   padding: 24px 16px;
-}
-
-.mono-code {
-  font-family: var(--od-font-mono, monospace);
-  font-weight: 600;
 }
 
 @media (max-width: 900px) {

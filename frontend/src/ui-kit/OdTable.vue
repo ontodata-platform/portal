@@ -3,7 +3,8 @@
  * 统一表格（UX-1 §10.1）：内置空态、分页规格、列默认溢出省略。
  * 列定义扩展：
  * - { odEllipsis?: boolean }：开启后单元格超出省略并带原生 title 提示；
- * - { odSortable?: boolean }：按 dataIndex 的显示值进行本地排序。
+ * - { odSortable?: boolean }：按 dataIndex 的显示值进行本地排序；
+ * - { mono?: boolean }：编码/ID 列套 .cell-mono（等宽灰色小字，避免与标题抢视觉）。
  * 其余 props/attrs/slots/事件全部透传 a-table（bodyCell 等插槽照常使用）。
  */
 import { computed, useAttrs, useSlots } from 'vue'
@@ -42,9 +43,11 @@ const normalizedColumns = computed(() =>
     const col = column as {
       odEllipsis?: boolean
       odSortable?: boolean
+      mono?: boolean
       ellipsis?: boolean | object
       sorter?: unknown
       dataIndex?: string
+      className?: string
       [key: string]: unknown
     }
     const next = { ...col }
@@ -55,6 +58,9 @@ const normalizedColumns = computed(() =>
           numeric: true,
           sensitivity: 'base',
         })
+    }
+    if (col.mono) {
+      next.className = [col.className, 'cell-mono'].filter(Boolean).join(' ')
     }
     return next
   }),

@@ -134,6 +134,7 @@
   --color-muted: var(--od-color-muted);
   --font-ui: var(--od-font-ui);
   --font-mono: var(--od-font-mono);
+  --color-text-tertiary: var(--od-gray-500);
   --sidebar-width: var(--od-sidebar-width);
   --topbar-height: var(--od-topbar-height);
   --focus-ring: var(--od-focus-ring);
@@ -171,6 +172,16 @@
 /* 等宽数字：数据列/统计值/时间防抖动（number-tabular） */
 .od-num {
   font-variant-numeric: tabular-nums;
+}
+
+/* 编码/ID 降级：等宽灰色小字，避免与标题抢视觉（A4-1） */
+.cell-mono,
+.mono-code,
+.mono-text {
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-weight: 400;
 }
 
 /* 签名元素：工程蓝图网格——呼应制造业数据平台的工程语境（frontend-design: 签名元素只花一处） */

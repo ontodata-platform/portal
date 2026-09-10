@@ -237,17 +237,13 @@ onMounted(loadDetail)
 }
 
 .mono-badge {
-  font-family: var(--od-font-mono, monospace);
+  font-family: var(--font-mono);
   background: var(--od-gray-100, #f1f5f9);
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--od-gray-700, #334155);
-}
-
-.mono-text {
-  font-family: var(--od-font-mono, monospace);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-tertiary);
 }
 
 .apply-main-btn {

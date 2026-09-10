@@ -52,7 +52,7 @@ const consolidationForm = reactive({ relatedCode: '', primaryCode: '', reason: '
 const progressForm = reactive({ percent: '', note: '' })
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 130, odEllipsis: true, odSortable: true },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 130, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.title'), dataIndex: 'title', key: 'title', width: 220, odEllipsis: true, odSortable: true },
   { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 110, odEllipsis: true, odSortable: true },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110, odSortable: true },
@@ -732,11 +732,6 @@ onMounted(load)
     flex-wrap: wrap;
     gap: 0.75rem;
     margin-bottom: 1rem;
-  }
-
-  .mono-code {
-    font-family: var(--od-font-mono, monospace);
-    font-weight: 600;
   }
 
   .status-tag {

@@ -51,7 +51,7 @@ const decideTarget = ref<ApprovalRequest | null>(null)
 const decideForm = reactive({ decision: 'APPROVED' as 'APPROVED' | 'REJECTED', decisionNote: '' })
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.type'), dataIndex: 'approvalType', key: 'approvalType', width: 130, odEllipsis: true, odSortable: true },
   { title: t('common.sourceSystem'), dataIndex: 'sourceSystem', key: 'sourceSystem', width: 140, odEllipsis: true, odSortable: true },
   { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
@@ -535,11 +535,6 @@ onMounted(async () => {
 .batch-hint {
   font-size: 13px;
   color: var(--od-color-primary, #1e40af);
-}
-
-.mono-code {
-  font-family: var(--od-font-mono, monospace);
-  font-weight: 600;
 }
 
 .status-tag,

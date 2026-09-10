@@ -50,7 +50,7 @@ function open() {
 
     <div class="name" :title="item.name">{{ item.name }}</div>
     <div class="meta">
-      <span class="mono-code">{{ item.code }}</span>
+      <span class="cell-mono">{{ item.code }}</span>
       <span class="version-tag">v{{ item.currentVersion }}</span>
     </div>
 
@@ -161,11 +161,6 @@ function open() {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.mono-code {
-  font-family: var(--od-font-mono, monospace);
-  font-weight: 500;
 }
 
 .version-tag {

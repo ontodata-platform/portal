@@ -48,7 +48,7 @@ const createForm = reactive({
 const transitioning = ref(false)
 
 const columns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, odEllipsis: true, odSortable: true, mono: true },
   { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 130, odEllipsis: true, odSortable: true },
   { title: t('common.title'), dataIndex: 'title', key: 'title', odEllipsis: true, odSortable: true },
   { title: t('common.requester'), dataIndex: 'requester', key: 'requester', width: 120, odEllipsis: true, odSortable: true },
@@ -387,11 +387,6 @@ onMounted(load)
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
-}
-
-.mono-code {
-  font-family: var(--od-font-mono, monospace);
-  font-weight: 600;
 }
 
 .status-tag {

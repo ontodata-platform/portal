@@ -63,14 +63,14 @@ const pendingDelivery = computed(() =>
 )
 
 const requirementColumns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, mono: true },
   { title: t('common.title'), dataIndex: 'title', key: 'title' },
   { title: t('common.type'), dataIndex: 'requirementType', key: 'requirementType', width: 110 },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 110 },
 ])
 
 const myApprovalColumns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, mono: true },
   { title: t('common.title'), dataIndex: 'title', key: 'title' },
   { title: t('common.type'), dataIndex: 'approvalType', key: 'approvalType', width: 130 },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 100 },
@@ -79,7 +79,7 @@ const myApprovalColumns = computed(() => [
 ])
 
 const pendingColumns = computed(() => [
-  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140 },
+  { title: t('common.code'), dataIndex: 'code', key: 'code', width: 140, mono: true },
   { title: t('common.title'), dataIndex: 'title', key: 'title' },
   { title: t('common.applicant'), dataIndex: 'requester', key: 'requester', width: 110 },
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 100 },

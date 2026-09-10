@@ -138,7 +138,7 @@ defineExpose({ submitApply })
       </template>
       <a-descriptions v-else :column="1" size="small" bordered>
         <a-descriptions-item :label="t('common.name')">{{ primary?.name }}</a-descriptions-item>
-        <a-descriptions-item :label="t('common.stableCode')">{{ primary?.code }}</a-descriptions-item>
+        <a-descriptions-item :label="t('common.stableCode')"><span class="cell-mono">{{ primary?.code }}</span></a-descriptions-item>
         <a-descriptions-item :label="t('marketplace.grantedColumns')">
           {{ applyForm.grantedColumns.join('、') || t('marketplace.applyDefaultFields') }}
         </a-descriptions-item>
