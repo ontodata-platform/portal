@@ -260,7 +260,7 @@ export interface WorkbenchRunResponse {
   started: boolean
 }
 
-/** 管理端用户（Phase A mock，真实来源 Keycloak）。 */
+/** 管理端用户视图。身份权威源仍为统一身份服务，门户只呈现和受控代理管理操作。 */
 export interface IamUser {
   id: string
   name: string
@@ -270,7 +270,25 @@ export interface IamUser {
   status: 'ACTIVE' | 'DISABLED'
 }
 
-/** ABAC 策略只读条目（I-2 mock）。 */
+/** 角色目录（角色编码稳定，展示名称和权限范围由服务端返回）。 */
+export interface IamRole {
+  code: string
+  description: string
+  permissions: string[]
+}
+
+/** 用户与角色调整的审计记录。 */
+export interface IamAuditLog {
+  id: string
+  action: string
+  targetId: string
+  targetName: string
+  detail: string
+  operator: string
+  createdAt: string
+}
+
+/** ABAC 策略只读条目。 */
 export interface AbacPolicy {
   id: string
   name: string

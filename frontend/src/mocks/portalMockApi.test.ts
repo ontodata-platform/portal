@@ -171,10 +171,39 @@ describe('portal local mock API', () => {
     expect((after.items[0] as { type: string; resourceRef: string }).type).toBe('APPROVAL_NUDGE')
   })
 
-  it('serves IAM user seeds and ABAC policy snapshots', async () => {
+  it('manages local IAM role assignments and user status with an audit trail', async () => {
     const api = createPortalMockApi()
     const users = await api.request('get', '/admin/iam/users') as { items: { name: string }[] }
     expect(users.items.map((item) => item.name)).toEqual(expect.arrayContaining(['陈晓', 'alice', 'bob', '王工', '李工']))
+
+    const roles = await api.request('get', '/admin/iam/roles') as { items: { code: string; permissions: string[] }[] }
+    expect(roles.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'user', permissions: expect.any(Array) }),
+      expect.objectContaining({ code: 'portal-admin', permissions: expect.any(Array) }),
+    ]))
+
+    const roleUpdated = await api.request(
+      'put',
+      '/admin/iam/users/u-alice/roles',
+      {},
+      { roles: ['user', 'data-manager'] },
+    ) as { roles: string[] }
+    expect(roleUpdated.roles).toEqual(['user', 'data-manager'])
+
+    const statusUpdated = await api.request(
+      'put',
+      '/admin/iam/users/u-alice/status',
+      {},
+      { status: 'DISABLED' },
+    ) as { status: string }
+    expect(statusUpdated.status).toBe('DISABLED')
+
+    const audit = await api.request('get', '/admin/iam/audit-logs') as { items: { action: string; targetName: string }[] }
+    expect(audit.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: 'IAM_UPDATE_USER_ROLES', targetName: 'alice' }),
+      expect.objectContaining({ action: 'IAM_UPDATE_USER_STATUS', targetName: 'alice' }),
+    ]))
+
     const policies = await api.request('get', '/admin/abac-policies') as { items: { id: string }[] }
     expect(policies.items.length).toBeGreaterThan(0)
   })

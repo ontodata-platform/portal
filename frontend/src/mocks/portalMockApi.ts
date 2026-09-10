@@ -224,11 +224,44 @@ export function createPortalMockApi(): PortalMockApi {
    ]
   const iamUsers: RecordValue[] = [
     { id: 'u-chen', name: '陈晓', username: 'chenxiao', tenantId: 'default', roles: ['operator', 'user'], status: 'ACTIVE' },
-    { id: 'u-alice', name: 'alice', username: 'alice', tenantId: 'default', roles: ['user'], status: 'ACTIVE' },
-    { id: 'u-bob', name: 'bob', username: 'bob', tenantId: 'default', roles: ['user'], status: 'ACTIVE' },
-    { id: 'u-wang', name: '王工', username: 'wanggong', tenantId: 'default', roles: ['user'], status: 'ACTIVE' },
-    { id: 'u-li', name: '李工', username: 'ligong', tenantId: 'default', roles: ['portal-admin', 'operator'], status: 'ACTIVE' },
+    { id: 'u-alice', name: 'alice', username: 'alice', tenantId: 'default', roles: ['user', 'data-manager'], status: 'ACTIVE' },
+    { id: 'u-bob', name: 'bob', username: 'bob', tenantId: 'default', roles: ['user', 'algorithm-operator'], status: 'ACTIVE' },
+    { id: 'u-wang', name: '王工', username: 'wanggong', tenantId: 'default', roles: ['user', 'data-manager'], status: 'ACTIVE' },
+    { id: 'u-li', name: '李工', username: 'ligong', tenantId: 'default', roles: ['portal-admin', 'approval-approver'], status: 'ACTIVE' },
   ]
+  const iamRoles: RecordValue[] = [
+    {
+      code: 'user',
+      description: '使用门户、个人工作台以及已授权的数据和算法服务。',
+      permissions: ['PORTAL.ACCESS', 'PERSONAL.VIEW', 'DATA.APPLY', 'ALGORITHM.RUN'],
+    },
+    {
+      code: 'data-manager',
+      description: '维护数据服务供给，承接数据需求并组织交付。',
+      permissions: ['DATA.MANAGE', 'DATA.DELIVER', 'REQUIREMENT.HANDLE'],
+    },
+    {
+      code: 'algorithm-operator',
+      description: '维护算法服务与工作流，承接算法需求并组织运行。',
+      permissions: ['ALGORITHM.MANAGE', 'WORKFLOW.MANAGE', 'ALGORITHM.RUN'],
+    },
+    {
+      code: 'operator',
+      description: '统筹需求、审批监管和门户内容运营。',
+      permissions: ['REQUIREMENT.HANDLE', 'APPROVAL.SUPERVISE', 'NOTICE.MANAGE'],
+    },
+    {
+      code: 'approval-approver',
+      description: '在授权范围内处理数据授权和高风险操作审批。',
+      permissions: ['APPROVAL.DECIDE', 'APPROVAL.VIEW'],
+    },
+    {
+      code: 'portal-admin',
+      description: '管理门户用户状态、角色分配和访问策略全景。',
+      permissions: ['IAM.MANAGE_USERS', 'IAM.MANAGE_ROLES', 'IAM.VIEW_POLICIES'],
+    },
+  ]
+  const iamAuditLogs: RecordValue[] = []
   const abacPolicies: RecordValue[] = [
     { id: 'p-workbench', name: '工作台访问', resource: '/assistant|/data-workbench|/algorithm-workbench|/personal', action: 'access', effect: 'PERMIT', roles: ['user', 'operator', 'admin'] },
     { id: 'p-admin', name: '管理端访问', resource: '/admin/**', action: 'access', effect: 'PERMIT', roles: ['portal-operator', 'portal-admin', 'operator', 'admin'] },
@@ -329,7 +362,59 @@ export function createPortalMockApi(): PortalMockApi {
       notifications.unshift(notification)
       return { ok: true, code: item.code }
     }
-    if (normalizedMethod === 'get' && path === '/admin/iam/users') return page(iamUsers, params)
+    if (normalizedMethod === 'get' && path === '/admin/iam/users') {
+      const role = stringValue(params.role)
+      const scopedUsers = role
+        ? iamUsers.filter((user) => Array.isArray(user.roles) && user.roles.includes(role))
+        : iamUsers
+      return page(scopedUsers, params)
+    }
+    if (normalizedMethod === 'get' && path === '/admin/iam/roles') return { items: iamRoles.map(clone) }
+    if (normalizedMethod === 'get' && path === '/admin/iam/audit-logs') return { items: iamAuditLogs.map(clone) }
+
+    const userRolesMatch = path.match(/^\/admin\/iam\/users\/([^/]+)\/roles$/)
+    if (normalizedMethod === 'put' && userRolesMatch) {
+      const user = find(iamUsers, 'id', userRolesMatch[1], path)
+      const roles = stringArray(body.roles)
+      if (roles.length === 0) throw error(422, 'VALIDATION_FAILED', '至少为用户分配一个角色', path, { roles: '请选择至少一个角色' })
+      const unknownRoles = roles.filter((code) => !iamRoles.some((role) => role.code === code))
+      if (unknownRoles.length > 0) throw error(422, 'VALIDATION_FAILED', '包含未知角色', path, { roles: `未知角色：${unknownRoles.join('、')}` })
+      update(user, { roles })
+      iamAuditLogs.unshift({
+        id: nextCode('iam-audit'),
+        action: 'IAM_UPDATE_USER_ROLES',
+        targetId: user.id,
+        targetName: user.name,
+        detail: `角色调整为：${roles.join('、')}`,
+        operator: demoIdentity.name,
+        createdAt: timestamp,
+      })
+      return clone(user)
+    }
+
+    const userStatusMatch = path.match(/^\/admin\/iam\/users\/([^/]+)\/status$/)
+    if (normalizedMethod === 'put' && userStatusMatch) {
+      const user = find(iamUsers, 'id', userStatusMatch[1], path)
+      const status = stringValue(body.status)
+      if (status !== 'ACTIVE' && status !== 'DISABLED') {
+        throw error(422, 'VALIDATION_FAILED', '用户状态无效', path, { status: '状态只能是 ACTIVE 或 DISABLED' })
+      }
+      if (status === 'DISABLED' && Array.isArray(user.roles) && user.roles.includes('portal-admin')) {
+        const otherActiveAdmin = iamUsers.some((candidate) => candidate.id !== user.id && candidate.status === 'ACTIVE' && Array.isArray(candidate.roles) && candidate.roles.includes('portal-admin'))
+        if (!otherActiveAdmin) throw error(409, 'STATE_CONFLICT', '不能停用最后一个启用的门户管理员', path)
+      }
+      update(user, { status })
+      iamAuditLogs.unshift({
+        id: nextCode('iam-audit'),
+        action: 'IAM_UPDATE_USER_STATUS',
+        targetId: user.id,
+        targetName: user.name,
+        detail: status === 'ACTIVE' ? '已启用用户' : '已停用用户',
+        operator: demoIdentity.name,
+        createdAt: timestamp,
+      })
+      return clone(user)
+    }
     if (normalizedMethod === 'get' && path === '/admin/abac-policies') return { items: abacPolicies.map(clone) }
 
     const decisionMatch = path.match(/^\/approvals\/([^/]+)\/decision$/)

@@ -12,6 +12,8 @@ import type {
   BatchDecideResult,
   DataRequirementProfile,
   Feedback,
+  IamAuditLog,
+  IamRole,
   IamUser,
   MarketplaceApplyResponse,
   Notice,
@@ -47,6 +49,7 @@ export interface ListParams {
   type?: string
   domain?: string
   sla?: string
+  role?: string
 }
 
 /** 统一任务中心：聚合副本（PUT 幂等 upsert，权威归产生它的软件）。 */
@@ -202,10 +205,19 @@ export const personalApi = {
   markAllRead: () => client.post<{ unread: number }>('/personal/notifications/read-all').then((r) => r.data),
 }
 
-/** 管理端用户与权限（Phase A：只读 mock）。 */
+/**
+ * 管理端 IAM 聚合。身份仍由统一身份服务权威管理；门户后端在真实联调时
+ * 负责代理用户状态与角色调整，并返回审计记录，前端不直连身份服务。
+ */
 export const adminIamApi = {
   users: (params: Partial<ListParams> = {}) =>
     client.get<PageResponse<IamUser>>('/admin/iam/users', { params }).then((r) => r.data),
+  roles: () => client.get<{ items: IamRole[] }>('/admin/iam/roles').then((r) => r.data),
+  updateUserRoles: (userId: string, body: { roles: string[] }) =>
+    client.put<IamUser>(`/admin/iam/users/${userId}/roles`, body).then((r) => r.data),
+  updateUserStatus: (userId: string, status: IamUser['status']) =>
+    client.put<IamUser>(`/admin/iam/users/${userId}/status`, { status }).then((r) => r.data),
+  auditLogs: () => client.get<{ items: IamAuditLog[] }>('/admin/iam/audit-logs').then((r) => r.data),
   policies: () => client.get<{ items: AbacPolicy[] }>('/admin/abac-policies').then((r) => r.data),
 }
 
