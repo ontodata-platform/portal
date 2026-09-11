@@ -418,10 +418,7 @@ onMounted(load)
         <!-- ═══ 角色：角色绑定权限 ═══ -->
         <a-tab-pane key="roles" :tab="t('admin.iam.tabRoles')">
           <a-card :bordered="false" class="admin-card pane-card">
-            <template #extra>
-              <a-button size="small" type="primary" @click="openRoleCreate">{{ t('admin.iam.addRole') }}</a-button>
-            </template>
-            <div class="toolbar-area">
+            <div class="toolbar-area pane-toolbar">
               <a-input
                 v-model:value="roleQuery.keyword"
                 :placeholder="t('admin.iam.roleSearchPlaceholder')"
