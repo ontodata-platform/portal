@@ -7,6 +7,7 @@
  */
 
 import { loadContentEntries } from './contentConfig'
+import { loadRoles, persistRoles, type RoleDef } from './roleConfig'
 import { demoIdentity, relativeIso, seedDataServices } from './seed'
 import { productDescriptorOf } from './seed.products'
 import {
@@ -270,7 +271,37 @@ export function createPortalMockApi(): PortalMockApi {
         : iamUsers
       return page(scopedUsers, params)
     }
-    if (normalizedMethod === 'get' && path === '/admin/iam/roles') return { items: iamRoles.map(clone) }
+    // D5 角色存储：角色绑定权限（页面访问 + 操作）；删除前校验绑定成员
+    if (normalizedMethod === 'get' && path === '/admin/iam/roles') return { items: loadRoles().map((role) => ({ ...role, id: role.code })) }
+    if (normalizedMethod === 'post' && path === '/admin/iam/roles') {
+      const roleCode = String(body.code ?? '')
+      if (loadRoles().some((item) => item.code === roleCode)) throw error(409, 'ROLE_EXISTS', '角色编码已存在', path)
+      const role: RoleDef = { code: roleCode, name: String(body.name ?? roleCode), description: String(body.description ?? ''), permissions: (body.permissions as string[]) ?? [], builtin: false }
+      const roles = loadRoles()
+      roles.push(role)
+      persistRoles(roles)
+      return clone(role)
+    }
+    const roleCodeMatch = path.match(/^\/admin\/iam\/roles\/([^/]+)$/)
+    if (roleCodeMatch) {
+      const roleCode = decodeURIComponent(roleCodeMatch[1])
+      const roles = loadRoles()
+      const role = roles.find((item) => item.code === roleCode)
+      if (!role) throw error(404, 'NOT_FOUND', '未找到角色', path)
+      if (normalizedMethod === 'put') {
+        role.name = String(body.name ?? role.name)
+        role.description = String(body.description ?? role.description)
+        role.permissions = (body.permissions as string[]) ?? role.permissions
+        persistRoles(roles)
+        return clone(role)
+      }
+      if (normalizedMethod === 'delete') {
+        const members = iamUsers.filter((user) => Array.isArray(user.roles) && user.roles.includes(roleCode))
+        if (members.length > 0) throw error(409, 'ROLE_IN_USE', `仍有 ${members.length} 名用户绑定该角色`, path)
+        persistRoles(roles.filter((item) => item.code !== roleCode))
+        return { ok: true }
+      }
+    }
     if (normalizedMethod === 'get' && path === '/admin/iam/audit-logs') return { items: iamAuditLogs.map(clone) }
 
     const userRolesMatch = path.match(/^\/admin\/iam\/users\/([^/]+)\/roles$/)

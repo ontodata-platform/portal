@@ -212,6 +212,12 @@ export const adminIamApi = {
   roles: () => client.get<{ items: IamRole[] }>('/admin/iam/roles').then((r) => r.data),
   createUser: (body: { name: string; username: string; tenantId: string; roles: string[] }) =>
     client.post<IamUser>('/admin/iam/users', body).then((r) => r.data),
+  createRole: (body: { code: string; name: string; description: string; permissions: string[] }) =>
+    client.post<IamRole>('/admin/iam/roles', body).then((r) => r.data),
+  updateRole: (code: string, body: { name?: string; description?: string; permissions: string[] }) =>
+    client.put<IamRole>(`/admin/iam/roles/${code}`, body).then((r) => r.data),
+  deleteRole: (code: string) =>
+    client.delete(`/admin/iam/roles/${code}`).then((r) => r.data),
   updateUserRoles: (userId: string, body: { roles: string[] }) =>
     client.put<IamUser>(`/admin/iam/users/${userId}/roles`, body).then((r) => r.data),
   updateUserStatus: (userId: string, status: IamUser['status']) =>

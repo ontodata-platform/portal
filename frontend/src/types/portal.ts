@@ -340,6 +340,8 @@ export interface IamUser {
 /** 角色目录（角色编码稳定，展示名称和权限范围由服务端返回）。 */
 export interface IamRole {
   code: string
+  /** 角色显示名（新建角色填写；内置角色回退中文展示） */
+  name?: string
   description: string
   permissions: string[]
 }
