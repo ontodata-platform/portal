@@ -315,7 +315,7 @@ onUnmounted(() => {
         class="portal-nav-menu"
         @click="handleMenuClick"
       >
-        <a-menu-item v-for="item in navItems.slice(0, 5)" :key="item.key">
+        <a-menu-item v-for="item in navItems.slice(0, 4)" :key="item.key">
           <template #icon>
             <component :is="item.icon" />
           </template>
