@@ -340,12 +340,6 @@ onUnmounted(() => {
             </template>
             <span>{{ t('menu.admin') }}</span>
           </a-menu-item>
-          <a-menu-item key="/help">
-            <template #icon>
-              <QuestionCircleOutlined />
-            </template>
-            <span>{{ t('help.title') }}</span>
-          </a-menu-item>
         </a-menu>
       </div>
     </a-layout-sider>
