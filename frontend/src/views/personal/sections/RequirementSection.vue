@@ -12,6 +12,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { requirementApi } from '@/api/portal'
+import { statusColorMap, statusLabelMap } from '@/constants/statusMeta'
 import { useMessageStore } from '@/stores/message'
 import type { DataRequirementProfile, RequirementRequest } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
@@ -57,14 +58,8 @@ const columns = computed(() => [
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 180 },
 ])
 
-const statusColor: Record<string, string> = {
-  OPEN: 'cyan',
-  ANALYZING: 'processing',
-  ASSIGNED: 'geekblue',
-  IN_PROGRESS: 'processing',
-  COMPLETED: 'success',
-  CANCELED: 'default',
-}
+// C1-3：状态颜色统一来自字典
+const statusColor = computed(() => statusColorMap('requirement'))
 
 const typeLabel = computed(
   () =>
@@ -75,17 +70,7 @@ const typeLabel = computed(
     }) as Record<string, string>,
 )
 
-const statusText = computed(
-  () =>
-    ({
-      OPEN: t('requirements.open'),
-      ANALYZING: t('requirements.analyzing'),
-      ASSIGNED: t('requirements.assigned'),
-      IN_PROGRESS: t('requirements.inProgress'),
-      COMPLETED: t('requirements.completed'),
-      CANCELED: t('requirements.canceled'),
-    }) as Record<string, string>,
-)
+const statusText = computed(() => statusLabelMap('requirement', t))
 
 function describeLoadError(error: unknown): string {
   const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message

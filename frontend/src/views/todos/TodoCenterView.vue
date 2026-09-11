@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { approvalApi, personalApi } from '@/api/portal'
+import { slaColorOf } from '@/constants/statusMeta'
 import { useMessageStore } from '@/stores/message'
 import type { TodoAggregateItem } from '@/types/portal'
 import NotificationSection from '@/views/personal/sections/NotificationSection.vue'
@@ -58,8 +59,8 @@ const kindLabel = computed<Record<string, string>>(() => ({
   ANOMALY: t('todos.kindAnomaly'),
 }))
 
-const slaTone = (sla: string | null): string =>
-  sla === 'OVERDUE' ? 'error' : sla === 'DUE_SOON' ? 'warning' : sla === 'MET' ? 'success' : 'default'
+// C1-3：SLA 颜色统一来自字典
+const slaTone = (sla: string | null): string => slaColorOf(sla)
 
 async function load(): Promise<void> {
   loading.value = true

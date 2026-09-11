@@ -10,6 +10,7 @@ import { useRouter } from 'vue-router'
 
 import { approvalApi } from '@/api/portal'
 import ApprovalDecisionDrawer from '@/components/approval/ApprovalDecisionDrawer.vue'
+import { slaColorOf, slaTextOf, statusColorMap, statusLabelMap } from '@/constants/statusMeta'
 import { useMessageStore } from '@/stores/message'
 import type { ApprovalRequest } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
@@ -87,20 +88,9 @@ const columns = computed(() => [
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 140, fixed: 'right' },
 ])
 
-const statusColor: Record<string, string> = {
-  PENDING: 'processing',
-  APPROVED: 'success',
-  REJECTED: 'error',
-}
-
-const statusText = computed(
-  () =>
-    ({
-      PENDING: t('approvals.pendingApproval'),
-      APPROVED: t('approvals.approved'),
-      REJECTED: t('approvals.rejected'),
-    }) as Record<string, string>,
-)
+// C1-3：状态颜色/文案统一来自字典
+const statusColor = computed(() => statusColorMap('approval'))
+const statusText = computed(() => statusLabelMap('approval', t))
 
 const typeLabel = computed(
   () =>
@@ -112,19 +102,11 @@ const typeLabel = computed(
 )
 
 function slaText(status?: string) {
-  if (status === 'OVERDUE') return t('approvals.slaOverdue')
-  if (status === 'DUE_SOON') return t('approvals.slaDueSoon')
-  if (status === 'ON_TIME') return t('approvals.slaOnTime')
-  if (status === 'MET') return t('approvals.slaMet')
-  if (status === 'MISSED') return t('approvals.slaMissed')
-  return t('approvals.slaNone')
+  return slaTextOf(status, t)
 }
 
 function slaColor(status?: string) {
-  if (status === 'OVERDUE' || status === 'MISSED') return 'error'
-  if (status === 'DUE_SOON') return 'warning'
-  if (status === 'ON_TIME' || status === 'MET') return 'success'
-  return 'default'
+  return slaColorOf(status)
 }
 
 function isToday(iso?: string) {

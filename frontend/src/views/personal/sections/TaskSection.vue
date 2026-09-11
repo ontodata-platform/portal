@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { taskApi } from '@/api/portal'
+import { statusColorMap } from '@/constants/statusMeta'
 import { useMessageStore } from '@/stores/message'
 import type { PortalTask } from '@/types/portal'
 import EmptyState from '@/ui-kit/EmptyState.vue'
@@ -38,16 +39,8 @@ const columns = computed(() => [
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 100 },
 ])
 
-const statusColor = computed(
-  () =>
-    ({
-      PENDING: 'default',
-      RUNNING: 'processing',
-      SUCCESS: 'success',
-      FAILED: 'error',
-      CANCELED: 'default',
-    }) as Record<string, string>,
-)
+// C1-3：任务状态颜色统一来自字典
+const statusColor = computed(() => statusColorMap('task'))
 
 function formatTime(value: string): string {
   return formatDateTime(value)

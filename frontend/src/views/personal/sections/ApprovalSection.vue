@@ -13,6 +13,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { approvalApi } from '@/api/portal'
+import { statusColorMap, statusLabelMap } from '@/constants/statusMeta'
 import ApprovalDecisionDrawer from '@/components/approval/ApprovalDecisionDrawer.vue'
 import { useMessageStore } from '@/stores/message'
 import type { ApprovalRequest } from '@/types/portal'
@@ -60,20 +61,9 @@ const columns = computed(() => [
   { title: t('common.action'), dataIndex: 'action', key: 'action', width: 110 },
 ])
 
-const statusColor: Record<string, string> = {
-  PENDING: 'processing',
-  APPROVED: 'success',
-  REJECTED: 'error',
-}
-
-const statusText = computed(
-  () =>
-    ({
-      PENDING: t('approvals.pendingApproval'),
-      APPROVED: t('approvals.approved'),
-      REJECTED: t('approvals.rejected'),
-    }) as Record<string, string>,
-)
+// C1-3：状态颜色/文案统一来自字典
+const statusColor = computed(() => statusColorMap('approval'))
+const statusText = computed(() => statusLabelMap('approval', t))
 
 function describeLoadError(error: unknown): string {
   const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message

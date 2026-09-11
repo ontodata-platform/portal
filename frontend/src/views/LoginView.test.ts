@@ -55,9 +55,10 @@ describe('LoginView（M5 IAM 浏览器登录）', () => {
     vi.stubEnv('VITE_OIDC_TOKEN_ENDPOINT', 'https://idp.example/token')
     vi.stubEnv('VITE_OIDC_REDIRECT_URI', 'http://localhost:5175/auth/callback')
     mountView()
-    await flushPromises()
-
-    expect(assign).toHaveBeenCalledTimes(1)
+    // SHA-256 走 WebCrypto 任务队列，flushPromises 不保证完成，用 waitFor 确定性等待
+    await vi.waitFor(() => {
+      expect(assign).toHaveBeenCalledTimes(1)
+    })
     const target = assign.mock.calls[0]![0] as string
     const params = new URL(target).searchParams
     expect(params.get('response_type')).toBe('code')
