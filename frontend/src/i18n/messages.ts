@@ -34,6 +34,7 @@ export const zhCn = {
     requester: '提出人',
     applicant: '申请人',
     delete: '删除',
+    save: '保存',
     reload: '重新加载',
     loadNextStep: '确认门户后端可用后重新加载。',
     yes: '是',
@@ -871,6 +872,7 @@ export const zhCn = {
   admin: {
     approvalConfig: {
       title: '审批配置',
+      description: '配置各类审批事项的表单字段与审批流程节点；保存后新提交的申请将按此配置执行。',
       fieldsTitle: '表单字段',
       fieldKey: '键',
       fieldLabel: '名称',
@@ -1079,6 +1081,7 @@ export const enUs: MessageSchema = {
     requester: 'Requester',
     applicant: 'Applicant',
     delete: 'Delete',
+    save: 'Save',
     reload: 'Reload',
     loadNextStep: 'Confirm the portal backend is up, then reload.',
     yes: 'Yes',
@@ -1919,6 +1922,7 @@ export const enUs: MessageSchema = {
   admin: {
     approvalConfig: {
       title: 'Approval Config',
+      description: 'Configure form fields and flow nodes per approval type; new requests follow this config.',
       fieldsTitle: 'Form Fields',
       fieldKey: 'Key',
       fieldLabel: 'Label',

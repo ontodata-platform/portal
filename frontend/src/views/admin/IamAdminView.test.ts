@@ -25,6 +25,8 @@ vi.mock('@/api/portal', () => ({
 
 const stubs = {
   'a-card': { props: ['title'], template: '<section><h2>{{ title }}</h2><slot /></section>' },
+  'a-tabs': { template: '<div><slot /></div>' },
+  'a-tab-pane': { props: ['tab'], template: '<div class="tab-pane"><span class="tab-label">{{ tab }}</span><slot /></div>' },
   'a-table': {
     props: ['columns', 'dataSource', 'loading', 'rowKey'],
     template:

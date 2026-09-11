@@ -74,7 +74,8 @@ function save(): void {
     </aside>
 
     <section class="editor">
-      <h2 class="editor-title">{{ active.current?.name }}（v{{ active.current?.version }}）</h2>
+      <p class="editor-desc">{{ t('admin.approvalConfig.description') }}</p>
+      <h2 class="editor-title">{{ active.current?.name }}</h2>
 
       <h3 class="block-title">{{ t('admin.approvalConfig.fieldsTitle') }}</h3>
       <table class="config-table">
@@ -179,6 +180,12 @@ function save(): void {
   margin: 0 0 14px;
   font-size: 15px;
   font-weight: 600;
+}
+
+.editor-desc {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--od-gray-500, #64748b);
 }
 
 .block-title {

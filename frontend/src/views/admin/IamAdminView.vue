@@ -75,6 +75,7 @@ const roleForm = reactive({ roles: [] as string[] })
 const roleDrawerOpen = ref(false)
 const inspectedRole = ref<IamRole | null>(null)
 
+const activeTab = ref('users')
 const activeUserCount = computed(() => users.value.filter((user) => user.status === 'ACTIVE').length)
 const disabledUserCount = computed(() => users.value.filter((user) => user.status === 'DISABLED').length)
 const roleOptions = computed(() => roles.value.map((role) => ({ value: role.code, label: 中文展示(role.code) })))
@@ -241,230 +242,239 @@ onMounted(load)
         </div>
       </section>
 
-      <a-card :bordered="false" class="admin-card" :title="t('admin.iam.users')">
-        <template #extra>
-          <a-button size="small" type="primary" @click="createOpen = true">{{ t('admin.iam.createUser') }}</a-button>
-        </template>
-        <div class="toolbar-area">
-          <TableFilterBar
-            :query="query"
-            :filters="userFilterSpecs"
-            :search-placeholder="t('admin.iam.searchPlaceholder')"
-            :search-width="240"
-            @update="Object.assign(query, $event)"
-            @search="load"
-          />
-        </div>
+      <a-tabs v-model:active-key="activeTab" class="iam-tabs">
+        <a-tab-pane key="users" :tab="t('admin.iam.users')">
+          <a-card :bordered="false" class="admin-card pane-card">
+            <template #extra>
+              <a-button size="small" type="primary" @click="createOpen = true">{{ t('admin.iam.createUser') }}</a-button>
+            </template>
+            <div class="toolbar-area">
+              <TableFilterBar
+                :query="query"
+                :filters="userFilterSpecs"
+                :search-placeholder="t('admin.iam.searchPlaceholder')"
+                :search-width="240"
+                @update="Object.assign(query, $event)"
+                @search="load"
+              />
+            </div>
 
-        <EmptyState v-if="!loading && users.length === 0" :title="t('admin.iam.users')" />
-        <OdTable
-          v-else
-          :columns="userColumns"
-          :data-source="users"
-          :loading="loading"
-          row-key="id"
-          :pagination="false"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'roles'">
-              <a-space size="small" wrap>
-                <a-tag v-for="role in record.roles" :key="role" color="blue">{{ 中文展示(role) }}</a-tag>
-              </a-space>
-            </template>
-            <template v-else-if="column.key === 'status'">
-              <a-tag :color="record.status === 'ACTIVE' ? 'success' : 'default'">
-                {{ record.status === 'ACTIVE' ? t('admin.iam.active') : t('admin.iam.disabled') }}
-              </a-tag>
-            </template>
-            <template v-else-if="column.key === 'action'">
-              <a-space size="small" wrap>
-                <a-button size="small" @click="openRoleEditor(record)">
-                  <template #icon><EditOutlined /></template>
-                  {{ t('admin.iam.configureRoles') }}
-                </a-button>
-                <a-button
-                  size="small"
-                  :danger="record.status === 'ACTIVE'"
-                  :loading="actionLoading === 'status:' + record.id"
-                  @click="toggleUserStatus(record)"
-                >
-                  <template #icon><PoweroffOutlined /></template>
-                  {{ record.status === 'ACTIVE' ? t('admin.iam.disable') : t('admin.iam.enable') }}
-                </a-button>
-              </a-space>
-            </template>
-          </template>
-        </OdTable>
-      </a-card>
+            <EmptyState v-if="!loading && users.length === 0" :title="t('admin.iam.users')" />
+            <OdTable
+              v-else
+              :columns="userColumns"
+              :data-source="users"
+              :loading="loading"
+              row-key="id"
+              :pagination="false"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'roles'">
+                  <a-space size="small" wrap>
+                    <a-tag v-for="role in record.roles" :key="role" color="blue">{{ 中文展示(role) }}</a-tag>
+                  </a-space>
+                </template>
+                <template v-else-if="column.key === 'status'">
+                  <a-tag :color="record.status === 'ACTIVE' ? 'success' : 'default'">
+                    {{ record.status === 'ACTIVE' ? t('admin.iam.active') : t('admin.iam.disabled') }}
+                  </a-tag>
+                </template>
+                <template v-else-if="column.key === 'action'">
+                  <a-space size="small" wrap>
+                    <a-button size="small" @click="openRoleEditor(record)">
+                      <template #icon><EditOutlined /></template>
+                      {{ t('admin.iam.configureRoles') }}
+                    </a-button>
+                    <a-button
+                      size="small"
+                      :danger="record.status === 'ACTIVE'"
+                      :loading="actionLoading === 'status:' + record.id"
+                      @click="toggleUserStatus(record)"
+                    >
+                      <template #icon><PoweroffOutlined /></template>
+                      {{ record.status === 'ACTIVE' ? t('admin.iam.disable') : t('admin.iam.enable') }}
+                    </a-button>
+                  </a-space>
+                </template>
+              </template>
+            </OdTable>
+          </a-card>
+        </a-tab-pane>
+        <a-tab-pane key="roles" :tab="t('admin.iam.rolePermissions')">
+          <a-card :bordered="false" class="admin-card pane-card">
+            <OdTable
+              :columns="roleColumns"
+              :data-source="roleRows"
+              row-key="code"
+              :pagination="false"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'role'">
+                  <div class="role-name-cell">
+                    <strong>{{ 中文展示(record.code) }}</strong>
+                    <span class="cell-mono">{{ record.code }}</span>
+                  </div>
+                </template>
+                <template v-else-if="column.key === 'permissions'">
+                  <a-space size="small" wrap>
+                    <a-tag v-for="permission in (record.permissions ?? []).slice(0, 3)" :key="permission">{{ 中文展示(permission) }}</a-tag>
+                    <a-tag v-if="(record.permissions ?? []).length > 3">+{{ record.permissions.length - 3 }}</a-tag>
+                  </a-space>
+                </template>
+                <template v-else-if="column.key === 'members'">{{ record.memberCount }} 人</template>
+                <template v-else-if="column.key === 'action'">
+                  <a-button size="small" type="primary" ghost @click="inspectRole(record)">
+                    {{ t('admin.iam.viewPermissions') }}
+                  </a-button>
+                </template>
+              </template>
+            </OdTable>
+          </a-card>
+        </a-tab-pane>
+        <a-tab-pane key="policies" :tab="t('admin.iam.policies')">
+          <a-card :bordered="false" class="admin-card pane-card" :title="t('admin.iam.policies')">
+            <p class="card-hint">{{ t('admin.iam.policyHint') }}</p>
+            <OdTable :columns="policyColumns" :data-source="policies" row-key="id" :pagination="false">
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'roles'">
+                  <a-space size="small" wrap>
+                    <a-tag v-for="role in record.roles" :key="role">{{ 中文展示(role) }}</a-tag>
+                  </a-space>
+                </template>
+                <template v-else-if="column.key === 'action'">{{ 中文展示(record.action) }}</template>
+              </template>
+            </OdTable>
+          </a-card>
+        </a-tab-pane>
+        <a-tab-pane key="audit" :tab="t('admin.iam.auditLogs')">
+          <a-card :bordered="false" class="admin-card pane-card" :title="t('admin.iam.auditLogs')">
+            <EmptyState v-if="!loading && auditLogs.length === 0" :title="t('admin.iam.noAuditLogs')" />
+            <OdTable
+              v-else
+              :columns="auditColumns"
+              :data-source="auditLogs"
+              row-key="id"
+              :pagination="false"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'action'">{{ 中文展示(record.action) }}</template>
+                <template v-else-if="column.key === 'createdAt'">{{ formatDateTime(record.createdAt) }}</template>
+              </template>
+            </OdTable>
+          </a-card>
 
-      <a-card :bordered="false" class="admin-card" :title="t('admin.iam.rolePermissions')">
-        <OdTable
-          :columns="roleColumns"
-          :data-source="roleRows"
-          row-key="code"
-          :pagination="false"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'role'">
-              <div class="role-name-cell">
-                <strong>{{ 中文展示(record.code) }}</strong>
-                <span class="cell-mono">{{ record.code }}</span>
+          <a-modal
+            v-model:open="roleEditorOpen"
+            :title="t('admin.iam.roleEditor')"
+            :confirm-loading="actionLoading === 'roles:' + editingUser?.id"
+            class="iam-user-role-modal"
+            @ok="saveUserRoles"
+          >
+            <template v-if="editingUser">
+              <p class="modal-hint">{{ t('admin.iam.roleEditorHint') }}</p>
+              <a-form layout="vertical">
+                <a-form-item :label="editingUser.name + ' · ' + editingUser.username" required>
+                  <a-checkbox-group v-model:value="roleForm.roles">
+                    <div class="role-select-grid">
+                      <a-checkbox v-for="role in roles" :key="role.code" :value="role.code">
+                        <span class="role-checkbox-text">
+                          <strong>{{ 中文展示(role.code) }}</strong>
+                          <small>{{ role.description }}</small>
+                        </span>
+                      </a-checkbox>
+                    </div>
+                  </a-checkbox-group>
+                </a-form-item>
+              </a-form>
+              <div class="effective-permissions">
+                <span>{{ t('admin.iam.effectivePermissions') }}</span>
+                <a-space size="small" wrap>
+                  <a-tag v-for="permission in effectiveRolePermissions" :key="permission" color="blue">{{ 中文展示(permission) }}</a-tag>
+                </a-space>
               </div>
             </template>
-            <template v-else-if="column.key === 'permissions'">
-              <a-space size="small" wrap>
-                <a-tag v-for="permission in (record.permissions ?? []).slice(0, 3)" :key="permission">{{ 中文展示(permission) }}</a-tag>
-                <a-tag v-if="(record.permissions ?? []).length > 3">+{{ record.permissions.length - 3 }}</a-tag>
-              </a-space>
-            </template>
-            <template v-else-if="column.key === 'members'">{{ record.memberCount }} 人</template>
-            <template v-else-if="column.key === 'action'">
-              <a-button size="small" type="primary" ghost @click="inspectRole(record)">
-                {{ t('admin.iam.viewPermissions') }}
-              </a-button>
-            </template>
-          </template>
-        </OdTable>
-      </a-card>
+          </a-modal>
 
-      <a-card :bordered="false" class="admin-card" :title="t('admin.iam.policies')">
-        <p class="card-hint">{{ t('admin.iam.policyHint') }}</p>
-        <OdTable :columns="policyColumns" :data-source="policies" row-key="id" :pagination="false">
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'roles'">
+          <a-drawer v-model:open="roleDrawerOpen" :title="inspectedRole ? t('admin.iam.roleDetail') + '：' + 中文展示(inspectedRole.code) : ''" width="520">
+            <template v-if="inspectedRole">
+              <a-descriptions :column="1" size="small">
+                <a-descriptions-item :label="t('admin.iam.role')">{{ 中文展示(inspectedRole.code) }}</a-descriptions-item>
+                <a-descriptions-item :label="t('admin.iam.roleDescription')">{{ inspectedRole.description }}</a-descriptions-item>
+                <a-descriptions-item :label="t('admin.iam.memberCount')">{{ roleMembers(inspectedRole.code).length }} 人</a-descriptions-item>
+              </a-descriptions>
+              <a-divider />
+              <h3 class="drawer-section-title">{{ t('admin.iam.grantedPermissions') }}</h3>
               <a-space size="small" wrap>
-                <a-tag v-for="role in record.roles" :key="role">{{ 中文展示(role) }}</a-tag>
+                <a-tag v-for="permission in inspectedRole.permissions" :key="permission" color="blue">{{ 中文展示(permission) }}</a-tag>
               </a-space>
+              <h3 class="drawer-section-title">{{ t('admin.iam.roleMembers') }}</h3>
+              <ul class="role-member-list">
+                <li v-for="member in roleMembers(inspectedRole.code)" :key="member.id">
+                  <span>{{ member.name }}（{{ member.username }}）</span>
+                  <a-tag :color="member.status === 'ACTIVE' ? 'success' : 'default'">{{ member.status === 'ACTIVE' ? t('admin.iam.active') : t('admin.iam.disabled') }}</a-tag>
+                </li>
+              </ul>
             </template>
-            <template v-else-if="column.key === 'action'">{{ 中文展示(record.action) }}</template>
-          </template>
-        </OdTable>
-      </a-card>
+          </a-drawer>
 
-      <a-card :bordered="false" class="admin-card" :title="t('admin.iam.auditLogs')">
-        <EmptyState v-if="!loading && auditLogs.length === 0" :title="t('admin.iam.noAuditLogs')" />
-        <OdTable
-          v-else
-          :columns="auditColumns"
-          :data-source="auditLogs"
-          row-key="id"
-          :pagination="false"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'action'">{{ 中文展示(record.action) }}</template>
-            <template v-else-if="column.key === 'createdAt'">{{ formatDateTime(record.createdAt) }}</template>
-          </template>
-        </OdTable>
-      </a-card>
+          <!-- D5-1 新增用户 -->
+          <a-modal v-model:open="createOpen" :title="t('admin.iam.createUser')" :confirm-loading="creating" @ok="createUser">
+            <a-form layout="vertical">
+              <a-form-item :label="t('common.name')" required>
+                <a-input v-model:value="createForm.name" />
+              </a-form-item>
+              <a-form-item :label="t('admin.iam.username')" required>
+                <a-input v-model:value="createForm.username" />
+              </a-form-item>
+              <a-form-item :label="t('common.role')">
+                <a-select v-model:value="createForm.roles" mode="multiple" :options="roleOptions" allow-clear />
+              </a-form-item>
+            </a-form>
+          </a-modal>
+        </a-tab-pane>
+        <a-tab-pane key="org" :tab="t('admin.iam.orgTitle')">
+          <a-card :bordered="false" class="admin-card pane-card">
+            <OrgTreeView />
+          </a-card>
+        </a-tab-pane>
+
+        <a-tab-pane key="matrix" :tab="t('admin.iam.matrixTitle')">
+          <a-card :bordered="false" class="admin-card pane-card">
+            <PermissionMatrix />
+          </a-card>
+        </a-tab-pane>
+
+        <a-tab-pane key="external" :tab="t('admin.iam.externalTitle')">
+          <a-card :bordered="false" class="admin-card pane-card" :title="t('admin.iam.externalTitle')">
+            <template #extra>
+              <a-button size="small" type="primary" @click="requestPermission">{{ t('admin.iam.requestPermission') }}</a-button>
+            </template>
+            <table class="external-table">
+              <thead>
+                <tr>
+                  <th>{{ t('common.applicant') }}</th>
+                  <th>{{ t('personal.profileTab.externalCopy') }}</th>
+                  <th>{{ t('common.role') }}</th>
+                  <th>{{ t('admin.iam.externalResource') }}</th>
+                  <th>{{ t('personal.profileTab.expires') }}</th>
+                  <th>{{ t('personal.profileTab.syncedAt') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in externalPermissions" :key="`${item.user}-${item.system}-${item.resource}`">
+                  <td>{{ item.user }}</td>
+                  <td>{{ item.system }}</td>
+                  <td>{{ item.role }}</td>
+                  <td>{{ item.resource }}</td>
+                  <td>{{ item.expires }}</td>
+                  <td class="cell-mono">{{ item.syncedAt }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </a-card>
+        </a-tab-pane>
+      </a-tabs>
     </div>
-
-    <a-modal
-      v-model:open="roleEditorOpen"
-      :title="t('admin.iam.roleEditor')"
-      :confirm-loading="actionLoading === 'roles:' + editingUser?.id"
-      class="iam-user-role-modal"
-      @ok="saveUserRoles"
-    >
-      <template v-if="editingUser">
-        <p class="modal-hint">{{ t('admin.iam.roleEditorHint') }}</p>
-        <a-form layout="vertical">
-          <a-form-item :label="editingUser.name + ' · ' + editingUser.username" required>
-            <a-checkbox-group v-model:value="roleForm.roles">
-              <div class="role-select-grid">
-                <a-checkbox v-for="role in roles" :key="role.code" :value="role.code">
-                  <span class="role-checkbox-text">
-                    <strong>{{ 中文展示(role.code) }}</strong>
-                    <small>{{ role.description }}</small>
-                  </span>
-                </a-checkbox>
-              </div>
-            </a-checkbox-group>
-          </a-form-item>
-        </a-form>
-        <div class="effective-permissions">
-          <span>{{ t('admin.iam.effectivePermissions') }}</span>
-          <a-space size="small" wrap>
-            <a-tag v-for="permission in effectiveRolePermissions" :key="permission" color="blue">{{ 中文展示(permission) }}</a-tag>
-          </a-space>
-        </div>
-      </template>
-    </a-modal>
-
-    <a-drawer v-model:open="roleDrawerOpen" :title="inspectedRole ? t('admin.iam.roleDetail') + '：' + 中文展示(inspectedRole.code) : ''" width="520">
-      <template v-if="inspectedRole">
-        <a-descriptions :column="1" size="small">
-          <a-descriptions-item :label="t('admin.iam.role')">{{ 中文展示(inspectedRole.code) }}</a-descriptions-item>
-          <a-descriptions-item :label="t('admin.iam.roleDescription')">{{ inspectedRole.description }}</a-descriptions-item>
-          <a-descriptions-item :label="t('admin.iam.memberCount')">{{ roleMembers(inspectedRole.code).length }} 人</a-descriptions-item>
-        </a-descriptions>
-        <a-divider />
-        <h3 class="drawer-section-title">{{ t('admin.iam.grantedPermissions') }}</h3>
-        <a-space size="small" wrap>
-          <a-tag v-for="permission in inspectedRole.permissions" :key="permission" color="blue">{{ 中文展示(permission) }}</a-tag>
-        </a-space>
-        <h3 class="drawer-section-title">{{ t('admin.iam.roleMembers') }}</h3>
-        <ul class="role-member-list">
-          <li v-for="member in roleMembers(inspectedRole.code)" :key="member.id">
-            <span>{{ member.name }}（{{ member.username }}）</span>
-            <a-tag :color="member.status === 'ACTIVE' ? 'success' : 'default'">{{ member.status === 'ACTIVE' ? t('admin.iam.active') : t('admin.iam.disabled') }}</a-tag>
-          </li>
-        </ul>
-      </template>
-    </a-drawer>
-
-    <!-- D5-1 新增用户 -->
-    <a-modal v-model:open="createOpen" :title="t('admin.iam.createUser')" :confirm-loading="creating" @ok="createUser">
-      <a-form layout="vertical">
-        <a-form-item :label="t('common.name')" required>
-          <a-input v-model:value="createForm.name" />
-        </a-form-item>
-        <a-form-item :label="t('admin.iam.username')" required>
-          <a-input v-model:value="createForm.username" />
-        </a-form-item>
-        <a-form-item :label="t('common.role')">
-          <a-select v-model:value="createForm.roles" mode="multiple" :options="roleOptions" allow-clear />
-        </a-form-item>
-      </a-form>
-    </a-modal>
-
-    <!-- D5-2 组织管理 -->
-    <a-card :bordered="false" class="admin-card" :title="t('admin.iam.orgTitle')">
-      <OrgTreeView />
-    </a-card>
-
-    <!-- D5-3 门户权限矩阵（路由守卫消费） -->
-    <a-card :bordered="false" class="admin-card" :title="t('admin.iam.matrixTitle')">
-      <PermissionMatrix />
-    </a-card>
-
-    <!-- D5-4 外部系统权限副本（只读） + 权限申请 -->
-    <a-card :bordered="false" class="admin-card" :title="t('admin.iam.externalTitle')">
-      <template #extra>
-        <a-button size="small" type="primary" @click="requestPermission">{{ t('admin.iam.requestPermission') }}</a-button>
-      </template>
-      <table class="external-table">
-        <thead>
-          <tr>
-            <th>{{ t('common.applicant') }}</th>
-            <th>{{ t('personal.profileTab.externalCopy') }}</th>
-            <th>{{ t('common.role') }}</th>
-            <th>{{ t('admin.iam.externalResource') }}</th>
-            <th>{{ t('personal.profileTab.expires') }}</th>
-            <th>{{ t('personal.profileTab.syncedAt') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in externalPermissions" :key="`${item.user}-${item.system}-${item.resource}`">
-            <td>{{ item.user }}</td>
-            <td>{{ item.system }}</td>
-            <td>{{ item.role }}</td>
-            <td>{{ item.resource }}</td>
-            <td>{{ item.expires }}</td>
-            <td class="cell-mono">{{ item.syncedAt }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </a-card>
   </div>
 </template>
 
@@ -606,5 +616,13 @@ onMounted(load)
   border: 1px solid var(--od-gray-200, #e2e8f0);
   padding: 6px 10px;
   text-align: left;
+}
+
+.iam-tabs :deep(.ant-tabs-nav) {
+  margin-bottom: 12px;
+}
+
+.pane-card {
+  border-radius: 10px;
 }
 </style>

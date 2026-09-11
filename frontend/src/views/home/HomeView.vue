@@ -124,25 +124,25 @@ function goAsk(): void {
     <SkeletonList v-else-if="loading" variant="cards" :rows="4" />
 
     <template v-else-if="homeData">
-      <div class="home-grid">
-        <!-- 我的待办：跨域聚合，点击直达对应签页 -->
-        <section class="panel todo-panel" :aria-label="t('home.todoTitle')">
-          <h2 class="panel-title">{{ t('home.todoTitle') }}</h2>
-          <button
-            v-for="metric in todoMetrics"
-            :key="metric.key"
-            type="button"
-            class="todo-metric"
-            @click="router.push(metric.target)"
-          >
-            <span class="todo-value">{{ metric.value }}</span>
-            <span class="todo-label">
-              {{ metric.label }}
-              <ArrowRightOutlined class="todo-arrow" />
-            </span>
-          </button>
-        </section>
+      <!-- C-反馈：待办速览压成单行条（详细办理在个人工作台，避免与个人工作台重复） -->
+      <div class="todo-strip" :aria-label="t('home.todoTitle')">
+        <span class="todo-strip-label">{{ t('home.todoTitle') }}</span>
+        <button
+          v-for="metric in todoMetrics"
+          :key="metric.key"
+          type="button"
+          class="todo-chip"
+          @click="router.push(metric.target)"
+        >
+          {{ metric.label }} <strong>{{ metric.value }}</strong>
+        </button>
+        <a-button size="small" type="link" class="todo-strip-go" @click="router.push('/personal')">
+          {{ t('home.todoGoPersonal') }}
+          <ArrowRightOutlined />
+        </a-button>
+      </div>
 
+      <div class="home-grid">
         <!-- 公告与动态：仅已发布公告 -->
         <section class="panel notice-panel" :aria-label="t('home.noticesTitle')">
           <h2 class="panel-title">{{ t('home.noticesTitle') }}</h2>
@@ -231,8 +231,49 @@ function goAsk(): void {
 
 .home-grid {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
+}
+
+/* C-反馈：待办速览条 */
+.todo-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 16px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.todo-strip-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.todo-chip {
+  border: 0;
+  background: var(--od-gray-50, #f8fafc);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--od-gray-500, #64748b);
+  cursor: pointer;
+}
+
+.todo-chip:hover {
+  color: var(--od-primary, #2563eb);
+}
+
+.todo-chip strong {
+  color: var(--od-primary, #2563eb);
+  font-variant-numeric: tabular-nums;
+}
+
+.todo-strip-go {
+  margin-left: auto;
+  font-size: 12px;
 }
 
 .panel {
@@ -248,43 +289,8 @@ function goAsk(): void {
   font-weight: 600;
 }
 
-.todo-panel {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  align-content: start;
-}
-
-.todo-metric {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px;
-  border: 1px solid var(--od-gray-200, #e2e8f0);
-  border-radius: 10px;
-  background: #f8fafc;
-  cursor: pointer;
-  text-align: left;
-}
-
 .todo-metric:hover {
   border-color: var(--od-primary, #2563eb);
-}
-
-.todo-value {
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--od-primary, #2563eb);
-  font-variant-numeric: tabular-nums;
-}
-
-.todo-label {
-  font-size: 12px;
-  color: var(--od-gray-500, #64748b);
-}
-
-.todo-arrow {
-  margin-left: 4px;
 }
 
 .notice-list {
@@ -379,9 +385,5 @@ function goAsk(): void {
   margin-left: auto;
 }
 
-@media (max-width: 960px) {
-  .home-grid {
-    grid-template-columns: 1fr;
-  }
-}
+
 </style>

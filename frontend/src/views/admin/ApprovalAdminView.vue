@@ -231,7 +231,7 @@ onMounted(load)
           :columns="columns"
           :data-source="rows"
           :loading="loading"
-          :scroll="{ x: 870 }"
+          :scroll="{ x: 870, y: 480 }"
           row-key="code"
           :pagination="{ current: query.page, pageSize: query.size, total, showTotal: (tot: number) => `共 ${tot} 项` }"
           @change="

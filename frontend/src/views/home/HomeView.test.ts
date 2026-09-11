@@ -65,12 +65,13 @@ describe('HomeView（B1 首页）', () => {
     expect(wrapper.text()).toContain('数据工作台')
   })
 
-  it('待办格点击直达对应签页', async () => {
+  it('待办速览条点击直达对应签页', async () => {
     const wrapper = mountView()
     await flushPromises()
 
-    const metric = wrapper.findAll('.todo-metric').find((node) => node.text().includes('待我审批'))
-    await metric!.trigger('click')
+    const chip = wrapper.findAll('.todo-chip').find((node) => node.text().includes('待我审批'))
+    expect(chip).toBeTruthy()
+    await chip!.trigger('click')
 
     expect(pushMock).toHaveBeenCalledWith('/personal/approvals')
   })
