@@ -654,6 +654,145 @@ onMounted(load)
 </template>
 
 <style scoped>
+.iam-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.iam-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+}
+
+.iam-overview__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: var(--od-radius-card, 0.75rem);
+  background: var(--od-surface, #fff);
+  box-shadow: var(--od-shadow-xs);
+}
+
+.iam-overview__item span,
+.card-hint,
+.modal-hint,
+.role-name-cell span,
+.role-checkbox-text small {
+  color: var(--od-gray-500, #64748b);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.iam-overview__item strong {
+  color: var(--od-gray-900, #0f172a);
+  font-family: var(--od-font-mono, monospace);
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.admin-card {
+  border-radius: var(--od-radius-card, 0.75rem);
+  box-shadow: var(--od-shadow-1);
+}
+
+.toolbar-area {
+  margin-bottom: 1rem;
+}
+
+.card-hint,
+.modal-hint {
+  margin: 0 0 1rem;
+}
+
+.role-name-cell,
+.role-checkbox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.role-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+}
+
+.role-select-grid :deep(.ant-checkbox-wrapper) {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  margin-inline-start: 0;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 0.5rem;
+}
+
+.effective-permissions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--od-primary-50, #eff6ff);
+}
+
+.effective-permissions > span {
+  color: var(--od-gray-700, #334155);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.drawer-section-title {
+  margin: 1.25rem 0 0.75rem;
+  color: var(--od-gray-800, #1e293b);
+  font-size: 0.875rem;
+}
+
+.role-member-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.role-member-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 0.5rem;
+}
+
+@media (max-width: 48rem) {
+  .iam-overview,
+  .role-select-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.external-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.external-table th,
+.external-table td {
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  padding: 6px 10px;
+  text-align: left;
+}
+
 .iam-tabs :deep(.ant-tabs-nav) {
   margin-bottom: 12px;
 }
@@ -662,12 +801,7 @@ onMounted(load)
   border-radius: 10px;
 }
 
-.card-hint {
-  margin: 0 0 10px;
-  font-size: 12px;
-  color: var(--od-gray-500, #64748b);
-}
-
+/* ── 权限字典/绑定抽屉（C-反馈重构新增） ── */
 .perm-group-title {
   margin: 14px 0 6px;
   font-size: 13px;
@@ -712,18 +846,5 @@ onMounted(load)
 .perm-drawer-footer {
   margin-top: 16px;
   text-align: right;
-}
-
-.external-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.external-table th,
-.external-table td {
-  border: 1px solid var(--od-gray-200, #e2e8f0);
-  padding: 6px 10px;
-  text-align: left;
 }
 </style>
