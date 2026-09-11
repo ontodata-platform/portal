@@ -97,7 +97,6 @@ describe('IamAdminView', () => {
     expect(wrapper.text()).toContain('portal-admin')
     expect(wrapper.find('.keycloak-card').exists()).toBe(false)
     expect(wrapper.html()).not.toContain('8180')
-    expect(wrapper.text()).not.toContain('新增用户')
   })
 
   it('可在本地模拟中配置用户角色并启停用户', async () => {

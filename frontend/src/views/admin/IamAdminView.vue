@@ -60,6 +60,17 @@ const rolePermName = ref('')
 const rolePermDraft = ref<string[]>([])
 const rolePermSaving = ref(false)
 
+const roleQuery = reactive({ keyword: '' })
+
+// 角色查询：按名称/编码即时过滤
+const visibleRoleRows = computed(() =>
+  roleRows.value.filter((row) => {
+    if (!roleQuery.keyword.trim()) return true
+    const keyword = roleQuery.keyword.trim().toLowerCase()
+    return `${row.name} ${row.code}`.toLowerCase().includes(keyword)
+  }),
+)
+
 const roleMembers = (roleCode: string): IamUser[] =>
   users.value.filter((user) => user.roles.includes(roleCode))
 
@@ -348,10 +359,7 @@ onMounted(load)
         <!-- ═══ 用户：用户绑定角色 ═══ -->
         <a-tab-pane key="users" :tab="t('admin.iam.tabUsers')">
           <a-card :bordered="false" class="admin-card pane-card">
-            <template #extra>
-              <a-button size="small" type="primary" @click="createOpen = true">{{ t('admin.iam.createUser') }}</a-button>
-            </template>
-            <div class="toolbar-area">
+            <div class="toolbar-area pane-toolbar">
               <TableFilterBar
                 :query="query"
                 :filters="userFilterSpecs"
@@ -360,6 +368,9 @@ onMounted(load)
                 @update="Object.assign(query, $event)"
                 @search="load"
               />
+              <a-button type="primary" class="toolbar-end" @click="createOpen = true">
+                {{ t('admin.iam.createUser') }}
+              </a-button>
             </div>
 
             <EmptyState v-if="!loading && users.length === 0" :title="t('admin.iam.users')" />
@@ -369,7 +380,7 @@ onMounted(load)
               :data-source="users"
               :loading="loading"
               row-key="id"
-              :pagination="false"
+              :pagination="{ pageSize: 10 }"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'roles'">
@@ -410,12 +421,23 @@ onMounted(load)
             <template #extra>
               <a-button size="small" type="primary" @click="openRoleCreate">{{ t('admin.iam.addRole') }}</a-button>
             </template>
-            <p class="card-hint">{{ t('admin.iam.roleModelHint') }}</p>
+            <div class="toolbar-area">
+              <a-input
+                v-model:value="roleQuery.keyword"
+                :placeholder="t('admin.iam.roleSearchPlaceholder')"
+                style="width: 260px"
+                allow-clear
+                :prefix="undefined"
+              />
+              <a-button type="primary" class="toolbar-end" @click="openRoleCreate">
+                {{ t('admin.iam.addRole') }}
+              </a-button>
+            </div>
             <OdTable
               :columns="roleColumns"
-              :data-source="roleRows"
+              :data-source="visibleRoleRows"
               row-key="code"
-              :pagination="false"
+              :pagination="{ pageSize: 10 }"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'role'">
@@ -799,6 +821,22 @@ onMounted(load)
 
 .pane-card {
   border-radius: 10px;
+}
+
+.pane-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pane-toolbar :deep(.table-filter-bar) {
+  flex: 1;
+}
+
+.pane-toolbar .toolbar-end {
+  margin-left: auto;
 }
 
 /* ── 权限字典/绑定抽屉（C-反馈重构新增） ── */

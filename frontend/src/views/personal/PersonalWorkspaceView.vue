@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  AppstoreOutlined,
   AuditOutlined,
   BellOutlined,
   CarryOutOutlined,
@@ -16,10 +17,12 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
+import { contentApi } from '@/api/content'
 import { personalApi, resultApi, taskApi } from '@/api/portal'
 import { useIdentityStore } from '@/stores/identity'
 import { useMessageStore } from '@/stores/message'
 import type { PersonalTodo } from '@/types/portal'
+import EmptyState from '@/ui-kit/EmptyState.vue'
 import { 中文展示 } from '@/ui-kit/展示文本'
 
 const { t } = useI18n()
@@ -27,6 +30,28 @@ const route = useRoute()
 const router = useRouter()
 const identityStore = useIdentityStore()
 const messageStore = useMessageStore()
+
+// ── 门户内容（合并自首页）：公告与推荐位 ──
+const portalNotices = ref<Array<{ code: string; title: string; section: string; publishedAt?: string }>>([])
+const portalEntries = ref<Array<{ code: string; title: string; description: string; route: string; icon: string }>>([])
+
+async function loadPortalContent(): Promise<void> {
+  try {
+    const data = await contentApi.getHomeData()
+    portalNotices.value = data.notices
+    portalEntries.value = data.entries
+  } catch {
+    portalNotices.value = []
+    portalEntries.value = []
+  }
+}
+
+const entryIcons: Record<string, unknown> = {
+  database: DatabaseOutlined,
+  appstore: AppstoreOutlined,
+  robot: RobotOutlined,
+  'file-done': FileDoneOutlined,
+}
 
 const todos = ref<PersonalTodo>({
   pendingApprovalCount: 0,
@@ -98,6 +123,7 @@ async function loadSummary() {
 }
 
 onMounted(() => {
+  void loadPortalContent()
   void identityStore.fetchIdentity()
   void loadSummary()
 })
@@ -235,6 +261,38 @@ onMounted(() => {
 
     <div class="tab-body">
       <RouterView />
+    </div>
+
+    <!-- 门户动态（合并自首页）：公告与推荐位 -->
+    <div class="portal-content">
+      <section class="portal-panel" :aria-label="t('home.noticesTitle')">
+        <h2 class="portal-panel-title">{{ t('home.noticesTitle') }}</h2>
+        <EmptyState v-if="portalNotices.length === 0" :title="t('home.noticesEmpty')" />
+        <ul v-else class="notice-list">
+          <li v-for="notice in portalNotices" :key="notice.code" class="notice-item">
+            <a-tag color="blue" class="notice-section">{{ notice.section }}</a-tag>
+            <span class="notice-title">{{ notice.title }}</span>
+            <span class="notice-date">{{ notice.publishedAt?.slice(0, 10) }}</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="portal-panel" :aria-label="t('home.entriesTitle')">
+        <h2 class="portal-panel-title">{{ t('home.entriesTitle') }}</h2>
+        <div class="entry-grid">
+          <button
+            v-for="entry in portalEntries"
+            :key="entry.code"
+            type="button"
+            class="entry-card"
+            @click="router.push(entry.route)"
+          >
+            <component :is="entryIcons[entry.icon]" class="entry-icon" />
+            <span class="entry-title">{{ entry.title }}</span>
+            <span class="entry-desc">{{ entry.description }}</span>
+          </button>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -489,5 +547,89 @@ onMounted(() => {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+.portal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.portal-panel {
+  padding: 16px 20px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.portal-panel-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.notice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notice-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px;
+  border-bottom: 1px dashed var(--od-gray-200, #e2e8f0);
+}
+
+.notice-title {
+  flex: 1;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notice-date {
+  font-size: 11px;
+  color: var(--od-gray-500, #64748b);
+}
+
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.entry-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--od-gray-200, #e2e8f0);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.entry-card:hover {
+  border-color: var(--od-primary, #2563eb);
+}
+
+.entry-icon {
+  font-size: 18px;
+  color: var(--od-primary, #2563eb);
+}
+
+.entry-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.entry-desc {
+  font-size: 12px;
+  color: var(--od-gray-500, #64748b);
 }
 </style>

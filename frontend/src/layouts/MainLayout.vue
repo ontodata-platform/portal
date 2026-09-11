@@ -5,7 +5,6 @@ import {
   CheckOutlined,
   DatabaseOutlined,
   GlobalOutlined,
-  HomeOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -153,7 +152,6 @@ const commandResults = computed(() => {
 
 const navItems = computed(() => {
   const items = [
-    { key: '/home', label: t('menu.home'), icon: HomeOutlined },
     { key: '/assistant', label: t('menu.assistant'), icon: RobotOutlined },
     { key: '/personal', label: t('menu.personal'), icon: UserOutlined },
     { key: '/data-workbench', label: t('menu.marketplace'), icon: DatabaseOutlined },
@@ -167,7 +165,7 @@ const navItems = computed(() => {
 
 const selectedKeys = computed(() => {
   const path = route.path
-  if (path === '/' || path.startsWith('/home')) return ['/home']
+  if (path === '/') return ['/personal']
   if (path.startsWith('/help')) return []
   if (path.startsWith('/personal')) return ['/personal']
   if (path.startsWith('/data-workbench') || path.startsWith('/marketplace')) return ['/data-workbench']
